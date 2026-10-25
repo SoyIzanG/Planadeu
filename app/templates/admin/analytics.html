@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block title %}Estadísticas - Administración{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">
+    <i class="fas fa-chart-line me-2"></i>
+    Estadísticas de visitas
+</h1>
+
+<div class="row">
+    <!-- Overview Cards -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title text-primary">{{ stats.total_unique }}</h5>
+                <p class="card-text">Total Visitors</p>
+                <small class="text-muted">Unique IPs</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title text-success">{{ stats.total_visits }}</h5>
+                <p class="card-text">Total Visits</p>
+                <small class="text-muted">All page views</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title text-info">{{ stats.today_unique }}</h5>
+                <p class="card-text">Today's Visitors</p>
+                <small class="text-muted">Unique today</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title text-warning">{{ stats.recent_visitors }}</h5>
+                <p class="card-text">Recent Activity</p>
+                <small class="text-muted">Last 7 days</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Stats -->
+<div class="row mt-4">
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list-ol me-2"></i>
+                    Top Pages
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if stats.top_pages %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Page</th>
+                            <th>Visits</th>
+                            <th>Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for page in stats.top_pages %}
+                        <tr>
+                            <td>
+                                <code>{{ page.page_visited }}</code>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">{{ page.visits }}</span>
+                            </td>
+                            <td>
+                                {% set percentage = (page.visits / stats.total_visits * 100) if stats.total_visits > 0 else 0 %}
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: {{ percentage }}%;"
+                                         aria-valuenow="{{ percentage }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        {{ "%.1f"|format(percentage) }}%
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted">No hay datos de páginas disponibles</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-day me-2"></i>
+                    Today's Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <h6 class="text-info">{{ stats.today_visitors }}</h6>
+                        <small>Total Today</small>
+                    </div>
+                    <div class="col-6">
+                        <h6 class="text-success">{{ stats.today_unique }}</h6>
+                        <small>Unique Today</small>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Tracking started on app launch
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Info Section -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-info-circle me-2"></i>
+                    About This Estadísticas
+                </h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>What's Tracked</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i> Unique visitor IP addresses</li>
+                            <li><i class="fas fa-check text-success me-2"></i> Page visits per endpoint</li>
+                            <li><i class="fas fa-check text-success me-2"></i> Visit frequency tracking</li>
+                            <li><i class="fas fa-check text-success me-2"></i> User agent information</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Privacy Notes</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-shield-alt text-info me-2"></i> No se almacenan datos personales</li>
+                            <li><i class="fas fa-shield-alt text-info me-2"></i> IP addresses anonymized after processing</li>
+                            <li><i class="fas fa-shield-alt text-info me-2"></i> Los datos se utilizan únicamente para elaborar estadísticas</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.progress {
+    background-color: #e9ecef;
+}
+.progress-bar {
+    background-color: #007bff;
+}
+.card-title {
+    font-size: 2rem;
+    font-weight: bold;
+}
+</style>
+{% endblock %}

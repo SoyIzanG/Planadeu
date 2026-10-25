@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Match Highlights - Gallery - {{ config['SITE_NAME'] or 'Football League' }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Match Highlights</h1>
+            
+            <!-- Buscar -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <form method="GET" class="d-flex">
+                        <input type="text" name="q" class="form-control me-2" placeholder="Buscar momentos destacados..." value="{{ search }}">
+                        <button type="submit" class="btn btn-outline-primary">Buscar</button>
+                    </form>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-end">
+                        <a href="{{ url_for('gallery.index') }}" class="btn btn-outline-secondary">View All Gallery</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Highlights Grid -->
+            {% if galleries.items %}
+            <div class="row">
+                {% for gallery in galleries.items %}
+                <div class="col-md-4 col-lg-3 mb-4">
+                    <div class="card h-100 gallery-item">
+                        {% if gallery.image_url %}
+                        <a href="{{ url_for('gallery.detail', gallery_id=gallery.id) }}">
+                            <img src="{{ gallery.image_url }}" class="card-img-top gallery-image" alt="{{ gallery.title }}">
+                        </a>
+                        {% endif %}
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title">{{ gallery.title }}</h5>
+                                {% if gallery.is_featured %}
+                                <span class="badge bg-warning text-dark">Featured</span>
+                                {% endif %}
+                            </div>
+                            <p class="card-text text-muted small">{{ gallery.description[:100] }}{% if gallery.description|length > 100 %}...{% endif %}</p>
+                            <div class="mt-auto">
+                                {% if gallery.match %}
+                                <small class="text-muted d-block">
+                                    <i class="fas fa-futbol"></i> {{ gallery.match.home_team.name }} vs {{ gallery.match.away_team.name }}
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if galleries.pages > 1 %}
+            <nav aria-label="Highlights pagination">
+                <ul class="pagination justify-content-center">
+                    {% if galleries.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('gallery.highlights', page=galleries.prev_num, q=search) }}">Anterior</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in galleries.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != galleries.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('gallery.highlights', page=page_num, q=search) }}">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if galleries.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('gallery.highlights', page=galleries.next_num, q=search) }}">Siguiente</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No highlights found</h4>
+                <p class="text-muted">Match highlights will appear here once added by administrators.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.gallery-item {
+    transition: transform 0.2s ease-in-out;
+}
+.gallery-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.gallery-image {
+    height: 200px;
+    object-fit: cover;
+}
+</style>
+{% endblock %}

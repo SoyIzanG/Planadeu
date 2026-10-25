@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{% if match %}Editar partido{% else %}Programar partido{% endif %} - Administración{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">{% if match %}Editar partido{% else %}Programar partido{% endif %}</h1>
+
+<form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Temporada *</label>
+                <select name="season_id" class="form-select" required>
+                    {% for s in seasons %}
+                    <option value="{{ s.id }}" {% if match and match.season_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Matchday *</label>
+                <input type="number" name="matchday" class="form-control" min="1" value="{% if match %}{{ match.matchday }}{% endif %}" required>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Home Equipo *</label>
+                    <select name="home_team_id" class="form-select" required>
+                        {% for t in teams %}
+                        <option value="{{ t.id }}" {% if match and match.home_team_id == t.id %}selected{% endif %}>{{ t.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Away Equipo *</label>
+                    <select name="away_team_id" class="form-select" required>
+                        {% for t in teams %}
+                        <option value="{{ t.id }}" {% if match and match.away_team_id == t.id %}selected{% endif %}>{{ t.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Kickoff *</label>
+                <input type="datetime-local" name="kickoff" class="form-control" value="{% if match %}{{ match.kickoff.strftime('%Y-%m-%dT%H:%M') }}{% endif %}" required>
+            </div>
+            <button type="submit" class="btn btn-primary">{% if match %}Actualizar partido{% else %}Programar{% endif %}</button>
+            <a href="{{ url_for('admin.fixtures') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </div>
+</form>
+{% endblock %}

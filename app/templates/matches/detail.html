@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block title %}Match - League Site{% endblock %}
+
+{% block content %}
+<div class="card shadow">
+    <div class="card-body text-center py-5">
+        <div class="row align-items-center">
+          <h6 class="text-center">Matchday {{ match.matchday }}</h6>
+        </div>
+        <br>
+        <div class="row align-items-center junate-match">
+            
+            <div class="col-5 col-md-5">
+                <h4>
+                    <a href="{{ url_for('teams.profile', team_id=match.home_team.id) }}" class="text-decoration-none text-dark">
+                        {{ match.home_team.name }}
+                    </a>
+                </h4>
+            </div>
+            <div class="col-2 col-md-2">
+                <h2 class="mb-0">{{ match.score_display }}</h2>
+                
+            </div>
+            <div class="col-5 col-md-5">
+                <h4>
+                    <a href="{{ url_for('teams.profile', team_id=match.away_team.id) }}" class="text-decoration-none text-dark">
+                        {{ match.away_team.name }}
+                    </a>
+                </h4>
+            </div>
+        </div>
+              
+        {% if match.score_display == "vs" %}
+        <p class="text-muted mt-2">{{ match.kickoff.strftime('%A %d %B %Y, %H:%M') }}</p>
+        {% else %}
+        <p class="text-muted mt-2">Full Time</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if events %}
+<div class="card shadow mt-4">
+    <div class="card-header">Match Events</div>
+    <div class="card-body p-0">
+        <div class="row g-0">
+            <!-- Home Equipo Events -->
+            <div class="col-md-6 match-event-home">
+                <div class="p-3">
+                    <h6 class="team-header">{{ match.home_team.name }}</h6>
+                    {% for e in events %}
+                        {% set event_player = e.goal_scorer if e.event_type == 'goal' and e.is_own_goal else (e.goal_scorer or e.player or e.player_off) %}
+                        {% if event_player and event_player.team_id == match.home_team_id %}
+                        <div class="event-item d-flex align-items-center">
+                            <span class="badge bg-light text-dark me-2">
+                                {{ e.minute }}{% if e.extra_time %}+{{ e.extra_time }}{% endif %}'
+                            </span>
+                            {% if e.event_type == 'goal' %}
+                                <span class="goal-icon {% if e.is_own_goal %}own-goal{% endif %}"><i class="fas fa-futbol"></i></span>
+                                {% if e.goal_scorer %}{{ e.goal_scorer.full_name }}{% if e.is_penalty %} (pen){% endif %}{% if e.is_own_goal %} (OG){% endif %}{% endif %}
+                                {% if e.assist %}<small class="text-muted">(assist: {{ e.assist.full_name }})</small>{% endif %}
+                            {% elif e.event_type == 'yellow' %}
+                                <i class="bi bi-square-fill text-warning me-2"></i>
+                                {% if e.player %}{{ e.player.full_name }}{% endif %}
+                            {% elif e.event_type == 'red' %}
+                                <i class="bi bi-square-fill text-danger me-2"></i>
+                                {% if e.player %}{{ e.player.full_name }}{% endif %}
+                            {% elif e.event_type == 'substitution' %}
+                                <i class="bi bi-arrow-left-right me-2"></i>
+                                {% if e.player_off and e.player_on %}
+                                    {{ e.player_off.full_name }} → {{ e.player_on.full_name }}
+                                {% elif e.player_off %}
+                                    {{ e.player_off.full_name }} → ?
+                                {% elif e.player_on %}
+                                    ? → {{ e.player_on.full_name }}
+                                {% else %}
+                                    Substitution
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Away Equipo Events -->
+            <div class="col-md-6 match-event-away">
+                <div class="p-3">
+                    <h6 class="team-header">{{ match.away_team.name }}</h6>
+                    {% for e in events %}
+                        {% set event_player = e.goal_scorer if e.event_type == 'goal' and e.is_own_goal else (e.goal_scorer or e.player or e.player_off) %}
+                        {% if event_player and event_player.team_id == match.away_team_id %}
+                        <div class="event-item d-flex align-items-center justify-content-end">
+                            {% if e.event_type == 'goal' %}
+                            <span class="goal-icon {% if e.is_own_goal %}own-goal{% endif %}"><i class="fas fa-futbol"></i></span>
+                                {% if e.assist %}<small class="text-muted me-2">({{ e.assist.full_name }} assist)</small>{% endif %}
+                                {% if e.goal_scorer %}{{ e.goal_scorer.full_name }}{% if e.is_penalty %} (pen){% endif %}{% if e.is_own_goal %} (OG){% endif %}{% endif %}
+                                <i class="bi bi-football text-success ms-2"></i>
+                            {% elif e.event_type == 'yellow' %}
+                                {% if e.player %}{{ e.player.full_name }}{% endif %}
+                                <i class="bi bi-square-fill text-warning ms-2"></i>
+                            {% elif e.event_type == 'red' %}
+                                {% if e.player %}{{ e.player.full_name }}{% endif %}
+                                <i class="bi bi-square-fill text-danger ms-2"></i>
+                            {% elif e.event_type == 'substitution' %}
+                                {% if e.player_off and e.player_on %}
+                                    {{ e.player_off.full_name }} → {{ e.player_on.full_name }}
+                                {% elif e.player_off %}
+                                    {{ e.player_off.full_name }} → ?
+                                {% elif e.player_on %}
+                                    ? → {{ e.player_on.full_name }}
+                                {% else %}
+                                    Substitution
+                                {% endif %}
+                                <i class="bi bi-arrow-left-right ms-2"></i>
+                            {% endif %}
+                            <span class="badge bg-light text-dark ms-2">
+                                {{ e.minute }}{% if e.extra_time %}+{{ e.extra_time }}{% endif %}'
+                            </span>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.match-event-home {
+    text-align: left;
+    border-right: 2px solid #dee2e6;
+}
+
+.match-event-away {
+    text-align: right;
+}
+
+.event-item {
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.event-item:last-child {
+    border-bottom: none;
+}
+
+.team-header {
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.gioal-icon {
+    background: 
+     /* Center black circle */
+    radial-gradient(circle at center, 
+      black 0% 30%, 
+      white 31% 100%
+    ),
+
+    /* Surrounding black patches */
+    radial-gradient(circle at 50% 15%, black 0 10%, transparent 11%),
+    radial-gradient(circle at 85% 35%, black 0 10%, transparent 11%),
+    radial-gradient(circle at 70% 80%, black 0 10%, transparent 11%),
+    radial-gradient(circle at 30% 80%, black 0 10%, transparent 11%),
+    radial-gradient(circle at 15% 35%, black 0 10%, transparent 11%),
+
+    /* Base white */
+    white;
+
+    box-shadow: 
+    inset -12px -18px 25px rgba(0,0,0,0.4),
+    inset 8px 12px 20px rgba(255,255,255,0.6);
+
+
+    border-radius: 50%;
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-right: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    border: 1px solid #000;
+}
+
+.goal-icon.own-goal {
+    background: 
+     /* Center black circle */
+    radial-gradient(circle at center, 
+      black 0% 30%, 
+      rgb(138, 14, 14) 31% 100%
+    ),
+
+    /* Surrounding black patches */
+    radial-gradient(circle at 50% 15%, black 0 10%, transparent 11%),
+    radial-gradient(circle at 85% 35%, black 0 10%, transparent 11%),
+    radial-gradient(circle at 70% 80%, black 0 10%, transparent 11%),
+    radial-gradient(circle at 30% 80%, black 0 10%, transparent 11%),
+    radial-gradient(circle at 15% 35%, black 0 10%, transparent 11%),
+
+    /* Base white */
+    white;
+
+    box-shadow: 
+    inset -12px -18px 25px rgba(0,0,0,0.4),
+    inset 8px 12px 20px rgba(255,255,255,0.6);
+
+
+    border-radius: 50%;
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-right: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    border: 1px solid #000;
+}
+.badge {
+    margin-right: 0.25rem;
+}
+
+@media (max-width: 768px) {
+    .match-event-away .team-header {
+        text-align: left !important;
+    }
+    .match-event-away .d-flex {
+        justify-content: flex-start !important;
+    }
+    .junate-match {
+        flex-wrap: nowrap;
+    }
+    .junate-match h4,
+    .junate-match h2 {
+        font-size: 15px !important;
+        
+    }
+}
+</style>
+{% endblock %}

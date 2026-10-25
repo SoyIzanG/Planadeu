@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if season else 'Añadir' }} Temporada - Administración{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">{{ 'Editar' if season else 'Añadir' }} Temporada</h1>
+
+<form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Name *</label>
+                <input type="text" name="name" class="form-control" value="{{ season.name if season else '' }}" placeholder="2024-2025" required>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Start Date *</label>
+                    <input type="date" name="start_date" class="form-control" value="{{ season.start_date if season else '' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">End Date *</label>
+                    <input type="date" name="end_date" class="form-control" value="{{ season.end_date if season else '' }}" required>
+                </div>
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" name="is_active" class="form-check-input" id="is_active" {% if season and season.is_active %}checked{% endif %}>
+                <label class="form-check-label" for="is_active">Temporada activa</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a href="{{ url_for('admin.seasons') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </div>
+</form>
+{% endblock %}

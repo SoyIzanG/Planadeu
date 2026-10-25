@@ -1,0 +1,72 @@
+
+{% extends "base.html" %}
+{% block title %}Administración - Liga de Fútbol{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Panel de administración</h1>
+
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <div class="card shadow">
+            <div class="card-body">
+                <h5><i class="bi bi-trophy"></i> Temporadas</h5>
+                <a href="{{ url_for('admin.seasons') }}" class="btn btn-outline-primary btn-sm">Gestionar</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card shadow">
+            <div class="card-body">
+                <h5><i class="bi bi-shield"></i> Equipos</h5>
+                <a href="{{ url_for('admin.teams') }}" class="btn btn-outline-primary btn-sm">Gestionar</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card shadow">
+            <div class="card-body">
+                <h5><i class="bi bi-person"></i> Jugadores</h5>
+                <a href="{{ url_for('admin.players') }}" class="btn btn-outline-primary btn-sm">Gestionar</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card shadow">
+            <div class="card-body">
+                <h5><i class="bi bi-calendar-event"></i> Partidos</h5>
+                <a href="{{ url_for('admin.fixtures') }}" class="btn btn-outline-primary btn-sm">Programar y ver resultados</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card shadow">
+            <div class="card-body">
+                <h5><i class="bi bi-images"></i> Galería</h5>
+                <a href="{{ url_for('admin.gallery') }}" class="btn btn-outline-primary btn-sm">Gestionar galería</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card shadow">
+            <div class="card-body">
+                <h5><i class="bi bi-chat-text"></i> Comentarios de los aficionados</h5>
+                <a href="{{ url_for('admin.fan_comments') }}" class="btn btn-outline-primary btn-sm">Moderar comentarios</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card shadow">
+            <div class="card-body">
+                <h5><i class="bi bi-graph-up"></i> Estadísticas</h5>
+                <a href="{{ url_for('admin.analytics') }}" class="btn btn-outline-primary btn-sm">Ver estadísticas</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

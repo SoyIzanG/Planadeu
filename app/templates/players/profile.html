@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ player.full_name }} - League Site{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4 text-center mb-4">
+        {% if player.photo_filename %}
+        <img src="{{ player.photo_filename|asset_url('player') }}" alt="{{ player.full_name }}" class="img-fluid rounded">
+        {% else %}
+        <div class="bg-secondary rounded d-inline-flex align-items-center justify-content-center" style="width:150px;height:150px;">
+            <i class="bi bi-person-fill text-white" style="font-size:5rem;"></i>
+        </div>
+        {% endif %}
+        <h2 class="mt-2">{{ player.full_name }}</h2>
+        <p class="text-muted">{{ player.team.name }} · {{ player.position }}{% if player.jersey_number %} #{{ player.jersey_number }}{% endif %}{% if player.age %} · {{ player.age }} yrs{% endif %}</p>
+    </div>
+    <div class="col-md-8">
+        <div class="card shadow mb-4">
+            <div class="card-header">Estadísticas</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-4 col-md-2 text-center"><div class="fw-bold">{{ player.appearances }}</div><small class="text-muted">Apps</small></div>
+                    <div class="col-4 col-md-2 text-center"><div class="fw-bold">{{ player.goals }}</div><small class="text-muted">Goals</small></div>
+                    <div class="col-4 col-md-2 text-center"><div class="fw-bold">{{ player.assists }}</div><small class="text-muted">Assists</small></div>
+                    <div class="col-4 col-md-2 text-center"><div class="fw-bold">{{ player.yellow_cards }}</div><small class="text-muted">Yellow</small></div>
+                    <div class="col-4 col-md-2 text-center"><div class="fw-bold">{{ player.red_cards }}</div><small class="text-muted">Red</small></div>
+                    {% if player.is_goalkeeper_or_defender() %}
+                    <div class="col-4 col-md-2 text-center"><div class="fw-bold">{{ player.clean_sheets }}</div><small class="text-muted">Clean</small></div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

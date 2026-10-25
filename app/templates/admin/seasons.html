@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Temporadas - Administración{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Temporadas</h1>
+
+<a href="{{ url_for('admin.add_season') }}" class="btn btn-success mb-3">Añadir Temporada</a>
+
+<div class="card shadow">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead><tr><th>Name</th><th>Start</th><th>End</th><th>Active</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for s in seasons %}
+                <tr>
+                    <td>{{ s.name }}</td>
+                    <td>{{ s.start_date }}</td>
+                    <td>{{ s.end_date }}</td>
+                    <td>{% if s.is_active %}<span class="badge bg-success">Active</span>{% else %}-{% endif %}</td>
+                    <td><a href="{{ url_for('admin.add_season') }}" class="btn btn-sm btn-outline-primary">Editar</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

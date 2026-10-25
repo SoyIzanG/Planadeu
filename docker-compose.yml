@@ -1,0 +1,32 @@
+# League Site - Docker Compose for local development
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - FLASK_ENV=development
+      - DATABASE_URL=postgresql://league:league@db:5432/league_db
+      - SECRET_KEY=dev-secret-key
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+      - uploads_data:/app/uploads
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=league
+      - POSTGRES_PASSWORD=league
+      - POSTGRES_DB=league_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
+  uploads_data:

@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Comentarios - Administración{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>🗣️ Gestión de comentarios</h1>
+</div>
+
+<!-- Buscar -->
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <form method="GET" class="d-flex">
+            <input type="text" name="q" class="form-control me-2" placeholder="Buscar por nombre, apodo o comentario..." value="{{ search }}">
+            <button type="submit" class="btn btn-outline-primary">Buscar</button>
+            {% if search %}
+            <a href="{{ url_for('admin.fan_comments') }}" class="btn btn-outline-secondary ms-2">Limpiar búsqueda</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Lista de comentarios -->
+<div class="card shadow">
+    <div class="card-header">
+        <h5 class="mb-0">Comentarios ({{ comments.total }} total)</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if comments.items %}
+            {% for comment in comments.items %}
+            <div class="comment-item p-3 border-bottom">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="mb-1">
+                                    {{ comment.display_name }}
+                                    {% if comment.nickname %}
+                                    <small class="text-muted">({{ comment.name }})</small>
+                                    {% endif %}
+                                </h6>
+                                <small class="text-muted">{{ comment.formatted_date }}</small>
+                            </div>
+                            <span class="badge bg-{{ 'success' if comment.is_approved else 'warning' }}">
+                                {{ 'Aprobado' if comment.is_approved else 'Pendiente' }}
+                            </span>
+                        </div>
+                        <p class="mb-2">{{ comment.comment }}</p>
+                        <small class="text-muted">
+                            IP: {{ request.remote_addr if request.remote_addr else 'N/A' }} | 
+                            Longitud: {{ comment.comment|length }} caracteres
+                        </small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                    data-bs-toggle="modal" data-bs-target="#viewModal{{ comment.id }}">
+                                <i class="fas fa-eye"></i> Ver
+                            </button>
+                            <form method="POST" action="{{ url_for('admin.delete_fan_comment', comment_id=comment.id) }}" 
+                                  class="d-inline" onsubmit="return confirm('¿Seguro que quieres eliminar este comentario?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Ver Modal -->
+            <div class="modal fade" id="viewModal{{ comment.id }}" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Detalles del comentario</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row mb-3">
+                                <div class="col-sm-3"><strong>Name:</strong></div>
+                                <div class="col-sm-9">{{ comment.name }}</div>
+                            </div>
+                            {% if comment.nickname %}
+                            <div class="row mb-3">
+                                <div class="col-sm-3"><strong>Nickname:</strong></div>
+                                <div class="col-sm-9">{{ comment.nickname }}</div>
+                            </div>
+                            {% endif %}
+                            <div class="row mb-3">
+                                <div class="col-sm-3"><strong>Date:</strong></div>
+                                <div class="col-sm-9">{{ comment.formatted_date }}</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-sm-3"><strong>Status:</strong></div>
+                                <div class="col-sm-9">
+                                    <span class="badge bg-{{ 'success' if comment.is_approved else 'warning' }}">
+                                        {{ 'Aprobado' if comment.is_approved else 'Pendiente' }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-sm-3"><strong>Comentario:</strong></div>
+                                <div class="col-sm-9">{{ comment.comment }}</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-3"><strong>Character Count:</strong></div>
+                                <div class="col-sm-9">{{ comment.comment|length }}</div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <form method="POST" action="{{ url_for('admin.delete_fan_comment', comment_id=comment.id) }}" 
+                                  class="d-inline" onsubmit="return confirm('¿Seguro que quieres eliminar este comentario?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash"></i> Eliminar comentario
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <!-- Pagination -->
+            {% if comments.pages > 1 %}
+            <div class="p-3 border-top">
+                <nav aria-label="Paginación de comentarios">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if comments.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.fan_comments', page=comments.prev_num, q=search) }}">Anterior</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for page_num in comments.iter_pages() %}
+                            {% if page_num %}
+                                {% if page_num != comments.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.fan_comments', page=page_num, q=search) }}">{{ page_num }}</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if comments.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.fan_comments', page=comments.next_num, q=search) }}">Siguiente</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No se han encontrado comentarios</h5>
+                <p class="text-muted">
+                    {% if search %}
+                    Ningún comentario coincide con la búsqueda.
+                    {% else %}
+                    Todavía no se ha publicado ningún comentario.
+                    {% endif %}
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.comment-item:hover {
+    background-color: #f8f9fa;
+}
+
+.comment-item:last-child {
+    border-bottom: none !important;
+}
+
+.btn-group .form {
+    display: inline;
+}
+</style>
+{% endblock %}

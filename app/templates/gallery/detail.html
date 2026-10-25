@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}{{ gallery.title }} - Gallery - {{ config['SITE_NAME'] or 'Football League' }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('gallery.index') }}">Gallery</a></li>
+                    <li class="breadcrumb-item active">{{ gallery.title }}</li>
+                </ol>
+            </nav>
+            
+            <!-- Elemento de la galería -->
+            <div class="card">
+                {% if gallery.image_url %}
+                <img src="{{ gallery.image_url }}" class="card-img-top gallery-detail-image" alt="{{ gallery.title }}">
+                {% endif %}
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h1 class="card-title h2">{{ gallery.title }}</h1>
+                                <div>
+                                    {% if gallery.is_featured %}
+                                    <span class="badge bg-warning text-dark fs-6">Featured</span>
+                                    {% endif %}
+                                    <span class="badge bg-primary fs-6">{{ gallery.category.title() }}</span>
+                                </div>
+                            </div>
+                            
+                            {% if gallery.description %}
+                            <p class="lead">{{ gallery.description }}</p>
+                            {% endif %}
+                            
+                            {% if gallery.match %}
+                            <div class="alert alert-info">
+                                <h5><i class="fas fa-futbol"></i> Match Details</h5>
+                                <p class="mb-0">
+                                    <strong>{{ gallery.match.home_team.name }} {{ gallery.match.home_score or '-' }} - {{ gallery.match.away_score or '-' }} {{ gallery.match.away_team.name }}</strong><br>
+                                    <small class="text-muted">
+                                        {{ gallery.match.kickoff.strftime('%B %d, %Y at %I:%M %p') }} • 
+                                        Matchday {{ gallery.match.matchday }}
+                                    </small>
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h5 class="card-title">Details</h5>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Category:</strong> {{ gallery.category.title() }}</li>
+                                        <li><strong>Posted:</strong> {{ gallery.created_at.strftime('%B %d, %Y') }}</li>
+                                        {% if gallery.updated_at != gallery.created_at %}
+                                        <li><strong>Updated:</strong> {{ gallery.updated_at.strftime('%B %d, %Y') }}</li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <div class="mt-4">
+                <a href="{{ url_for('gallery.index') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Gallery
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.gallery-detail-image {
+    max-height: 500px;
+    object-fit: contain;
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Partidos - Administración{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Partidos {% if season %}<small class="text-muted">{{ season.name }}</small>{% endif %}</h1>
+
+<a href="{{ url_for('admin.add_fixture') }}" class="btn btn-success mb-3">Programar partido</a>
+
+<div class="card shadow">
+    <div class="card-body p-0">
+        {% if matches %}
+        <ul class="list-group list-group-flush">
+            {% for m in matches %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>MD{{ m.matchday }}: 
+                    {{ m.home_team.name }} vs {{ m.away_team.name }} ({{ m.kickoff.strftime('%d %b %H:%M') if m.kickoff else '' }})</span>
+                <span>
+                    {% if m.is_played %}
+                    <span class="badge bg-secondary">{{ m.home_goals }}-{{ m.away_goals }}</span>
+                    <a href="{{ url_for('admin.enter_result', match_id=m.id) }}" class="btn btn-sm btn-outline-primary">Editar resultado</a>
+                    {% else %}
+                    <a href="{{ url_for('admin.edit_fixture', match_id=m.id) }}" class="btn btn-sm btn-outline-warning me-2">Editar partido</a>
+                    <a href="{{ url_for('admin.enter_result', match_id=m.id) }}" class="btn btn-sm btn-primary">Enter Result</a>
+                    {% endif %}
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="p-4 mb-0 text-muted">No hay partidos. Añade primero una temporada y después programa los encuentros.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+# Render Configuration for League Site
+services:
+  # Web Service
+  - type: web
+    name: league-site
+    env: python
+    buildCommand: |
+      chmod +x build.sh && ./build.sh
+      chmod +x migrate.sh && ./migrate.sh
+    startCommand: gunicorn --bind 0.0.0.0:$PORT run:app
+    healthCheckPath: /
+    
+    # Python version specification
+    pythonVersion: "3.13.0"
+    
+    # Environment Variables (Set these in Render Dashboard)
+    # Required:
+    # SECRET_KEY - Generate a strong secret key
+    # DATABASE_URL - Supabase PostgreSQL connection string
+    # CLOUDINARY_CLOUD_NAME - Cloudinary cloud name
+    # CLOUDINARY_API_KEY - Cloudinary API key  
+    # CLOUDINARY_API_SECRET - Cloudinary API secret
+    
+    # Optional:
+    # FLASK_ENV - Set to "production"
+    # FLASK_DEBUG - Set to "0" for production
+
+  # Database (PostgreSQL via Supabase)
+  - type: pserv
+    name: league-db
+    region: oregon
+    plan: free
+    connectionTimeout: 300
+    healthCheckPath: /health

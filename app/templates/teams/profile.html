@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{ team.name }} - League Site{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4 text-center mb-4">
+        {% if team.logo_filename %}
+        <img src="{{ team.logo_filename|asset_url('team') }}" alt="{{ team.name }}" class="img-fluid" style="max-height: 120px;">
+        {% else %}
+        <div class="bg-secondary rounded d-inline-flex align-items-center justify-content-center" style="width:120px;height:120px;">
+            <i class="bi bi-shield-fill text-white" style="font-size:4rem;"></i>
+        </div>
+        {% endif %}
+        <h2 class="mt-2">{{ team.name }}</h2>
+        {% if team.short_name %}<span class="badge bg-dark">{{ team.short_name }}</span>{% endif %}
+        {% if team.stadium %}<p class="text-muted small mb-0"><i class="bi bi-geo-alt"></i> {{ team.stadium }}</p>{% endif %}
+        {% if team.founded_year %}<p class="text-muted small">{{ team.founded_year }}</p>{% endif %}
+    </div>
+    <div class="col-md-8">
+        {% if standing %}
+        <div class="card shadow mb-4">
+            <div class="card-header">Current Standing ({{ season.name }})</div>
+            <div class="card-body">
+                <p class="mb-0">
+                    <strong>Position:</strong> {{ standing.position }}
+                    <strong class="ms-3">Points:</strong> {{ standing.points }}
+                    <strong class="ms-3">Form:</strong>
+                    {% for c in standing.form or '' %}
+                        {% if c == 'W' %}<span class="badge bg-success">W</span>
+                        {% elif c == 'D' %}<span class="badge bg-secondary">D</span>
+                        {% elif c == 'L' %}<span class="badge bg-danger">L</span>
+                        {% endif %}
+                    {% endfor %}
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card shadow">
+            <div class="card-header">Squad</div>
+            <div class="card-body p-0">
+                {% if team.players.count() %}
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>#</th><th>Jugador</th><th>Pos</th><th>Apps</th><th>Goals</th><th>Assists</th></tr></thead>
+                    <tbody>
+                        {% for p in team.players.order_by('jersey_number') %}
+                        <tr>
+                            <td>{{ p.jersey_number or '-' }}</td>
+                            <td><a href="{{ url_for('players.profile', player_id=p.id) }}">{{ p.full_name }}</a></td>
+                            <td>{{ p.position }}</td>
+                            <td>{{ p.appearances }}</td>
+                            <td>{{ p.goals }}</td>
+                            <td>{{ p.assists }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="p-3 mb-0 text-muted">No players registered.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

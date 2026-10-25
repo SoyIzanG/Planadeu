@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if player else 'Registrar' }} Jugador - Administración{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">{{ 'Editar' if player else 'Registrar' }} Jugador</h1>
+
+<form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">First Name *</label>
+                    <input type="text" name="first_name" class="form-control" value="{{ player.first_name if player else '' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Last Name *</label>
+                    <input type="text" name="last_name" class="form-control" value="{{ player.last_name if player else '' }}" required>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Equipo *</label>
+                <select name="team_id" class="form-select" required>
+                    {% for t in teams %}
+                    <option value="{{ t.id }}" {% if player and player.team_id == t.id %}selected{% endif %}>{{ t.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Position</label>
+                    <select name="position" class="form-select">
+                        <option value="GK" {% if player and player.position == 'GK' %}selected{% endif %}>Portero</option>
+                        <option value="DEF" {% if player and player.position == 'DEF' %}selected{% endif %}>Defensa</option>
+                        <option value="MID" {% if player and player.position == 'MID' %}selected{% endif %}>Centrocampista</option>
+                        <option value="FWD" {% if player and player.position == 'FWD' %}selected{% endif %}>Delantero</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Jersey Number</label>
+                    <input type="number" name="jersey_number" class="form-control" value="{{ player.jersey_number if player else '' }}" min="1" max="99">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Age</label>
+                    <input type="number" name="age" class="form-control" value="{{ player.age if player else '' }}" min="14" max="50" placeholder="Por ejemplo, 25">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Photo</label>
+                <input type="file" name="photo" class="form-control" accept=".png,.jpg,.jpeg,.gif,.webp">
+                {% if player and player.photo_filename %}<small class="text-muted">Actual: {{ player.photo_filename }}</small>{% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a href="{{ url_for('admin.players') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </div>
+</form>
+{% endblock %}

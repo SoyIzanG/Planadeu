@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Equipos - Administración{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Equipos</h1>
+
+<form class="mb-4" method="get">
+    <div class="input-group">
+        <input type="text" name="q" class="form-control" placeholder="Buscar..." value="{{ search or '' }}">
+        <button class="btn btn-primary" type="submit">Buscar</button>
+    </div>
+</form>
+
+<a href="{{ url_for('admin.add_team') }}" class="btn btn-success mb-3">Añadir Equipo</a>
+
+<div class="card shadow">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead><tr><th>Name</th><th>Short</th><th>Stadium</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for t in teams.items %}
+                <tr>
+                    <td>{{ t.name }}</td>
+                    <td>{{ t.short_name or '-' }}</td>
+                    <td>{{ t.stadium or '-' }}</td>
+                    <td>
+                        <a href="{{ url_for('teams.profile', team_id=t.id) }}" class="btn btn-sm btn-outline-secondary">Ver</a>
+                        <a href="{{ url_for('admin.edit_team', team_id=t.id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                        <form action="{{ url_for('admin.delete_team', team_id=t.id) }}" method="post" class="d-inline" onsubmit="return confirm('Eliminar?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if teams.pages > 1 %}
+<nav class="mt-3">
+    <ul class="pagination">
+        {% for p in teams.iter_pages() %}
+        <li class="page-item {% if p == teams.page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('admin.teams', page=p, q=search) }}">{{ p or '...' }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

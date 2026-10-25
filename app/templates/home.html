@@ -1,0 +1,267 @@
+
+{% extends "base.html" %}
+{% block title %}Inicio | Liga de Fútbol{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(120deg, #101820, #243746 70%, #344b3c);
+        color: #fff;
+        padding: 4.5rem 2rem;
+        border-radius: 16px;
+        margin-bottom: 2.5rem;
+    }
+
+    .hero::after {
+        content: "";
+        position: absolute;
+        width: 240px;
+        height: 240px;
+        border: 35px solid rgba(184, 243, 74, .12);
+        border-radius: 50%;
+        right: -60px;
+        top: -70px;
+        pointer-events: none;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .hero h1 {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 800;
+        letter-spacing: -1px;
+    }
+
+    .hero .lead {
+        max-width: 650px;
+        color: #dce4e9;
+        margin: 0 auto 1.5rem;
+    }
+
+    .hero-label {
+        display: inline-block;
+        background: rgba(184, 243, 74, .15);
+        color: #d6ff91;
+        border: 1px solid rgba(184, 243, 74, .35);
+        padding: .4rem .8rem;
+        border-radius: 30px;
+        font-size: .8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 1rem;
+    }
+
+    .btn-league {
+        background: #b8f34a;
+        color: #101820;
+        font-weight: 700;
+        border: none;
+        padding: .8rem 1.3rem;
+        border-radius: 8px;
+    }
+
+    .btn-league:hover {
+        background: #c9ff70;
+        color: #101820;
+    }
+
+    .section-heading {
+        font-weight: 800;
+        letter-spacing: -.4px;
+    }
+
+    .feature-card {
+        height: 100%;
+        border: 1px solid #e9ecef;
+        border-radius: 13px;
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 28px rgba(16, 24, 32, .09);
+    }
+
+    .feature-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #eef8dc;
+        color: #263b18;
+        border-radius: 12px;
+        font-size: 1.45rem;
+        margin-bottom: 1rem;
+    }
+
+    .feature-card .card-title {
+        font-weight: 750;
+    }
+
+    .feature-card .btn {
+        border-radius: 7px;
+    }
+
+    .bottom-banner {
+        background: #eaf2e0;
+        border: 1px solid #dce8cf;
+        border-radius: 14px;
+        padding: 1.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="hero text-center">
+    <div class="hero-content">
+        <span class="hero-label">
+            <i class="bi bi-trophy-fill me-1"></i>
+            Fútbol · Competición · Resultados
+        </span>
+
+        <h1 class="mb-3">El fútbol se vive aquí</h1>
+
+        <p class="lead">
+            Sigue la competición, consulta los resultados de los partidos
+            y descubre la clasificación y los goleadores de cada jornada.
+        </p>
+
+        <a href="{{ url_for('league.table') }}" class="btn btn-league">
+            Ver clasificación
+            <i class="bi bi-arrow-right ms-2"></i>
+        </a>
+    </div>
+</section>
+
+<section class="mb-5">
+    <div class="mb-4">
+        <p class="text-uppercase small fw-bold text-secondary mb-1">
+            Todo en un mismo sitio
+        </p>
+        <h2 class="section-heading mb-0">Explora la competición</h2>
+    </div>
+
+    <div class="row g-3">
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card feature-card">
+                <div class="card-body p-4">
+                    <div class="feature-icon">
+                        <i class="bi bi-trophy"></i>
+                    </div>
+                    <h5 class="card-title">Clasificación</h5>
+                    <p class="text-muted">
+                        Consulta los puntos, los partidos jugados,
+                        las victorias y los goles de cada equipo.
+                    </p>
+                    <a href="{{ url_for('league.table') }}"
+                       class="btn btn-outline-dark btn-sm">
+                        Ver clasificación
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card feature-card">
+                <div class="card-body p-4">
+                    <div class="feature-icon">
+                        <i class="bi bi-calendar3"></i>
+                    </div>
+                    <h5 class="card-title">Partidos y resultados</h5>
+                    <p class="text-muted">
+                        Revisa los encuentros disputados y consulta
+                        los próximos partidos de la competición.
+                    </p>
+                    <a href="{{ url_for('matches.list_matches') }}"
+                       class="btn btn-outline-dark btn-sm">
+                        Ver partidos
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card feature-card">
+                <div class="card-body p-4">
+                    <div class="feature-icon">
+                        <i class="bi bi-bar-chart-line"></i>
+                    </div>
+                    <h5 class="card-title">Estadísticas y goleadores</h5>
+                    <p class="text-muted">
+                        Consulta las estadísticas disponibles
+                        y sigue los datos de los jugadores.
+                    </p>
+                    <a href="{{ url_for('league.statistics') }}"
+                       class="btn btn-outline-dark btn-sm">
+                        Ver estadísticas
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card feature-card">
+                <div class="card-body p-4">
+                    <div class="feature-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <h5 class="card-title">Afición</h5>
+                    <p class="text-muted">
+                        Accede al espacio dedicado a los seguidores
+                        de la competición.
+                    </p>
+                    <a href="{{ url_for('fan.index') }}"
+                       class="btn btn-outline-dark btn-sm">
+                        Ver sección
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card feature-card">
+                <div class="card-body p-4">
+                    <div class="feature-icon">
+                        <i class="bi bi-images"></i>
+                    </div>
+                    <h5 class="card-title">Galería</h5>
+                    <p class="text-muted">
+                        Consulta las imágenes y los momentos
+                        destacados de la competición.
+                    </p>
+                    <a href="{{ url_for('gallery.index') }}"
+                       class="btn btn-outline-dark btn-sm">
+                        Ver galería
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<section class="bottom-banner d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h3 class="h5 fw-bold mb-1">Cada jornada cuenta</h3>
+        <p class="text-muted mb-0">
+            Partidos, resultados y clasificación, siempre en un mismo sitio.
+        </p>
+    </div>
+
+    <a href="{{ url_for('matches.list_matches') }}"
+       class="btn btn-dark">
+        Consultar partidos
+        <i class="bi bi-arrow-right ms-1"></i>
+    </a>
+</section>
+
+{% endblock %}

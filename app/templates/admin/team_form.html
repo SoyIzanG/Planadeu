@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if team else 'Añadir' }} Equipo - Administración{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">{{ 'Editar' if team else 'Añadir' }} Equipo</h1>
+
+<form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Name *</label>
+                <input type="text" name="name" class="form-control" value="{{ team.name if team else '' }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Short Name</label>
+                <input type="text" name="short_name" class="form-control" value="{{ team.short_name if team else '' }}" maxlength="10">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Founded Year</label>
+                <input type="number" name="founded_year" class="form-control" value="{{ team.founded_year if team else '' }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Stadium</label>
+                <input type="text" name="stadium" class="form-control" value="{{ team.stadium if team else '' }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Logo</label>
+                <input type="file" name="logo" class="form-control" accept=".png,.jpg,.jpeg,.gif,.webp">
+                {% if team and team.logo_filename %}<small class="text-muted">Actual: {{ team.logo_filename }}</small>{% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a href="{{ url_for('admin.teams') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </div>
+</form>
+{% endblock %}

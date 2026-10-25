@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Jugadors - Administración{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Jugadors</h1>
+
+<form class="mb-4" method="get">
+    <div class="input-group">
+        <input type="text" name="q" class="form-control" placeholder="Buscar..." value="{{ search or '' }}">
+        <button class="btn btn-primary" type="submit">Buscar</button>
+    </div>
+</form>
+
+<a href="{{ url_for('admin.add_player') }}" class="btn btn-success mb-3">Registrar Jugador</a>
+
+<div class="card shadow">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead><tr><th>Name</th><th>Equipo</th><th>Pos</th><th>#</th><th>Age</th><th>Goals</th><th>Assists</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for p in players.items %}
+                <tr>
+                    <td>{{ p.full_name }}</td>
+                    <td>{{ p.team.name }}</td>
+                    <td>{{ p.position }}</td>
+                    <td>{{ p.jersey_number or '-' }}</td>
+                    <td>{{ p.age or '-' }}</td>
+                    <td>{{ p.goals }}</td>
+                    <td>{{ p.assists }}</td>
+                    <td>
+                        <a href="{{ url_for('players.profile', player_id=p.id) }}" class="btn btn-sm btn-outline-secondary">Ver</a>
+                        <a href="{{ url_for('admin.edit_player', player_id=p.id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if players.pages > 1 %}
+<nav class="mt-3">
+    <ul class="pagination">
+        {% for p in players.iter_pages() %}
+        <li class="page-item {% if p == players.page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('admin.players', page=p, q=search) }}">{{ p or '...' }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

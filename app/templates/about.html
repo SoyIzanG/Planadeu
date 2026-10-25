@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}About - League Site{% endblock %}
+
+{% block extra_css %}
+<style>
+    .feature-card {
+        border: none;
+        border-radius: 1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 0.5rem 2rem rgba(56, 0, 60, 0.15);
+    }
+    .feature-icon {
+        width: 4rem;
+        height: 4rem;
+        border-radius: 1rem;
+        background: linear-gradient(135deg, var(--league-secondary), #00cc6a);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #38003c;
+    }
+    
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>About Us</h1>
+    <p>Welcome to our league website. Here you can find all the latest news, fixtures, and results.</p>
+</div>
+<section class="mb-5">
+    <h2 class="text-center mb-4 fw-bold">Our Sponsors</h2>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card feature-card h-100 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-building fs-2"></i>
+                    </div>
+                    <h5 class="card-title fw-bold">Junate Towers Solution</h5>
+                    <p class="card-text text-muted">Tower solution provider with innovative designs and excellent service across Nigeria and beyond.</p>
+                    <a href="https://junate-towers.vercel.app/" target="_blank" class="btn btn-outline-primary btn-sm">JTS</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card feature-card h-100 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-calendar-check fs-2"></i>
+                    </div>
+                    <h5 class="card-title fw-bold">Junate Project Management</h5>
+                    <p class="card-text text-muted">Project management platform for tracking and managing projects with real-time updates and collaboration tools.</p>
+                    <a href="https://junate.onrender.com/" target="_blank" class="btn btn-outline-primary btn-sm">JPM</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card feature-card h-100 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-robot fs-2"></i>
+                    </div>
+                    <h5 class="card-title fw-bold">Junate World</h5>
+                    <p class="card-text text-muted">An AI and Machine Learning company focused on innovative solutions and cutting-edge technology.</p>
+                    <a href="https://abel-ogbonna.vercel.app" target="_blank" class="btn btn-outline-primary btn-sm">J-W</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card feature-card h-100 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-building fs-2"></i>
+                    </div>
+                    <h5 class="card-title fw-bold">Junate Towers Solution</h5>
+                    <p class="card-text text-muted">Tower solution provider with innovative designs and excellent service across Nigeria and beyond.</p>
+                    <a href="https://junate-towers.vercel.app/" target="_blank" class="btn btn-outline-primary btn-sm">JTS</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card feature-card h-100 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-calendar-check fs-2"></i>
+                    </div>
+                    <h5 class="card-title fw-bold">Junate Project Management</h5>
+                    <p class="card-text text-muted">Project management platform for tracking and managing projects with real-time updates and collaboration tools.</p>
+                    <a href="https://junate.onrender.com/" target="_blank" class="btn btn-outline-primary btn-sm">JPM</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card feature-card h-100 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-robot fs-2"></i>
+                    </div>
+                    <h5 class="card-title fw-bold">Junate World</h5>
+                    <p class="card-text text-muted">An AI and Machine Learning company focused on innovative solutions and cutting-edge technology.</p>
+                    <a href="https://abel-ogbonna.vercel.app" target="_blank" class="btn btn-outline-primary btn-sm">J-W</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
