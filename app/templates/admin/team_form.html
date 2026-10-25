@@ -1,37 +1,46 @@
+```html
 {% extends "base.html" %}
-{% block title %}{{ 'Editar' if team else 'Añadir' }} Equipo - Administración{% endblock %}
+{% block title %}{{ 'Editar' if team else 'Añadir' }} equipo - Administración{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">{{ 'Editar' if team else 'Añadir' }} Equipo</h1>
+<h1 class="mb-4">{{ 'Editar' if team else 'Añadir' }} equipo</h1>
 
 <form method="post" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="card shadow">
         <div class="card-body">
             <div class="mb-3">
-                <label class="form-label">Name *</label>
+                <label class="form-label">Nombre *</label>
                 <input type="text" name="name" class="form-control" value="{{ team.name if team else '' }}" required>
             </div>
+
             <div class="mb-3">
-                <label class="form-label">Short Name</label>
+                <label class="form-label">Nombre corto</label>
                 <input type="text" name="short_name" class="form-control" value="{{ team.short_name if team else '' }}" maxlength="10">
             </div>
+
             <div class="mb-3">
-                <label class="form-label">Founded Year</label>
+                <label class="form-label">Año de fundación</label>
                 <input type="number" name="founded_year" class="form-control" value="{{ team.founded_year if team else '' }}">
             </div>
+
             <div class="mb-3">
-                <label class="form-label">Stadium</label>
+                <label class="form-label">Estadio</label>
                 <input type="text" name="stadium" class="form-control" value="{{ team.stadium if team else '' }}">
             </div>
+
             <div class="mb-3">
-                <label class="form-label">Logo</label>
+                <label class="form-label">Escudo del equipo</label>
                 <input type="file" name="logo" class="form-control" accept=".png,.jpg,.jpeg,.gif,.webp">
-                {% if team and team.logo_filename %}<small class="text-muted">Actual: {{ team.logo_filename }}</small>{% endif %}
+                {% if team and team.logo_filename %}
+                <small class="text-muted">Archivo actual: {{ team.logo_filename }}</small>
+                {% endif %}
             </div>
+
             <button type="submit" class="btn btn-primary">Guardar</button>
             <a href="{{ url_for('admin.teams') }}" class="btn btn-secondary">Cancelar</a>
         </div>
     </div>
 </form>
 {% endblock %}
+```
