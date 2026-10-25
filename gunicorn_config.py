@@ -1,17 +1,16 @@
+
 """
 Gunicorn configuration for production deployment.
 """
 
-import multiprocessing
 import os
 
-# Bind
-bind = os.environ.get("GUNICORN_BIND", "0.0.0.0:8000")
+# Bind to Render's assigned port
+bind = f"0.0.0.0:{os.environ.get('PORT', '10000')}"
 
-# Workers
-workers = int(os.environ.get("GUNICORN_WORKERS", multiprocessing.cpu_count() * 2 + 1))
+# Use a single worker to reduce memory consumption
+workers = 1
 worker_class = "sync"
-worker_connections = 1000
 
 # Timeouts
 timeout = 120
