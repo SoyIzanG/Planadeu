@@ -1,64 +1,65 @@
+```html
 {% extends "base.html" %}
 
-{% block title %}Fan Base - {{ config['SITE_NAME'] or 'Football League' }}{% endblock %}
+{% block title %}Afición - {{ config['SITE_NAME'] or 'Liga de Fútbol' }}{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
     <div class="row">
         <div class="col-lg-8">
-            <!-- Header -->
+            <!-- Encabezado -->
             <div class="card shadow mb-4">
                 <div class="card-body text-center">
-                    <h1 class="mb-3">📣 Fan Base</h1>
-                    <p class="lead text-muted">Share your thoughts, support your team, and connect with fellow fans!</p>
+                    <h1 class="mb-3">📣 Zona de la afición</h1>
+                    <p class="lead text-muted">Comparte tus opiniones, apoya a tu equipo y conecta con otros aficionados.</p>
                 </div>
             </div>
 
-            <!-- Comment Form -->
+            <!-- Formulario de comentarios -->
             <div class="card shadow mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0">💬 Leave a Comment</h5>
+                    <h5 class="mb-0">💬 Deja un comentario</h5>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('fan.add_comment') }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        
+
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="name" class="form-label">Name *</label>
-                                    <input type="text" class="form-control" id="name" name="name" 
-                                           required maxlength="100" placeholder="Enter your name">
+                                    <label for="name" class="form-label">Nombre *</label>
+                                    <input type="text" class="form-control" id="name" name="name"
+                                           required maxlength="100" placeholder="Introduce tu nombre">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="nickname" class="form-label">Nickname (Optional)</label>
-                                    <input type="text" class="form-control" id="nickname" name="nickname" 
-                                           maxlength="100" placeholder="Your fan nickname">
+                                    <label for="nickname" class="form-label">Apodo (opcional)</label>
+                                    <input type="text" class="form-control" id="nickname" name="nickname"
+                                           maxlength="100" placeholder="Tu apodo como aficionado">
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="mb-3">
-                            <label for="comment" class="form-label">Comment *</label>
-                            <textarea class="form-control" id="comment" name="comment" rows="4" 
-                                      required minlength="10" maxlength="1000" 
-                                      placeholder="Share your thoughts about the league, your team, or recent matches..."></textarea>
-                            <small class="text-muted">Minimum 10 characters, maximum 1000 characters</small>
+                            <label for="comment" class="form-label">Comentario *</label>
+                            <textarea class="form-control" id="comment" name="comment" rows="4"
+                                      required minlength="10" maxlength="1000"
+                                      placeholder="Comparte tu opinión sobre la liga, tu equipo o los últimos partidos..."></textarea>
+                            <small class="text-muted">Mínimo 10 caracteres y máximo 1000.</small>
                         </div>
-                        
+
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-paper-plane"></i> Post Comment
+                            <i class="fas fa-paper-plane"></i> Publicar comentario
                         </button>
                     </form>
                 </div>
             </div>
 
-            <!-- Comments Section -->
+            <!-- Sección de comentarios -->
             <div class="card shadow">
                 <div class="card-header">
-                    <h5 class="mb-0">💭 Fan Comments</h5>
+                    <h5 class="mb-0">💭 Comentarios de la afición</h5>
                 </div>
                 <div class="card-body">
                     {% if comments.items %}
@@ -78,17 +79,17 @@
                             <p class="mb-0">{{ comment.comment }}</p>
                         </div>
                         {% endfor %}
-                        
-                        <!-- Pagination -->
+
+                        <!-- Paginación -->
                         {% if comments.pages > 1 %}
-                        <nav aria-label="Comments pagination">
+                        <nav aria-label="Paginación de comentarios">
                             <ul class="pagination justify-content-center">
                                 {% if comments.has_prev %}
                                 <li class="page-item">
                                     <a class="page-link" href="{{ url_for('fan.index', page=comments.prev_num) }}">Anterior</a>
                                 </li>
                                 {% endif %}
-                                
+
                                 {% for page_num in comments.iter_pages() %}
                                     {% if page_num %}
                                         {% if page_num != comments.page %}
@@ -106,7 +107,7 @@
                                     </li>
                                     {% endif %}
                                 {% endfor %}
-                                
+
                                 {% if comments.has_next %}
                                 <li class="page-item">
                                     <a class="page-link" href="{{ url_for('fan.index', page=comments.next_num) }}">Siguiente</a>
@@ -119,46 +120,46 @@
                         <div class="text-center py-5">
                             <i class="fas fa-comments fa-3x text-muted mb-3"></i>
                             <h5 class="text-muted">Todavía no hay comentarios</h5>
-                            <p class="text-muted">Be the first to share your thoughts with the fan community!</p>
+                            <p class="text-muted">¡Sé el primero en compartir tu opinión con la afición!</p>
                         </div>
                     {% endif %}
                 </div>
             </div>
         </div>
 
-        <!-- Sidebar -->
+        <!-- Barra lateral -->
         <div class="col-lg-4">
             <div class="card shadow mb-4">
                 <div class="card-header">
-                    <h6 class="mb-0">🏆 League Info</h6>
+                    <h6 class="mb-0">🏆 Información de la liga</h6>
                 </div>
                 <div class="card-body">
                     <p class="small text-muted">
-                        Welcome to our fan base! This is your space to share opinions, 
-                        celebrate victories, discuss matches, and connect with other passionate fans.
+                        ¡Bienvenido a la zona de la afición! Este es tu espacio para compartir opiniones,
+                        celebrar victorias, comentar los partidos y conectar con otros apasionados del fútbol.
                     </p>
                     <hr>
-                    <h6>Community Guidelines:</h6>
+                    <h6>Normas de la comunidad:</h6>
                     <ul class="small">
-                        <li>Be respectful to all fans</li>
-                        <li>Keep comments relevant to football</li>
-                        <li>No offensive language</li>
-                        <li>Support your team passionately!</li>
+                        <li>Respeta a todos los aficionados.</li>
+                        <li>Publica comentarios relacionados con el fútbol.</li>
+                        <li>No utilices lenguaje ofensivo.</li>
+                        <li>¡Apoya a tu equipo con pasión!</li>
                     </ul>
                 </div>
             </div>
 
             <div class="card shadow">
                 <div class="card-header">
-                    <h6 class="mb-0">📊 Quick Stats</h6>
+                    <h6 class="mb-0">📊 Estadísticas rápidas</h6>
                 </div>
                 <div class="card-body">
                     <div class="d-flex justify-content-between mb-2">
-                        <span>Total Comments:</span>
+                        <span>Total de comentarios:</span>
                         <strong>{{ comments.total }}</strong>
                     </div>
                     <div class="d-flex justify-content-between">
-                        <span>Active Fans:</span>
+                        <span>Aficionados activos:</span>
                         <strong>{{ comments.total }}</strong>
                     </div>
                 </div>
@@ -196,3 +197,4 @@
 }
 </style>
 {% endblock %}
+```
