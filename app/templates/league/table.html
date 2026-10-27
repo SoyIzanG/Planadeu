@@ -8,6 +8,10 @@
   body { background: #fff !important; }
   main, .container, #table-container, .card { width: 100% !important; max-width: 100% !important; box-shadow: none !important; border: 0 !important; }
   .table { font-size: 10pt !important; }
+  .pdf-heading { display: flex !important; align-items: center; gap: 14px; margin: 0 0 18px; }
+  .pdf-heading img { width: 64px; height: 64px; object-fit: contain; }
+  .table img { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  @page { size: A4 landscape; margin: 12mm; }
   .table thead { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   a { color: #000 !important; text-decoration: none !important; }
 }
@@ -26,6 +30,10 @@
 
 <div id="table-container">
     {% if standings %}
+    <div class="pdf-heading" style="display:none">
+        {% if standings[0].team.logo_filename %}<img src="{{ standings[0].team.logo_filename|asset_url('team') }}" alt="Escudo de {{ standings[0].team.name }}">{% endif %}
+        <div><h2 class="mb-1">Clasificación de la liga</h2><p class="mb-0">{{ season.name if season else '' }} · Equipo líder: {{ standings[0].team.name }} · {{ standings[0].points }} puntos</p></div>
+    </div>
     <div class="card shadow">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
@@ -60,7 +68,7 @@
                         <td>
                             <a href="{{ url_for('teams.profile', team_id=s.team.id) }}" class="text-decoration-none text-dark fw-medium d-inline-flex align-items-center gap-2">
                                 {% if s.team.logo_filename %}
-                                <img src="{{ s.team.logo_filename|asset_url('team') }}" alt="Escudo de {{ s.team.name }}" loading="lazy" style="width:30px;height:30px;object-fit:contain;">
+                                <img src="{{ s.team.logo_filename|asset_url('team') }}" alt="Escudo de {{ s.team.name }}" loading="eager" style="width:30px;height:30px;object-fit:contain;">
                                 {% else %}
                                 <span class="d-inline-flex align-items-center justify-content-center bg-light border rounded-circle" style="width:30px;height:30px;"><i class="bi bi-shield-fill text-secondary"></i></span>
                                 {% endif %}
