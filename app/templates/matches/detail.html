@@ -5,7 +5,7 @@
 <div class="card shadow">
     <div class="card-body text-center py-5">
         <div class="row align-items-center">
-          <h6 class="text-center">Matchday {{ match.matchday }}</h6>
+          <h6 class="text-center">{% if match.matchday == 0 %}Historial anterior{% else %}Matchday {{ match.matchday }}{% endif %}</h6>
         </div>
         {% if match.home_team.name == "UE Planadeu" or match.away_team.name == "UE Planadeu" %}
         <div class="alert alert-warning mt-3 mb-3"><strong>PARTIDO PENDIENTE DE CONFIRMAR</strong></div>
