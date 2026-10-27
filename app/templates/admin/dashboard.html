@@ -1,72 +1,99 @@
-
 {% extends "base.html" %}
-{% block title %}Administración - Liga de Fútbol{% endblock %}
+{% block title %}Administración | La Liga{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Panel de administración</h1>
-
-<div class="row">
-    <div class="col-md-4 mb-3">
-        <div class="card shadow">
-            <div class="card-body">
-                <h5><i class="bi bi-trophy"></i> Temporadas</h5>
-                <a href="{{ url_for('admin.seasons') }}" class="btn btn-outline-primary btn-sm">Gestionar</a>
-            </div>
-        </div>
+<section class="admin-hero mb-4">
+    <div class="admin-hero-copy">
+        <span class="admin-eyebrow"><i class="bi bi-shield-lock me-1"></i> ÁREA PRIVADA · LA LIGA</span>
+        <h1>Panel de administración</h1>
+        <p>Gestiona la competición, los equipos y la actividad desde un único lugar.</p>
     </div>
+    <div class="admin-hero-icon" aria-hidden="true"><i class="bi bi-trophy-fill"></i></div>
+</section>
 
-    <div class="col-md-4 mb-3">
-        <div class="card shadow">
+<div class="admin-section-heading">
+    <div><h2>Gestión de la competición</h2><p>Accesos directos a las herramientas de administración</p></div>
+</div>
+
+<div class="row g-3 admin-grid">
+    <div class="col-12 col-sm-6 col-xl-4">
+        <article class="card admin-card h-100">
             <div class="card-body">
-                <h5><i class="bi bi-shield"></i> Equipos</h5>
-                <a href="{{ url_for('admin.teams') }}" class="btn btn-outline-primary btn-sm">Gestionar</a>
+                <div class="admin-card-icon"><i class="bi bi-calendar-range"></i></div>
+                <h3>Temporadas</h3><p>Organiza las temporadas y su configuración.</p>
+                <a href="{{ url_for('admin.seasons') }}" class="btn btn-outline-primary">Gestionar temporadas <i class="bi bi-arrow-right ms-1"></i></a>
             </div>
-        </div>
+        </article>
     </div>
-
-    <div class="col-md-4 mb-3">
-        <div class="card shadow">
+    <div class="col-12 col-sm-6 col-xl-4">
+        <article class="card admin-card h-100">
             <div class="card-body">
-                <h5><i class="bi bi-person"></i> Jugadores</h5>
-                <a href="{{ url_for('admin.players') }}" class="btn btn-outline-primary btn-sm">Gestionar</a>
+                <div class="admin-card-icon"><i class="bi bi-shield"></i></div>
+                <h3>Equipos</h3><p>Consulta los clubes y actualiza sus datos.</p>
+                <a href="{{ url_for('admin.teams') }}" class="btn btn-outline-primary">Gestionar equipos <i class="bi bi-arrow-right ms-1"></i></a>
             </div>
-        </div>
+        </article>
     </div>
-
-    <div class="col-md-4 mb-3">
-        <div class="card shadow">
+    <div class="col-12 col-sm-6 col-xl-4">
+        <article class="card admin-card h-100">
             <div class="card-body">
-                <h5><i class="bi bi-calendar-event"></i> Partidos</h5>
-                <a href="{{ url_for('admin.fixtures') }}" class="btn btn-outline-primary btn-sm">Programar y ver resultados</a>
+                <div class="admin-card-icon"><i class="bi bi-people"></i></div>
+                <h3>Jugadores</h3><p>Administra las fichas y la información de los jugadores.</p>
+                <a href="{{ url_for('admin.players') }}" class="btn btn-outline-primary">Gestionar jugadores <i class="bi bi-arrow-right ms-1"></i></a>
             </div>
-        </div>
+        </article>
     </div>
-
-    <div class="col-md-4 mb-3">
-        <div class="card shadow">
+    <div class="col-12 col-sm-6 col-xl-4">
+        <article class="card admin-card h-100">
             <div class="card-body">
-                <h5><i class="bi bi-images"></i> Galería</h5>
-                <a href="{{ url_for('admin.gallery') }}" class="btn btn-outline-primary btn-sm">Gestionar galería</a>
+                <div class="admin-card-icon"><i class="bi bi-calendar2-week"></i></div>
+                <h3>Partidos y actas</h3><p>Programa encuentros y consulta los resultados registrados.</p>
+                <a href="{{ url_for('admin.fixtures') }}" class="btn btn-outline-primary">Gestionar partidos <i class="bi bi-arrow-right ms-1"></i></a>
             </div>
-        </div>
+        </article>
     </div>
-
-    <div class="col-md-4 mb-3">
-        <div class="card shadow">
+    <div class="col-12 col-sm-6 col-xl-4">
+        <article class="card admin-card h-100">
             <div class="card-body">
-                <h5><i class="bi bi-chat-text"></i> Comentarios de los aficionados</h5>
-                <a href="{{ url_for('admin.fan_comments') }}" class="btn btn-outline-primary btn-sm">Moderar comentarios</a>
+                <div class="admin-card-icon"><i class="bi bi-images"></i></div>
+                <h3>Galería</h3><p>Organiza el contenido visual de la competición.</p>
+                <a href="{{ url_for('admin.gallery') }}" class="btn btn-outline-primary">Gestionar galería <i class="bi bi-arrow-right ms-1"></i></a>
             </div>
-        </div>
+        </article>
     </div>
-
-    <div class="col-md-4 mb-3">
-        <div class="card shadow">
+    <div class="col-12 col-sm-6 col-xl-4">
+        <article class="card admin-card h-100">
             <div class="card-body">
-                <h5><i class="bi bi-graph-up"></i> Estadísticas</h5>
-                <a href="{{ url_for('admin.analytics') }}" class="btn btn-outline-primary btn-sm">Ver estadísticas</a>
+                <div class="admin-card-icon"><i class="bi bi-chat-square-text"></i></div>
+                <h3>Comentarios</h3><p>Revisa y modera los mensajes de los aficionados.</p>
+                <a href="{{ url_for('admin.fan_comments') }}" class="btn btn-outline-primary">Moderar comentarios <i class="bi bi-arrow-right ms-1"></i></a>
             </div>
-        </div>
+        </article>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-4">
+        <article class="card admin-card h-100">
+            <div class="card-body">
+                <div class="admin-card-icon"><i class="bi bi-bar-chart-line"></i></div>
+                <h3>Estadísticas</h3><p>Accede a los datos y resúmenes disponibles.</p>
+                <a href="{{ url_for('admin.analytics') }}" class="btn btn-outline-primary">Ver estadísticas <i class="bi bi-arrow-right ms-1"></i></a>
+            </div>
+        </article>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.admin-hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:clamp(1.35rem,4vw,2.5rem);border-radius:18px;background:linear-gradient(120deg,#103567,#1d5ca0);color:#fff;box-shadow:0 12px 32px rgba(18,59,112,.16);overflow:hidden}
+.admin-hero-copy{max-width:680px}.admin-eyebrow{font-size:.75rem;letter-spacing:.12em;font-weight:800;color:#bcdcff}
+.admin-hero h1{font-size:clamp(1.8rem,4vw,2.65rem);letter-spacing:-.04em;margin:.65rem 0}.admin-hero p{margin:0;color:#e0edff;max-width:540px}
+.admin-hero-icon{width:88px;height:88px;flex:0 0 88px;border:1px solid rgba(255,255,255,.22);border-radius:22px;display:grid;place-items:center;background:rgba(255,255,255,.1);font-size:2.6rem;color:#fff}
+.admin-section-heading{margin:1.5rem 0 1rem}.admin-section-heading h2{font-size:1.25rem;margin:0 0 .3rem;color:#18385e}.admin-section-heading p{margin:0;color:#6c7b8d;font-size:.92rem}
+.admin-card{border:1px solid #e1e9f2;border-radius:14px;box-shadow:0 5px 18px rgba(22,56,94,.045);transition:transform .18s ease,box-shadow .18s ease}
+.admin-card:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(22,56,94,.09)}.admin-card .card-body{display:flex;align-items:flex-start;flex-direction:column;padding:1.3rem}
+.admin-card-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;background:#eaf3ff;color:#174b86;font-size:1.25rem;margin-bottom:1rem}
+.admin-card h3{font-size:1.08rem;letter-spacing:-.02em;color:#193957;margin:0 0 .45rem}.admin-card p{color:#69798b;font-size:.9rem;line-height:1.55;flex:1;margin:0 0 1.15rem}
+.admin-card .btn{width:100%;text-align:left;border-color:#c8d9ed;color:#174b86;padding:.65rem .8rem;font-size:.88rem}.admin-card .btn:hover{background:#174b86;color:#fff}
+@media(max-width:575.98px){.admin-hero{border-radius:14px}.admin-hero-icon{width:52px;height:52px;flex-basis:52px;border-radius:14px;font-size:1.6rem}.admin-hero p{font-size:.92rem}.admin-card .card-body{padding:1rem}}
+</style>
 {% endblock %}
