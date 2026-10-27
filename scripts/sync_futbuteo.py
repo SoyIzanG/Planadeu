@@ -29,7 +29,23 @@ USER_AGENT = "Planadeu-LeagueSync/1.0 (+scheduled fixture verification)"
 DATE_RE = re.compile(r"(?<!\d)(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?!\d)")
 ISO_DATE_RE = re.compile(r"\b(20\d{2}-\d{2}-\d{2})(?:[T ](\d{1,2}:\d{2})(?::\d{2})?)?\b")
 SCORE_RE = re.compile(r"(?<!\d)(\d{1,2})\s*[-–:]\s*(\d{1,2})(?!\d)")
-CANDIDATE_CLASS_RE = re.compile(r"(match|fixture|partit|result|game|joc)", re.I)
+CANDIDATE_CLASS_RE = re.compile(r"(match|fixture|partit|result|game|joc|event|row)", re.I)
+MONTHS = {
+    "gen": 1, "gener": 1, "ene": 1, "enero": 1,
+    "feb": 2, "febrer": 2, "febrero": 2,
+    "mar": 3, "marc": 3, "marzo": 3,
+    "abr": 4, "abril": 4,
+    "mai": 5, "mayo": 5,
+    "jun": 6, "juny": 6, "junio": 6,
+    "jul": 7, "juliol": 7, "julio": 7,
+    "ago": 8, "agost": 8, "agosto": 8,
+    "set": 9, "sep": 9, "setembre": 9, "septiembre": 9,
+    "oct": 10, "octubre": 10,
+    "nov": 11, "novembre": 11, "noviembre": 11,
+    "des": 12, "dic": 12, "desembre": 12, "diciembre": 12,
+}
+SHORT_DATE_RE = re.compile(r"\\b(\\d{1,2})\\s+(gen(?:er)?|ene(?:ro)?|feb(?:rer|rero)?|mar(?:ç|c|zo)?|abr(?:il)?|mai|mayo|jun(?:y|io)?|jul(?:iol|io)?|ago(?:st|sto)?|set(?:embre)?|sep(?:tiembre)?|oct(?:ubre)?|nov(?:embre|iembre)?|des(?:embre)?|dic(?:iembre)?)\\b", re.I)
+TIME_RE = re.compile(r"(?<!\\d)([01]?\\d|2[0-3]):([0-5]\\d)(?!\\d)")
 
 
 def norm(value: str) -> str:
@@ -45,15 +61,19 @@ class CandidateParser(HTMLParser):
         self.stack = []
         self.candidates = []
         self.full_text = []
+        self.current_date = None
+        self.recent_text = ""
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
         classes = attrs.get("class", "")
+        # Futbuteo changes class names frequently. Include all common card/container
+        # elements and let the two-team + complete-round checks reject false positives.
         candidate = tag.lower() in {"tr", "li"} or (
             tag.lower() in {"div", "article", "section"}
-            and CANDIDATE_CLASS_RE.search(classes or "") is not None
+            and (CANDIDATE_CLASS_RE.search(classes or "") is not None or tag.lower() == "div")
         )
-        node = {"tag": tag.lower(), "attrs": attrs, "text": []} if candidate else None
+        node = {"tag": tag.lower(), "attrs": attrs, "text": [], "date_context": self.current_date} if candidate else None
         if node:
             self.stack.append(node)
         for node in self.stack:
@@ -71,12 +91,26 @@ class CandidateParser(HTMLParser):
                 for node in closed:
                     text = " ".join(node["text"])
                     if text.strip():
-                        self.candidates.append(text)
+                        self.candidates.append((text, node["date_context"]))
                 break
 
     def handle_data(self, data):
         if data.strip():
             self.full_text.append(data.strip())
+            self.recent_text = (self.recent_text + " " + data.strip())[-180:]
+            # The source labels fixture sections with yearless headings such as
+            # "Sábado 31 oct". Remember that date for following fixture cards.
+            short = SHORT_DATE_RE.search(self.recent_text)
+            if short:
+                day = int(short.group(1))
+                month_token = norm(short.group(2)).replace(" ", "")
+                month = MONTHS.get(month_token)
+                if month:
+                    year = 2026 if month >= 8 else 2027
+                    try:
+                        self.current_date = date(year, month, day)
+                    except ValueError:
+                        pass
             for node in self.stack:
                 node["text"].append(data.strip())
 
@@ -124,7 +158,7 @@ def parse_round(html: str, official_teams: list[str]):
     parser.feed(html)
     team_lookup = {norm(team): team for team in official_teams}
     fixtures = {}
-    for candidate in parser.candidates:
+    for candidate, date_context in parser.candidates:
         candidate_norm = norm(candidate)
         found = [team for key, team in team_lookup.items() if key and key in candidate_norm]
         # A fixture card must mention exactly two different official clubs.
@@ -132,6 +166,14 @@ def parse_round(html: str, official_teams: list[str]):
         if len(unique) != 2:
             continue
         kickoff = parse_date(candidate)
+        if kickoff is None and date_context is not None:
+            clock_match = TIME_RE.search(candidate)
+            if clock_match:
+                hour, minute = map(int, clock_match.groups())
+                kickoff = datetime(date_context.year, date_context.month, date_context.day, hour, minute)
+            else:
+                # Date is known but no kickoff time is shown; keep a neutral local noon.
+                kickoff = datetime(date_context.year, date_context.month, date_context.day, 12, 0)
         if kickoff is None:
             continue
         hg, ag = parse_score(candidate, kickoff)
