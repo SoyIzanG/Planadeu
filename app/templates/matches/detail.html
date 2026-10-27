@@ -7,6 +7,9 @@
         <div class="row align-items-center">
           <h6 class="text-center">Matchday {{ match.matchday }}</h6>
         </div>
+        {% if match.home_team.name == "UE Planadeu" or match.away_team.name == "UE Planadeu" %}
+        <div class="alert alert-warning mt-3 mb-3"><strong>PARTIDO PENDIENTE DE CONFIRMAR</strong></div>
+        {% endif %}
         <br>
         <div class="row align-items-center junate-match">
             
