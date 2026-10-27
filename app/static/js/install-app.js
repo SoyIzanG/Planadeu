@@ -409,11 +409,23 @@
   }
 
   function addNotificationSettings() {
-    const existingPanels = Array.from(document.querySelectorAll(".result-notifications"));
-    existingPanels.slice(1).forEach(panel => panel.remove());
+    // Los ajustes solo existen dentro de su página privada, nunca al final del contenido general.
+    document.querySelectorAll("main.container > .result-notifications").forEach(panel => panel.remove());
+    const existingPages = Array.from(document.querySelectorAll("#private-notification-page"));
+    existingPages.slice(1).forEach(page => page.remove());
     if (!(isInstalledApp() || localStorage.getItem(installedFlagKey) === "1") || !("Notification" in window)) return;
     const main = document.querySelector("main.container");
-    if (!main || existingPanels.length) return;
+    if (!main) return;
+    let page = document.querySelector("#private-notification-page");
+    if (!page) {
+      page = document.createElement("section");
+      page.id = "private-notification-page";
+      page.className = "private-notification-page";
+      page.hidden = true;
+      page.innerHTML = '<button type="button" class="btn btn-outline-secondary mb-3" id="notification-page-back">← Volver</button><h1 class="h3">Notificaciones</h1><p>Configura los avisos de resultados para este dispositivo.</p>';
+      main.appendChild(page);
+    }
+    if (page.querySelector(".result-notifications")) return;
     const panel = document.createElement("section");
     panel.className = "result-notifications no-print";
     panel.innerHTML = `
@@ -429,7 +441,7 @@
         <button type="button" class="secondary" id="notify-test">Enviar notificación de prueba</button>
       </div>
       <p id="notify-status" aria-live="polite"></p>`;
-    main.appendChild(panel);
+    page.appendChild(panel);
     const enabled = panel.querySelector("#notify-enabled");
     const newResults = panel.querySelector("#notify-new");
     const updatedResults = panel.querySelector("#notify-updated");
@@ -502,7 +514,7 @@
     });
   }
 
-    async function checkResults(firstCheck = false) {
+  async function checkResults(firstCheck = false) {
     let prefs = {};
     try { prefs = JSON.parse(localStorage.getItem(notificationsKey) || "{}"); } catch (_) {}
     if (!(isInstalledApp() || localStorage.getItem(installedFlagKey) === "1") || checkInProgress || !("Notification" in window) ||
