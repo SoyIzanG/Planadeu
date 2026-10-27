@@ -15,6 +15,8 @@
   const installNeverKey = "laLigaInstallNeverAsk";
   const installSessionDismissKey = "laLigaInstallDismissedThisSession";
   const notificationsKey = "laLigaResultNotifications";
+  const notificationIntroKey = "laLigaNotificationIntroShown";
+  const themeKey = "laLigaTheme";
   const isInstalledApp = () => window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
   let deferredPrompt = null;
   let knownResults = null;
@@ -80,7 +82,7 @@
       .install-modal-backdrop.device-ipad .install-modal,.install-modal-backdrop.device-tablet .install-modal,.install-modal-backdrop.device-samsung-tablet .install-modal { width:100%; margin-bottom:0; border-radius:26px 26px 0 0; border-bottom:0; }
     }
     @media(prefers-reduced-motion:reduce) { .install-modal-backdrop,.install-modal { animation:none !important; } .install-modal { transform:none; opacity:1; filter:none; } }
-    .result-notifications { margin:1rem 0; padding:1rem; border-radius:14px; background:#fff; border:1px solid #cbd9e8; color:#243b53; }
+    .result-notifications { order:99; margin:2rem 0 0; padding:1rem; border-radius:14px; background:#fff; border:1px solid #cbd9e8; color:#243b53; }
     .result-notifications p { margin:.2rem 0 .8rem; font-size:.88rem; color:#526579; }
     .notification-controls { display:grid; gap:.65rem; }
     .notification-controls label { display:flex; align-items:center; gap:.55rem; font-size:.92rem; }
@@ -88,6 +90,27 @@
     .result-notifications button { border:0; border-radius:9px; background:#243b53; color:#fff; padding:.6rem .85rem; font-weight:700; }
     .result-notifications button.secondary { background:#eaf0f6; color:#243b53; }
     .result-notifications button:disabled { opacity:.7; }
+
+    .app-settings-menu { position:relative; margin-left:.5rem; }
+    .app-settings-trigger { border:1px solid rgba(255,255,255,.28); color:#fff; background:rgba(255,255,255,.06); border-radius:12px; width:44px; height:44px; font-size:1.4rem; line-height:1; }
+    .app-settings-popover { position:absolute; z-index:1085; right:0; top:calc(100% + .65rem); width:min(290px,calc(100vw - 2rem)); padding:.8rem; border:1px solid #d6e0eb; border-radius:16px; background:#fff; color:#243b53; box-shadow:0 16px 42px rgba(8,20,34,.24); animation:settingsPop .24s cubic-bezier(.2,.8,.2,1); }
+    .app-settings-popover[hidden] { display:none; }
+    .app-settings-popover button { display:flex; width:100%; align-items:center; gap:.6rem; padding:.7rem; border:0; border-radius:10px; background:transparent; color:inherit; text-align:left; font-weight:650; }
+    .app-settings-popover button:hover { background:#edf4fb; }
+    .notify-intro-backdrop { position:fixed; inset:0; z-index:1090; display:flex; align-items:flex-end; justify-content:center; background:rgba(8,20,34,.55); backdrop-filter:blur(5px); animation:installBackdropIn .3s ease both; }
+    .notify-intro-window { width:min(560px,100%); padding:1.5rem 1.25rem max(1.35rem,env(safe-area-inset-bottom)); border-radius:24px 24px 0 0; color:#243b53; background:linear-gradient(145deg,#fff,#eaf3fc); box-shadow:0 -16px 60px rgba(0,0,0,.25); animation:notifyIntroRise .64s cubic-bezier(.16,1,.3,1) both; }
+    .notify-intro-window h2 { font-size:1.35rem; margin:.2rem 0 .5rem; }
+    .notify-intro-window p { color:#526579; }
+    .notify-intro-window .intro-actions { display:flex; gap:.6rem; flex-wrap:wrap; }
+    .notify-intro-window button { border:0; border-radius:11px; padding:.7rem .9rem; background:#243b53; color:#fff; font-weight:750; }
+    .notify-intro-window button.secondary { background:#e5edf6; color:#243b53; }
+    @keyframes settingsPop { from { opacity:0; transform:translateY(-7px) scale(.98); } to { opacity:1; transform:translateY(0) scale(1); } }
+    @keyframes notifyIntroRise { 0% { opacity:0; transform:translateY(105%) scale(.97); } 78% { opacity:1; transform:translateY(-4px) scale(1); } 100% { opacity:1; transform:translateY(0) scale(1); } }
+    .notify-intro-backdrop.device-iphone .notify-intro-window { animation:notifyIntroRise .7s cubic-bezier(.2,1.25,.35,1) both; }
+    .notify-intro-backdrop.device-samsung .notify-intro-window { animation:notifyIntroRise .58s cubic-bezier(.18,.9,.22,1) both; }
+    .notify-intro-backdrop.device-desktop,.notify-intro-backdrop.device-mac { align-items:flex-end; justify-content:flex-end; padding:1rem; }
+    .notify-intro-backdrop.device-desktop .notify-intro-window,.notify-intro-backdrop.device-mac .notify-intro-window { width:min(430px,calc(100vw - 2rem)); border-radius:22px; margin-bottom:.5rem; animation:settingsPop .32s cubic-bezier(.2,.8,.2,1) both; }
+    @media(prefers-reduced-motion:reduce) { .notify-intro-window,.notify-intro-backdrop,.app-settings-popover { animation:none !important; } }
     @keyframes leagueToastIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
     @media(prefers-reduced-motion:reduce) { .league-toast { animation:none; } }
   `;
@@ -295,6 +318,71 @@
     showToast("La Liga instalada", "La app ya está lista. Abre el icono instalado para configurar los avisos.");
   });
 
+
+  function addSettingsMenu() {
+    const navContainer = document.querySelector(".navbar .container");
+    if (!navContainer || document.querySelector(".app-settings-menu")) return;
+    const wrap = document.createElement("div");
+    wrap.className = "app-settings-menu";
+    wrap.innerHTML = '<button type="button" class="app-settings-trigger" aria-label="Ajustes" aria-expanded="false" title="Ajustes">⋮</button><div class="app-settings-popover" hidden><button type="button" data-action="notifications">🔔 Notificaciones</button><button type="button" data-action="theme">🎨 Cambiar tema</button></div>';
+    navContainer.appendChild(wrap);
+    const trigger = wrap.querySelector(".app-settings-trigger");
+    const pop = wrap.querySelector(".app-settings-popover");
+    trigger.addEventListener("click", () => {
+      pop.hidden = !pop.hidden;
+      trigger.setAttribute("aria-expanded", String(!pop.hidden));
+    });
+    pop.querySelector('[data-action="notifications"]').addEventListener("click", () => {
+      pop.hidden = true;
+      document.querySelector(".result-notifications")?.scrollIntoView({behavior:"smooth",block:"end"});
+    });
+    pop.querySelector('[data-action="theme"]').addEventListener("click", () => {
+      pop.hidden = true;
+      const current = localStorage.getItem(themeKey) || "light";
+      const next = current === "dark" ? "light" : "dark";
+      localStorage.setItem(themeKey,next);
+      applyTheme(next);
+      showToast("Tema actualizado", next === "dark" ? "Tema oscuro activado." : "Tema claro activado.");
+    });
+    document.addEventListener("click", event => {
+      if (!wrap.contains(event.target)) { pop.hidden = true; trigger.setAttribute("aria-expanded","false"); }
+    });
+    applyTheme(localStorage.getItem(themeKey) || "light");
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.dataset.leagueTheme = theme;
+    let themeStyle = document.getElementById("league-user-theme");
+    if (!themeStyle) { themeStyle = document.createElement("style"); themeStyle.id = "league-user-theme"; document.head.appendChild(themeStyle); }
+    themeStyle.textContent = theme === "dark" ? `
+      body { background:#101a27 !important; color:#e8eff7 !important; }
+      main.container, footer { color:#e8eff7; }
+      .card,.result-notifications { background:#182638 !important; color:#e8eff7 !important; border-color:#304257 !important; }
+      .card-header { background:#1c2c40 !important; color:#e8eff7 !important; border-color:#304257 !important; }
+      .table { --bs-table-bg:#182638; --bs-table-color:#e8eff7; --bs-table-border-color:#304257; }
+      .text-muted { color:#b5c3d2 !important; }
+    ` : "";
+  }
+
+  function showNotificationIntro() {
+    try {
+      if (localStorage.getItem(notificationIntroKey) === "1") return;
+      localStorage.setItem(notificationIntroKey,"1");
+    } catch (_) { return; }
+    const backdrop = document.createElement("div");
+    backdrop.className = "notify-intro-backdrop device-" + deviceType;
+    backdrop.setAttribute("role","dialog");
+    backdrop.setAttribute("aria-modal","true");
+    backdrop.innerHTML = '<section class="notify-intro-window"><h2>🔔 Configura tus notificaciones</h2><p>Elige si quieres avisos de resultados. Puedes cambiarlo cuando quieras desde el menú ⋮.</p><div class="intro-actions"><button type="button" data-action="configure">Configurar ahora</button><button type="button" class="secondary" data-action="later">Ahora no</button></div></section>';
+    document.body.appendChild(backdrop);
+    backdrop.querySelector('[data-action="configure"]').addEventListener("click", () => {
+      backdrop.remove();
+      document.querySelector(".result-notifications")?.scrollIntoView({behavior:"smooth",block:"end"});
+      document.querySelector("#notify-enabled")?.focus({preventScroll:true});
+    });
+    backdrop.querySelector('[data-action="later"]').addEventListener("click", () => backdrop.remove());
+  }
+
   function addNotificationSettings() {
     if (!isInstalledApp() || !("Notification" in window)) return;
     const main = document.querySelector("main.container");
@@ -314,7 +402,7 @@
         <button type="button" class="secondary" id="notify-test">Enviar notificación de prueba</button>
       </div>
       <p id="notify-status" aria-live="polite"></p>`;
-    main.prepend(panel);
+    main.appendChild(panel);
     const enabled = panel.querySelector("#notify-enabled");
     const newResults = panel.querySelector("#notify-new");
     const updatedResults = panel.querySelector("#notify-updated");
@@ -432,7 +520,9 @@
 
   function init() {
     addInstallCard();
+    addSettingsMenu();
     addNotificationSettings();
+    if (isInstalledApp()) showNotificationIntro();
     checkResults();
     window.setInterval(() => checkResults(false), 60000);
   }
