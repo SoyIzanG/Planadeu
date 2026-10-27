@@ -32,14 +32,19 @@
     .install-app-card .install-button { background:#243b53; color:#fff; }
     .install-app-card .install-dismiss { position:absolute; top:.65rem; right:.65rem; background:#eaf0f6; color:#243b53; font-size:.8rem; }
     .install-app-card .install-hint { color:#526579; font-size:.83rem; margin-top:.65rem; }
-    .install-modal-backdrop { position:fixed; inset:0; z-index:1100; display:grid; place-items:center; padding:1rem; background:rgba(12,25,40,.62); backdrop-filter:blur(4px); }
-    .install-modal { width:min(460px,100%); max-height:90vh; overflow:auto; position:relative; padding:1.4rem; border-radius:20px; background:#fff; color:#243b53; box-shadow:0 24px 80px rgba(0,0,0,.3); }
-    .install-modal h2 { font-size:1.35rem; margin:.4rem 2rem .6rem 0; }
-    .install-modal p { color:#526579; }
+    .install-modal-backdrop { position:fixed; inset:0; z-index:1100; display:flex; align-items:flex-end; justify-content:center; padding:0; background:rgba(7,18,32,.0); backdrop-filter:blur(0); animation:installBackdropIn .42s cubic-bezier(.2,.8,.2,1) forwards; }
+    .install-modal { width:min(620px,100%); max-height:76vh; overflow:auto; position:relative; padding:1.6rem 1.35rem max(1.5rem,env(safe-area-inset-bottom)); border-radius:26px 26px 0 0; background:linear-gradient(145deg,#fff 0%,#f2f7fc 62%,#e7f1fb 100%); color:#243b53; box-shadow:0 -18px 70px rgba(0,0,0,.28); transform:translateY(105%); opacity:.8; animation:installSheetUp .72s cubic-bezier(.16,1,.3,1) .04s forwards; border:1px solid rgba(255,255,255,.8); border-bottom:0; }
+    .install-modal::before { content:""; display:block; width:46px; height:5px; border-radius:99px; background:#b9c9d9; margin:-.55rem auto 1.15rem; }
+    .install-modal h2 { font-size:clamp(1.3rem,5vw,1.65rem); line-height:1.2; margin:.4rem 2rem .6rem 0; letter-spacing:-.025em; }
+    .install-modal p { color:#526579; line-height:1.5; }
     .install-modal .modal-actions { display:flex; gap:.6rem; flex-wrap:wrap; margin-top:1rem; }
-    .install-modal button { border:0; border-radius:9px; padding:.65rem .9rem; font-weight:700; cursor:pointer; background:#243b53; color:#fff; }
-    .install-modal button.secondary { background:#eaf0f6; color:#243b53; }
-    .install-modal .modal-close { position:absolute; right:.7rem; top:.7rem; background:#eaf0f6; color:#243b53; }
+    .install-modal button { border:0; border-radius:12px; padding:.75rem 1rem; font-weight:750; cursor:pointer; background:linear-gradient(135deg,#243b53,#356da8); color:#fff; box-shadow:0 7px 18px rgba(36,59,83,.18); transition:transform .2s ease,box-shadow .2s ease; }
+    .install-modal button:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(36,59,83,.24); }
+    .install-modal button.secondary { background:#e6edf5; color:#243b53; box-shadow:none; }
+    .install-modal .modal-close { position:absolute; right:.85rem; top:.85rem; background:#eaf0f6; color:#243b53; box-shadow:none; }
+    @keyframes installBackdropIn { from { background:rgba(7,18,32,0); backdrop-filter:blur(0); } to { background:rgba(7,18,32,.58); backdrop-filter:blur(5px); } }
+    @keyframes installSheetUp { 0% { transform:translateY(105%); opacity:.7; } 70% { transform:translateY(-7px); opacity:1; } 100% { transform:translateY(0); opacity:1; } }
+    @media(prefers-reduced-motion:reduce) { .install-modal-backdrop,.install-modal { animation:none; } .install-modal { transform:none; opacity:1; } }
     .result-notifications { margin:1rem 0; padding:1rem; border-radius:14px; background:#fff; border:1px solid #cbd9e8; color:#243b53; }
     .result-notifications p { margin:.2rem 0 .8rem; font-size:.88rem; color:#526579; }
     .notification-controls { display:grid; gap:.65rem; }
