@@ -88,54 +88,54 @@
             padding-bottom: 2rem;
         }
 
-        /* Animación global de entrada para las páginas y sus componentes. */
+        /* Entrada fluida y coherente en todas las páginas. */
         @keyframes pageEnter {
-            from { opacity: 0; transform: translate3d(0, 16px, 0); }
+            0% { opacity: 0; transform: translate3d(0, 14px, 0); }
+            70% { opacity: 1; }
+            100% { opacity: 1; transform: translate3d(0, 0, 0); }
+        }
+
+        @keyframes contentReveal {
+            from { opacity: 0; transform: translate3d(0, 10px, 0); }
             to { opacity: 1; transform: translate3d(0, 0, 0); }
         }
 
-        @keyframes pageEnterSoft {
-            from { opacity: 0; transform: translate3d(0, 9px, 0) scale(.99); }
-            to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+        @keyframes navReveal {
+            from { opacity: 0; transform: translate3d(0, -6px, 0); }
+            to { opacity: 1; transform: translate3d(0, 0, 0); }
         }
 
-        main.container {
-            animation: pageEnter .48s cubic-bezier(.2, .7, .25, 1) both;
+        .navbar { animation: navReveal .38s ease-out both; }
+        main.container.page-enter {
+            animation: pageEnter .55s cubic-bezier(.16, 1, .3, 1) both;
         }
-
         main.container.page-enter > * {
-            animation: pageEnterSoft .48s cubic-bezier(.2, .7, .25, 1) both;
+            animation: contentReveal .52s cubic-bezier(.16, 1, .3, 1) both;
         }
-
         main.container.page-enter > *:nth-child(1) { animation-delay: .04s; }
         main.container.page-enter > *:nth-child(2) { animation-delay: .09s; }
         main.container.page-enter > *:nth-child(3) { animation-delay: .14s; }
         main.container.page-enter > *:nth-child(4) { animation-delay: .19s; }
         main.container.page-enter > *:nth-child(5) { animation-delay: .24s; }
 
-        main.container.page-enter .card,
-        main.container.page-enter .alert,
-        main.container.page-enter .list-group-item,
-        main.container.page-enter .table tbody tr {
-            animation: pageEnterSoft .42s cubic-bezier(.2, .7, .25, 1) both;
+        .card, .btn, .nav-link, .action-btn {
+            transition: color .2s ease, background-color .2s ease, border-color .2s ease,
+                        box-shadow .25s ease, transform .25s cubic-bezier(.2, .7, .2, 1);
         }
-
-        main.container.page-enter .table tbody tr:nth-child(1) { animation-delay: .04s; }
-        main.container.page-enter .table tbody tr:nth-child(2) { animation-delay: .07s; }
-        main.container.page-enter .table tbody tr:nth-child(3) { animation-delay: .10s; }
-        main.container.page-enter .table tbody tr:nth-child(4) { animation-delay: .13s; }
-        main.container.page-enter .table tbody tr:nth-child(5) { animation-delay: .16s; }
-        main.container.page-enter .table tbody tr:nth-child(n+6) { animation-delay: .19s; }
+        .btn:active, .action-btn:active { transform: scale(.97); }
+        .nav-link { transition: color .18s ease, opacity .18s ease; }
+        .card:hover { transform: translateY(-2px); }
+        .table tbody tr { transition: background-color .18s ease; }
 
         @media (prefers-reduced-motion: reduce) {
-            main.container,
-            main.container.page-enter > *,
-            main.container.page-enter .card,
-            main.container.page-enter .alert,
-            main.container.page-enter .list-group-item,
-            main.container.page-enter .table tbody tr {
+            *, *::before, *::after {
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                scroll-behavior: auto !important;
+                transition-duration: .01ms !important;
+            }
+            main.container, main.container.page-enter > * {
                 animation: none !important;
-                transition: none !important;
                 transform: none !important;
             }
         }
