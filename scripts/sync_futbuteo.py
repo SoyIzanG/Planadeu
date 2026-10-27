@@ -12,6 +12,7 @@ import re
 import sys
 import time
 import unicodedata
+import html as html_lib
 from datetime import date, datetime
 from html.parser import HTMLParser
 from urllib.error import HTTPError, URLError
@@ -247,9 +248,16 @@ def parse_round(html: str, official_teams: list[str]):
         and set(used) | {bye} == set(official_teams)
     )
     if not valid:
+        # Explain which stage is empty so a blocked/changed source can be
+        # distinguished from a team-name or date parser problem.
+        visible_text = norm(html_lib.unescape(re.sub(r"<[^>]+>", " ", html)))
+        team_hits = sum(1 for team in official_teams if norm(team) and norm(team) in visible_text)
+        date_hits = len(SHORT_DATE_RE.findall(html_lib.unescape(re.sub(r"<[^>]+>", " ", html))))
         return None, (
             f"validación incompleta: {len(fixtures_list)} partidos candidatos, "
-            f"{len(set(used))} equipos distintos, descanso={'detectado' if bye else 'no detectado'}"
+            f"{len(set(used))} equipos distintos, descanso={'detectado' if bye else 'no detectado'}; "
+            f"diagnóstico fuente: HTML={len(html)} caracteres, tarjetas={len(parser.candidates)}, "
+            f"nombres oficiales reconocidos en texto={team_hits}/15, fechas visibles={date_hits}"
         )
     return {"fixtures": fixtures_list, "bye": bye}, None
 
