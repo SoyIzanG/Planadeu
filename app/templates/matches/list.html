@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Fixtures - League Site{% endblock %}
+{% block title %}Partidos y resultados | UE Planadeu{% endblock %}
 
 {% block content %}
 <h1 class="mb-4">
@@ -10,14 +10,14 @@
 {% if by_matchday %}
 {% for matchday in by_matchday.keys()|sort %}
 <div class="card shadow mb-4">
-    <div class="card-header">{% if matchday == 0 %}Historial anterior{% else %}Matchday {{ matchday }}{% endif %}</div>
+    <div class="card-header">{% if matchday == 0 %}Historial anterior{% else %}Jornada {{ matchday }}{% endif %}</div>
     <div class="card-body p-0">
         <ul class="list-group list-group-flush">
             {% for m in by_matchday[matchday] %}
             
             <li class="list-group-item match-row">
                 <div class="match-time">
-                    {{ m.kickoff.strftime('%d %b %H:%M') if m.kickoff else '' }}
+                    {{ m.kickoff.strftime('%d/%m · %H:%M') if m.kickoff else '' }}
                 </div>
 
                 <div class="match-teams">
@@ -58,7 +58,7 @@
 </div>
 {% endfor %}
 {% else %}
-<div class="alert alert-info">No hay partidos. Añade una temporada y programa los encuentros.</div>
+<div class="alert alert-info">Todavía no hay partidos programados para mostrar.</div>
 {% endif %}
 {% endblock %}
 
@@ -66,13 +66,16 @@
 <style>
 .match-row {
   display: flex;
+  padding: 1rem 1.1rem;
+  border-color: #edf0f2;
   align-items: center; /* vertical alignment */
   justify-content: space-between;
   gap: 10px;
 }
 
 .match-time {
-  width: 50px;
+  width: 92px;
+  flex: 0 0 92px;
   font-size: 12px;
   color: #888;
 }
@@ -86,14 +89,24 @@
 
 .team {
   font-size: 14px;
+  font-weight: 600;
+  padding: 2px 0;
   line-height: 1.3;
 }
 
 .match-score {
-  width: 50px;
+  width: auto;
+  min-width: 70px;
+  max-width: 180px;
   text-align: center;
   font-weight: bold;
  }
 
+@media (max-width: 575.98px) {
+  .match-row { gap: 8px; padding: .85rem .65rem; align-items: flex-start; }
+  .match-time { width: 70px; flex-basis: 70px; font-size: 11px; }
+  .team { font-size: 12px; }
+  .match-score { min-width: 54px; font-size: 12px; }
+}
 </style>
 {% endblock %}
