@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Gallery - {{ config['SITE_NAME'] or 'Football League' }}{% endblock %}
+{% block title %}Galería | UE Planadeu{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
     <div class="row">
         <div class="col-12">
-            <h1 class="mb-4">Gallery</h1>
+            <h1 class="mb-4">Galería</h1>
             
             <!-- Filter and Buscar -->
             <div class="row mb-4">
@@ -19,9 +19,9 @@
                 <div class="col-md-6">
                     <div class="d-flex justify-content-end">
                         <div class="btn-group" role="group">
-                            <a href="{{ url_for('gallery.index') }}" class="btn {% if not current_category %}btn-primary{% else %}btn-outline-primary{% endif %}">All</a>
-                            <a href="{{ url_for('gallery.highlights') }}" class="btn {% if current_category == 'highlight' %}btn-primary{% else %}btn-outline-primary{% endif %}">Highlights</a>
-                            <a href="{{ url_for('gallery.stories') }}" class="btn {% if current_category == 'story' %}btn-primary{% else %}btn-outline-primary{% endif %}">Stories</a>
+                            <a href="{{ url_for('gallery.index') }}" class="btn {% if not current_category %}btn-primary{% else %}btn-outline-primary{% endif %}">Todo</a>
+                            <a href="{{ url_for('gallery.highlights') }}" class="btn {% if current_category == 'highlight' %}btn-primary{% else %}btn-outline-primary{% endif %}">Destacados</a>
+                            <a href="{{ url_for('gallery.stories') }}" class="btn {% if current_category == 'story' %}btn-primary{% else %}btn-outline-primary{% endif %}">Historias</a>
                         </div>
                     </div>
                 </div>
