@@ -1,52 +1,125 @@
 {% extends "base.html" %}
-{% block title %}Equipos - Administración{% endblock %}
+{% block title %}Equipos - Administración | La Liga{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Equipos</h1>
+<div class="teams-admin">
+    <header class="teams-heading">
+        <div>
+            <span class="teams-kicker"><i class="bi bi-shield-lock me-1"></i> ADMINISTRACIÓN · COMPETICIÓN</span>
+            <h1>Equipos</h1>
+            <p>Gestiona clubes, escudos y datos de cada equipo desde un solo lugar.</p>
+        </div>
+        <a href="{{ url_for('admin.add_team') }}" class="btn teams-primary"><i class="bi bi-plus-lg me-2"></i>Añadir equipo</a>
+    </header>
 
-<form class="mb-4" method="get">
-    <div class="input-group">
-        <input type="text" name="q" class="form-control" placeholder="Buscar..." value="{{ search or '' }}">
-        <button class="btn btn-primary" type="submit">Buscar</button>
-    </div>
-</form>
+    <section class="teams-metrics" aria-label="Resumen de equipos">
+        <article class="metric-card">
+            <span class="metric-icon"><i class="bi bi-shield"></i></span>
+            <div><span class="metric-label">Equipos registrados</span><strong>{{ teams.total }}</strong></div>
+        </article>
+        <article class="metric-card">
+            <span class="metric-icon metric-icon-soft"><i class="bi bi-list-check"></i></span>
+            <div><span class="metric-label">En esta página</span><strong>{{ teams.items|length }}</strong></div>
+        </article>
+        <article class="metric-card">
+            <span class="metric-icon metric-icon-dark"><i class="bi bi-diagram-3"></i></span>
+            <div><span class="metric-label">Páginas</span><strong>{{ teams.pages }}</strong></div>
+        </article>
+    </section>
 
-<a href="{{ url_for('admin.add_team') }}" class="btn btn-success mb-3">Añadir Equipo</a>
+    <section class="teams-panel">
+        <div class="teams-panel-top">
+            <div>
+                <h2>Directorio de equipos</h2>
+                <p>Busca un club o accede rápidamente a sus opciones.</p>
+            </div>
+            <form class="teams-search" method="get" role="search">
+                <label class="visually-hidden" for="team-search">Buscar equipos</label>
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input id="team-search" type="search" name="q" placeholder="Buscar por nombre, siglas o estadio…" value="{{ search or '' }}">
+                {% if search %}
+                <a class="clear-search" href="{{ url_for('admin.teams') }}" aria-label="Limpiar búsqueda"><i class="bi bi-x-lg"></i></a>
+                {% endif %}
+                <button type="submit">Buscar</button>
+            </form>
+        </div>
 
-<div class="card shadow">
-    <div class="table-responsive">
-        <table class="table mb-0">
-            <thead><tr><th>Name</th><th>Short</th><th>Stadium</th><th>Actions</th></tr></thead>
-            <tbody>
-                {% for t in teams.items %}
-                <tr>
-                    <td>{{ t.name }}</td>
-                    <td>{{ t.short_name or '-' }}</td>
-                    <td>{{ t.stadium or '-' }}</td>
-                    <td>
-                        <a href="{{ url_for('teams.profile', team_id=t.id) }}" class="btn btn-sm btn-outline-secondary">Ver</a>
-                        <a href="{{ url_for('admin.edit_team', team_id=t.id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
-                        <form action="{{ url_for('admin.delete_team', team_id=t.id) }}" method="post" class="d-inline" onsubmit="return confirm('Eliminar?');">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
-                        </form>
-                    </td>
-                </tr>
+        <div class="teams-table-wrap">
+            <table class="table teams-table align-middle mb-0">
+                <thead>
+                    <tr><th scope="col">Equipo</th><th scope="col">Nombre corto</th><th scope="col">Estadio</th><th scope="col" class="text-end">Acciones</th></tr>
+                </thead>
+                <tbody>
+                    {% for t in teams.items %}
+                    <tr>
+                        <td>
+                            <div class="team-identity">
+                                <div class="team-crest">
+                                    {% if t.logo_filename %}
+                                    <img src="{{ t.logo_filename }}" alt="Escudo de {{ t.name }}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
+                                    <span class="crest-fallback" style="display:none"><i class="bi bi-shield-fill"></i></span>
+                                    {% else %}
+                                    <span class="crest-fallback"><i class="bi bi-shield-fill"></i></span>
+                                    {% endif %}
+                                </div>
+                                <div class="team-name-wrap"><strong>{{ t.name }}</strong><span>Club · ID {{ t.id }}</span></div>
+                            </div>
+                        </td>
+                        <td><span class="team-short">{{ t.short_name or '—' }}</span></td>
+                        <td><span class="team-stadium"><i class="bi bi-geo-alt me-1"></i>{{ t.stadium or 'Sin estadio indicado' }}</span></td>
+                        <td>
+                            <div class="team-actions">
+                                <a href="{{ url_for('teams.profile', team_id=t.id) }}" class="action-btn action-view" aria-label="Ver {{ t.name }}" title="Ver equipo"><i class="bi bi-eye"></i><span>Ver</span></a>
+                                <a href="{{ url_for('admin.edit_team', team_id=t.id) }}" class="action-btn action-edit" aria-label="Editar {{ t.name }}" title="Editar equipo"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
+                                <form action="{{ url_for('admin.delete_team', team_id=t.id) }}" method="post" class="d-inline" onsubmit="return confirm('¿Seguro que quieres eliminar este equipo? Esta acción no se puede deshacer.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="action-btn action-delete" aria-label="Eliminar {{ t.name }}" title="Eliminar equipo"><i class="bi bi-trash3"></i><span>Eliminar</span></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4"><div class="teams-empty"><i class="bi bi-search"></i><strong>No se han encontrado equipos</strong><span>Prueba con otro término de búsqueda.</span></div></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if teams.pages > 1 %}
+        <nav class="teams-pagination" aria-label="Paginación de equipos">
+            <span>Mostrando {{ teams.items|length }} de {{ teams.total }} equipos</span>
+            <ul class="pagination mb-0">
+                {% for p in teams.iter_pages() %}
+                {% if p %}
+                <li class="page-item {% if p == teams.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.teams', page=p, q=search) }}" {% if p == teams.page %}aria-current="page"{% endif %}>{{ p }}</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+                {% endif %}
                 {% endfor %}
-            </tbody>
-        </table>
-    </div>
+            </ul>
+        </nav>
+        {% endif %}
+    </section>
+    <p class="teams-footnote"><i class="bi bi-info-circle me-1"></i> Los cambios en los datos de los clubes se reflejan en la competición.</p>
 </div>
+{% endblock %}
 
-{% if teams.pages > 1 %}
-<nav class="mt-3">
-    <ul class="pagination">
-        {% for p in teams.iter_pages() %}
-        <li class="page-item {% if p == teams.page %}active{% endif %}">
-            <a class="page-link" href="{{ url_for('admin.teams', page=p, q=search) }}">{{ p or '...' }}</a>
-        </li>
-        {% endfor %}
-    </ul>
-</nav>
-{% endif %}
+{% block extra_css %}
+<style>
+.teams-admin{--team-red:#c91f3a;--team-red-dark:#98152c;--team-ink:#242a35;--team-muted:#77808d;--team-line:#eceef2;color:var(--team-ink)}
+.teams-heading{display:flex;align-items:center;justify-content:space-between;gap:1.25rem;margin:0 0 1.6rem;padding:clamp(1.35rem,3vw,2rem);border:1px solid rgba(255,255,255,.14);border-radius:22px;background:radial-gradient(ellipse at 90% 0%,rgba(255,255,255,.13),transparent 35%),linear-gradient(120deg,#86152a 0%,#c91f3a 58%,#e23a50 100%);box-shadow:0 18px 42px rgba(156,20,44,.2);color:#fff}
+.teams-kicker{font-size:.7rem;letter-spacing:.14em;font-weight:800;color:#ffe0e5}.teams-heading h1{font-size:clamp(1.9rem,4vw,2.65rem);font-weight:800;letter-spacing:-.045em;margin:.55rem 0 .4rem}.teams-heading p{margin:0;color:#ffe9ec;max-width:570px}
+.teams-primary{white-space:nowrap;border:1px solid rgba(255,255,255,.65);border-radius:12px;background:#fff;color:var(--team-red-dark);padding:.8rem 1rem;font-weight:750;box-shadow:0 7px 18px rgba(65,0,12,.15);transition:all .25s ease}.teams-primary:hover{background:#fff1f3;color:#7e1024;transform:translateY(-2px);box-shadow:0 12px 24px rgba(65,0,12,.2)}.teams-primary:active{transform:scale(.96)}
+.teams-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-bottom:1.35rem}.metric-card{display:flex;align-items:center;gap:.9rem;min-width:0;padding:1.15rem 1.25rem;background:#fff;border:1px solid var(--team-line);border-radius:17px;box-shadow:0 5px 20px rgba(27,34,48,.035);transition:all .25s ease}.metric-card:hover{transform:translateY(-3px);border-color:#f1c1c9;box-shadow:0 12px 28px rgba(95,18,34,.08)}.metric-icon{width:46px;height:46px;flex:0 0 46px;display:grid;place-items:center;border-radius:14px;background:#fff0f2;color:var(--team-red);font-size:1.35rem}.metric-icon-soft{background:#f3f4f6;color:#535d6b}.metric-icon-dark{background:#282d38;color:#fff}.metric-label{display:block;color:var(--team-muted);font-size:.78rem;font-weight:650;margin-bottom:.18rem}.metric-card strong{display:block;font-size:1.55rem;line-height:1.1;letter-spacing:-.035em}
+.teams-panel{background:#fff;border:1px solid var(--team-line);border-radius:20px;box-shadow:0 8px 28px rgba(27,34,48,.045);overflow:hidden}.teams-panel-top{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1.35rem 1.4rem;border-bottom:1px solid var(--team-line)}.teams-panel-top h2{font-size:1.12rem;font-weight:800;letter-spacing:-.025em;margin:0 0 .28rem}.teams-panel-top p{font-size:.86rem;color:var(--team-muted);margin:0}
+.teams-search{display:flex;align-items:center;gap:.65rem;width:min(100%,440px);min-height:44px;padding:.25rem .3rem .25rem .85rem;border:1px solid #e4e6eb;border-radius:12px;background:#fafbfc;transition:border-color .2s,box-shadow .2s}.teams-search:focus-within{border-color:#e16b7d;box-shadow:0 0 0 3px rgba(201,31,58,.09)}.teams-search>i{color:#9098a5}.teams-search input{min-width:0;flex:1;border:0;outline:0;background:transparent;font-size:.84rem;color:var(--team-ink)}.teams-search input::placeholder{color:#9ba2ad}.teams-search button{border:0;border-radius:9px;background:var(--team-red);color:#fff;font-size:.83rem;font-weight:700;padding:.58rem .9rem;transition:all .2s}.teams-search button:hover{background:var(--team-red-dark)}.teams-search button:active{transform:scale(.96)}.clear-search{color:#8a929e;text-decoration:none}
+.teams-table-wrap{width:100%;overflow-x:auto}.teams-table{min-width:760px}.teams-table thead th{padding:.85rem 1.25rem;background:#fafbfc;color:#858d99;border-bottom:1px solid #eceef2;font-size:.69rem;text-transform:uppercase;letter-spacing:.09em;font-weight:800;white-space:nowrap}.teams-table tbody td{padding:.92rem 1.25rem;border-bottom:1px solid #f0f1f4;font-size:.86rem}.teams-table tbody tr{transition:background .2s ease}.teams-table tbody tr:hover{background:#fff8f9}.teams-table tbody tr:last-child td{border-bottom:0}
+.team-identity{display:flex;align-items:center;gap:.85rem;min-width:210px}.team-crest{width:46px;height:46px;flex:0 0 46px;display:grid;place-items:center;border:1px solid #eceef2;border-radius:13px;background:linear-gradient(145deg,#fff,#f7f7f9);padding:5px;transition:all .25s}.teams-table tr:hover .team-crest{border-color:#f0b9c2;transform:scale(1.04)}.team-crest img{display:block;max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}.crest-fallback{width:100%;height:100%;display:grid;place-items:center;color:#c3c8d0;font-size:1.45rem}.team-name-wrap{display:flex;flex-direction:column;gap:.2rem}.team-name-wrap strong{font-size:.88rem;font-weight:750;color:#292f3a}.team-name-wrap>span{font-size:.72rem;color:#9aa1ac}.team-short{display:inline-block;padding:.32rem .55rem;border:1px solid #eceef2;border-radius:8px;background:#fafbfc;color:#626b78;font-size:.78rem;font-weight:700}.team-stadium{color:#6f7885;white-space:nowrap;font-size:.82rem}
+.team-actions{display:flex;justify-content:flex-end;align-items:center;gap:.4rem}.action-btn{display:inline-flex;align-items:center;justify-content:center;gap:.38rem;min-height:34px;padding:.4rem .62rem;border:1px solid #e7e9ee;border-radius:9px;background:#fff;text-decoration:none;font:inherit;font-size:.76rem;font-weight:700;white-space:nowrap;cursor:pointer;transition:all .2s ease}.action-view{color:#555f6d}.action-view:hover{background:#f3f4f6;border-color:#d9dde4;color:#252b35}.action-edit{color:#b51b34;border-color:#f2cbd1}.action-edit:hover{background:#fff0f2;border-color:#e8a2ae;color:#8e1228}.action-delete{color:#a43b43}.action-delete:hover{background:#a51e31;border-color:#a51e31;color:#fff}.action-btn:active{transform:scale(.95)}.action-btn:focus-visible,.teams-primary:focus-visible,.teams-search button:focus-visible{outline:3px solid rgba(201,31,58,.3);outline-offset:2px}
+.teams-empty{display:flex;flex-direction:column;align-items:center;gap:.45rem;padding:3rem 1rem;color:#8a929e}.teams-empty>i{font-size:1.8rem;color:#c4a0a6}.teams-empty strong{color:#343b47}.teams-empty span{font-size:.85rem}.teams-pagination{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 1.4rem;border-top:1px solid var(--team-line)}.teams-pagination>span{color:var(--team-muted);font-size:.8rem}.teams-pagination .page-link{border-color:#e8eaf0;color:#606a77;font-size:.82rem}.teams-pagination .page-item.active .page-link{background:var(--team-red);border-color:var(--team-red);color:#fff}.teams-footnote{margin:1rem .2rem 0;color:#89919d;font-size:.78rem}
+@media(max-width:767.98px){.teams-heading{align-items:flex-start;flex-direction:column;border-radius:17px}.teams-primary{width:100%;text-align:center}.teams-metrics{grid-template-columns:1fr;gap:.65rem}.metric-card{padding:.9rem 1rem}.teams-panel-top{align-items:stretch;flex-direction:column;padding:1rem}.teams-search{width:100%}.teams-pagination{align-items:flex-start;flex-direction:column;padding:1rem}.teams-pagination .pagination{flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){.teams-admin *{transition:none!important;scroll-behavior:auto!important}}
+</style>
 {% endblock %}
