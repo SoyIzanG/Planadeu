@@ -1,6 +1,6 @@
 
 {% extends "base.html" %}
-{% block title %}Inicio | Liga de Fútbol{% endblock %}
+{% block title %}Inicio | UE Planadeu{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -127,11 +127,11 @@
             Fútbol · Competición · Resultados
         </span>
 
-        <h1 class="mb-3">El fútbol se vive aquí</h1>
+        <h1 class="mb-3">UE Planadeu</h1>
 
         <p class="lead">
-            Sigue la competición, consulta los resultados de los partidos
-            y descubre la clasificación y los goleadores de cada jornada.
+            Toda la actualidad de la competición: partidos, resultados y clasificación.
+            Un espacio para seguir cada jornada de la liga.
         </p>
 
         <a href="{{ url_for('league.table') }}" class="btn btn-league">
@@ -197,12 +197,11 @@
                     </div>
                     <h5 class="card-title">Estadísticas y goleadores</h5>
                     <p class="text-muted">
-                        Consulta las estadísticas disponibles
-                        y sigue los datos de los jugadores.
+                        Esta sección está en preparación. Publicaremos datos cuando estén verificados.
                     </p>
                     <a href="{{ url_for('league.statistics') }}"
                        class="btn btn-outline-dark btn-sm">
-                        Ver estadísticas
+                        Ver sección
                     </a>
                 </div>
             </div>
