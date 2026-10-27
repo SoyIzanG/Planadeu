@@ -323,6 +323,7 @@
 
 
   function addSettingsMenu() {
+    if (!(isInstalledApp() || localStorage.getItem(installedFlagKey) === "1")) return;
     const nav = document.querySelector("#nav");
     const list = nav?.querySelector(".navbar-nav.me-auto");
     if (!nav || !list || document.querySelector("#nav-notifications-link")) return;
