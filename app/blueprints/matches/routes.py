@@ -19,13 +19,18 @@ def list_matches():
         matchday = request.args.get("matchday", type=int)
         q = Match.query.filter_by(season_id=season.id).order_by(Match.matchday, Match.kickoff)
         if matchday:
-            q = q.filter_by(matchday=matchday)
+            # La jornada que estaba numerada como 5 pasa a ser la jornada 1.
+            if matchday == 1:
+                q = q.filter(Match.matchday.in_([1, 5]))
+            elif matchday != 5:
+                q = q.filter_by(matchday=matchday)
         matches = q.all()
 
-    # Group by matchday
+    # Mostrar la antigua jornada 5 como jornada 1.
     by_matchday = {}
     for m in matches:
-        by_matchday.setdefault(m.matchday, []).append(m)
+        display_matchday = 1 if m.matchday == 5 else m.matchday
+        by_matchday.setdefault(display_matchday, []).append(m)
 
     return render_template(
         "matches/list.html",
