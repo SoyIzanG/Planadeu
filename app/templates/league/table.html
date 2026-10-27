@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Clasificación de la liga - League Site{% endblock %}
+{% block title %}Clasificación | UE Planadeu{% endblock %}
 
 {% block content %}
 <h1 class="mb-4">
@@ -16,15 +16,15 @@
                     <tr>
                         <th>#</th>
                         <th>Club</th>
+                        <th>PJ</th>
+                        <th>G</th>
+                        <th>E</th>
                         <th>P</th>
-                        <th>W</th>
-                        <th>D</th>
-                        <th>L</th>
                         <th>GF</th>
-                        <th>GA</th>
-                        <th>GD</th>
-                        <th>Pts</th>
-                        <th>Form</th>
+                        <th>GC</th>
+                        <th>DG</th>
+                        <th>Pts.</th>
+                        <th>Racha</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -34,9 +34,9 @@
                             {{ s.position }}
                             {% if s.position_change %}
                                 {% if s.position_change > 0 %}
-                                <i class="bi bi-arrow-up text-success" title="Moved up"></i>
+                                <i class="bi bi-arrow-up text-success" title="Sube posiciones"></i>
                                 {% elif s.position_change < 0 %}
-                                <i class="bi bi-arrow-down text-danger" title="Moved down"></i>
+                                <i class="bi bi-arrow-down text-danger" title="Baja posiciones"></i>
                                 {% endif %}
                             {% endif %}
                         </td>
@@ -64,9 +64,9 @@
                         <td><strong>{{ s.points }}</strong></td>
                         <td>
                             {% for c in (s.form or '')[:5] %}
-                                {% if c == 'W' %}<span class="badge bg-success form-badge">W</span>
-                                {% elif c == 'D' %}<span class="badge bg-secondary form-badge">D</span>
-                                {% elif c == 'L' %}<span class="badge bg-danger form-badge">L</span>
+                                {% if c == 'W' %}<span class="badge bg-success form-badge">G</span>
+                                {% elif c == 'D' %}<span class="badge bg-secondary form-badge">E</span>
+                                {% elif c == 'L' %}<span class="badge bg-danger form-badge">P</span>
                                 {% endif %}
                             {% endfor %}
                         </td>
@@ -77,17 +77,17 @@
         </div>
     </div>
     <p class="mt-2 small text-muted">
-        <span class="badge bg-success">1st</span> Champions qualification
-        <span class="badge bg-danger ms-2">Relegation zone</span>
+        <span class="badge bg-success">1.º</span> Primera posición
+        <span class="badge bg-danger ms-2">Últimas posiciones</span>
     </p>
     {% else %}
-    <div class="alert alert-info">Todavía no hay clasificación. Añade una temporada y equipos para empezar.</div>
+    <div class="alert alert-info">La clasificación estará disponible cuando haya partidos contabilizados.</div>
     {% endif %}
 </div>
 
 {% if season %}
 <p class="mt-3">
-    <button class="btn btn-outline-primary btn-sm" id="refresh-table">Refresh Table (AJAX)</button>
+    <button class="btn btn-outline-primary btn-sm" id="refresh-table">Actualizar clasificación</button>
 </p>
 {% endif %}
 
