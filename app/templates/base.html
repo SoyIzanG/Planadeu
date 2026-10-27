@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#101820">
 
-    <title>{% block title %}Liga de Fútbol{% endblock %}</title>
+    <title>{% block title %}UE Planadeu | Fútbol y competición{% endblock %}</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
@@ -84,7 +84,20 @@
 
         main.container {
             min-height: 70vh;
+            padding-top: .75rem;
+            padding-bottom: 2rem;
         }
+
+        body { line-height: 1.55; }
+        .navbar { position: sticky; top: 0; z-index: 1030; box-shadow: 0 6px 24px rgba(0,0,0,.12); }
+        .navbar .container { min-height: 68px; }
+        h1, h2, h3 { letter-spacing: -.035em; font-weight: 800; }
+        .card { overflow: hidden; box-shadow: 0 8px 26px rgba(16,24,32,.055); transition: box-shadow .18s ease; }
+        .card:hover { box-shadow: 0 12px 32px rgba(16,24,32,.09); }
+        .card-header { padding: .9rem 1.1rem; font-weight: 750; background: #fff; border-bottom: 1px solid #e8edf0; }
+        .btn { border-radius: 9px; font-weight: 650; }
+        .table thead th { white-space: nowrap; font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; }
+        .table tbody td { vertical-align: middle; }
 
         .card {
             min-width: 0;
@@ -221,7 +234,7 @@
         <div class="container">
             <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
                 <i class="bi bi-trophy-fill brand-mark"></i>
-                Liga de Fútbol
+                UE Planadeu
             </a>
 
             <button class="navbar-toggler" type="button"
@@ -292,8 +305,8 @@
     </main>
 
     <footer class="container py-4 text-muted small text-center">
-        <div>Portal de competición · Liga de Fútbol</div>
-        <div class="mt-1">Resultados, clasificación y estadísticas.</div>
+        <div class="fw-bold">UE Planadeu</div>
+        <div class="mt-1">Fútbol · Partidos · Clasificación</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
