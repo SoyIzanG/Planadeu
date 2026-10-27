@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ team.name }} - League Site{% endblock %}
+{% block title %}{{ team.name }} | UE Planadeu{% endblock %}
 
 {% block content %}
 <div class="row">
@@ -19,12 +19,12 @@
     <div class="col-md-8">
         {% if standing %}
         <div class="card shadow mb-4">
-            <div class="card-header">Current Standing ({{ season.name }})</div>
+            <div class="card-header">Clasificación actual ({{ season.name }})</div>
             <div class="card-body">
                 <p class="mb-0">
-                    <strong>Position:</strong> {{ standing.position }}
-                    <strong class="ms-3">Points:</strong> {{ standing.points }}
-                    <strong class="ms-3">Form:</strong>
+                    <strong>Posición:</strong> {{ standing.position }}
+                    <strong class="ms-3">Puntos:</strong> {{ standing.points }}
+                    <strong class="ms-3">Racha:</strong>
                     {% for c in standing.form or '' %}
                         {% if c == 'W' %}<span class="badge bg-success">W</span>
                         {% elif c == 'D' %}<span class="badge bg-secondary">D</span>
@@ -37,11 +37,12 @@
         {% endif %}
 
         <div class="card shadow">
-            <div class="card-header">Squad</div>
+            <div class="card-header d-flex align-items-center justify-content-between"><span>Plantilla</span><span class="badge bg-warning text-dark">EN CONSTRUCCIÓN</span></div>
             <div class="card-body p-0">
-                {% if team.players.count() %}
+                <div class="alert alert-warning rounded-0 mb-0 border-0"><i class="bi bi-cone-striped me-2"></i>La sección de jugadores está en construcción. Los datos se están preparando para su publicación.</div>
+                {% if false and team.players.count() %}
                 <table class="table table-sm mb-0">
-                    <thead><tr><th>#</th><th>Jugador</th><th>Pos</th><th>Apps</th><th>Goals</th><th>Assists</th></tr></thead>
+                    <thead><tr><th>#</th><th>Jugador</th><th>Posición</th><th>Partidos</th><th>Goles</th><th>Asistencias</th></tr></thead>
                     <tbody>
                         {% for p in team.players.order_by('jersey_number') %}
                         <tr>
@@ -56,7 +57,7 @@
                     </tbody>
                 </table>
                 {% else %}
-                <p class="p-3 mb-0 text-muted">No players registered.</p>
+                <p class="p-3 mb-0 text-muted">Plantilla en preparación.</p>
                 {% endif %}
             </div>
         </div>
