@@ -2,7 +2,7 @@
 Matches routes - fixtures list, match detail.
 """
 
-from flask import render_template, request
+from flask import jsonify, render_template, request, url_for
 from app.blueprints.matches import matches_bp
 from app.models import Match, MatchEvent, Season
 
@@ -33,6 +33,32 @@ def list_matches():
         matches=matches,
         by_matchday=by_matchday,
     )
+
+
+@matches_bp.route("/api/results")
+def results_api():
+    """Published match results for opt-in browser notifications."""
+    season = Season.query.filter_by(is_active=True).first()
+    if not season:
+        season = Season.query.order_by(Season.start_date.desc()).first()
+    if not season:
+        return jsonify([])
+
+    matches = Match.query.filter_by(season_id=season.id).filter(
+        Match.is_played.is_(True),
+        Match.home_goals.isnot(None),
+        Match.away_goals.isnot(None),
+    ).order_by(Match.kickoff.desc()).all()
+
+    return jsonify([{
+        "id": match.id,
+        "home": match.home_team.name,
+        "away": match.away_team.name,
+        "home_goals": match.home_goals,
+        "away_goals": match.away_goals,
+        "signature": f"{match.home_goals}-{match.away_goals}",
+        "url": url_for("matches.detail", match_id=match.id),
+    } for match in matches])
 
 
 @matches_bp.route("/<int:match_id>")
