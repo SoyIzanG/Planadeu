@@ -1,11 +1,28 @@
 {% extends "base.html" %}
 {% block title %}Clasificación | UE Planadeu{% endblock %}
 
+{% block extra_css %}
+<style>
+@media print {
+  nav, footer, .no-print, #refresh-table, .alert { display: none !important; }
+  body { background: #fff !important; }
+  main, .container, #table-container, .card { width: 100% !important; max-width: 100% !important; box-shadow: none !important; border: 0 !important; }
+  .table { font-size: 10pt !important; }
+  .table thead { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  a { color: #000 !important; text-decoration: none !important; }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <h1 class="mb-4">
     Clasificación de la liga
     {% if season %}<small class="text-muted">{{ season.name }}</small>{% endif %}
 </h1>
+
+<div class="d-flex justify-content-end mb-3 no-print">
+    <button type="button" class="btn btn-primary" id="export-pdf"><i class="bi bi-file-earmark-pdf me-2"></i>Exportar clasificación en PDF</button>
+</div>
 
 <div id="table-container">
     {% if standings %}
@@ -96,6 +113,7 @@
 {% block extra_js %}
 {% if season %}
 <script>
+document.getElementById('export-pdf')?.addEventListener('click', function() { window.print(); });
 document.getElementById('refresh-table')?.addEventListener('click', function() {
     fetch('/api/table')
         .then(r => r.json())
