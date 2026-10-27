@@ -1,109 +1,20 @@
 {% extends "base.html" %}
-{% block title %}Estadísticas - League Site{% endblock %}
+{% block title %}Estadísticas - Planadeu{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">
-    Estadísticas
-    {% if season %}<small class="text-muted">{{ season.name }}</small>{% endif %}
-</h1>
-
-<div class="row">
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow h-100">
-            <div class="card-header bg-dark text-white">Máximos goleadores</div>
-            <div class="card-body p-0">
-                {% if top_scorers %}
-                <table class="table table-sm mb-0">
-                    <thead><tr><th>#</th><th>Jugador</th><th>Equipo</th><th>Goals</th></tr></thead>
-                    <tbody>
-                        {% for p in top_scorers %}
-                        <tr>
-                            <td>{{ loop.index }}</td>
-                            <td><a href="{{ url_for('players.profile', player_id=p.id) }}">{{ p.full_name }}</a></td>
-                            <td>{{ p.team.name }}</td>
-                            <td><strong>{{ p.goals }}</strong></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p class="p-3 mb-0 text-muted">Sin datos</p>
-                {% endif %}
+<section class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 text-center">
+                <div class="card-body py-5 px-4">
+                    <div class="display-4 mb-3" aria-hidden="true">🚧</div>
+                    <span class="badge bg-warning text-dark mb-3">EN CONSTRUCCIÓN</span>
+                    <h1 class="h2 mb-3">Estadísticas</h1>
+                    <p class="lead text-muted mb-3">Estamos preparando esta sección.</p>
+                    <p class="text-muted mb-0">Publicaremos goleadores, asistencias, tarjetas y estadísticas individuales cuando los datos estén verificados. Preferimos esperar antes que mostrar cifras incompletas o incorrectas.</p>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow h-100">
-            <div class="card-header bg-dark text-white">Máximos asistentes</div>
-            <div class="card-body p-0">
-                {% if top_assists %}
-                <table class="table table-sm mb-0">
-                    <thead><tr><th>#</th><th>Jugador</th><th>Equipo</th><th>Assists</th></tr></thead>
-                    <tbody>
-                        {% for p in top_assists %}
-                        <tr>
-                            <td>{{ loop.index }}</td>
-                            <td><a href="{{ url_for('players.profile', player_id=p.id) }}">{{ p.full_name }}</a></td>
-                            <td>{{ p.team.name }}</td>
-                            <td><strong>{{ p.assists }}</strong></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p class="p-3 mb-0 text-muted">Sin datos</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow h-100">
-            <div class="card-header bg-dark text-white">Porterías a cero (porteros/defensas)</div>
-            <div class="card-body p-0">
-                {% if clean_sheets %}
-                <table class="table table-sm mb-0">
-                    <thead><tr><th>#</th><th>Jugador</th><th>Equipo</th><th>Clean Sheets</th></tr></thead>
-                    <tbody>
-                        {% for p in clean_sheets %}
-                        <tr>
-                            <td>{{ loop.index }}</td>
-                            <td><a href="{{ url_for('players.profile', player_id=p.id) }}">{{ p.full_name }}</a></td>
-                            <td>{{ p.team.name }}</td>
-                            <td><strong>{{ p.clean_sheets }}</strong></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p class="p-3 mb-0 text-muted">Sin datos</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow h-100">
-            <div class="card-header bg-dark text-white">Jugadores con más tarjetas</div>
-            <div class="card-body p-0">
-                {% if most_cards %}
-                <table class="table table-sm mb-0">
-                    <thead><tr><th>#</th><th>Jugador</th><th>Equipo</th><th>Y</th><th>R</th></tr></thead>
-                    <tbody>
-                        {% for p in most_cards %}
-                        <tr>
-                            <td>{{ loop.index }}</td>
-                            <td><a href="{{ url_for('players.profile', player_id=p.id) }}">{{ p.full_name }}</a></td>
-                            <td>{{ p.team.name }}</td>
-                            <td>{{ p.yellow_cards }}</td>
-                            <td>{{ p.red_cards }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p class="p-3 mb-0 text-muted">Sin datos</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
+</section>
 {% endblock %}
