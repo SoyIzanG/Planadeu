@@ -122,16 +122,27 @@
 {% block extra_js %}
 {% if season %}
 <script>
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
+function renderForm(form) {
+    return String(form || '').slice(0, 5).split('').map(result => {
+        const classes = result === 'W' ? 'bg-success' : (result === 'D' ? 'bg-secondary' : 'bg-danger');
+        const label = result === 'W' ? 'G' : (result === 'D' ? 'E' : 'P');
+        return '<span class="badge ' + classes + ' form-badge">' + label + '</span>';
+    }).join(' ');
+}
 document.getElementById('export-pdf')?.addEventListener('click', function() { window.print(); });
 document.getElementById('refresh-table')?.addEventListener('click', function() {
     fetch('/api/table')
         .then(r => r.json())
         .then(data => {
             if (data.standings && data.standings.length > 0) {
-                let html = '<div class="card shadow"><div class="table-responsive"><table class="table table-hover mb-0"><thead class="table-dark"><tr><th>#</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th><th>Form</th></tr></thead><tbody>';
+                let html = '<div class="card shadow"><div class="table-responsive"><table class="table table-hover mb-0"><thead class="table-dark"><tr><th>#</th><th>Club</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts.</th><th>Racha</th></tr></thead><tbody>';
                 data.standings.forEach(s => {
-                    const rowClass = s.position === 1 ? 'table-champions' : '';
-                    html += `<tr class="${rowClass}"><td>${s.position}</td><td>${s.team_name}</td><td>${s.played}</td><td>${s.won}</td><td>${s.drawn}</td><td>${s.lost}</td><td>${s.goals_for}</td><td>${s.goals_against}</td><td>${s.goal_difference >= 0 ? '+' : ''}${s.goal_difference}</td><td><strong>${s.points}</strong></td><td>${s.form}</td></tr>`;
+                    const rowClass = s.position === 1 ? 'table-champions' : (s.position >= data.standings.length - 2 && data.standings.length > 3 ? 'table-relegation' : '');
+                    const logo = s.team_logo ? '<img src="' + escapeHtml(s.team_logo) + '" alt="Escudo de ' + escapeHtml(s.team_name) + '" loading="eager" style="width:30px;height:30px;object-fit:contain;flex-shrink:0;">' : '<span class="d-inline-flex align-items-center justify-content-center bg-light border rounded-circle" style="width:30px;height:30px;flex-shrink:0;"><i class="bi bi-shield-fill text-secondary"></i></span>';
+                    html += '<tr class="' + rowClass + '"><td>' + s.position + '</td><td><a href="/teams/' + encodeURIComponent(s.team_id) + '" class="text-decoration-none text-dark fw-medium d-inline-flex align-items-center gap-2">' + logo + '<span>' + escapeHtml(s.team_name) + '</span></a></td><td>' + s.played + '</td><td>' + s.won + '</td><td>' + s.drawn + '</td><td>' + s.lost + '</td><td>' + s.goals_for + '</td><td>' + s.goals_against + '</td><td><span class="' + (s.goal_difference > 0 ? 'text-success' : (s.goal_difference < 0 ? 'text-danger' : '')) + '">' + (s.goal_difference >= 0 ? '+' : '') + s.goal_difference + '</span></td><td><strong>' + s.points + '</strong></td><td>' + renderForm(s.form) + '</td></tr>';
                 });
                 html += '</tbody></table></div></div>';
                 document.getElementById('table-container').innerHTML = html;
