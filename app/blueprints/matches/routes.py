@@ -77,11 +77,3 @@ def detail(match_id):
         match=match,
         events=events,
     )
-
-
-@matches_bp.route("/notificaciones")
-def notification_settings():
-    """Private notification preferences page for signed-in users only."""
-    if not current_user.is_authenticated:
-        return redirect(url_for("auth.login", next=request.path))
-    return render_template("matches/notifications.html")
