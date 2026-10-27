@@ -5,9 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#243b53">
-    <meta name="description" content="Sigue La Liga: calendario de partidos, resultados, clasificación, equipos y estadísticas de la competición en un solo lugar.">
+    <meta name="description" content="Sigue la competición de fútbol: calendario de partidos, resultados, clasificación y equipos en La Liga. Toda la información de cada jornada en un solo lugar.">
     <meta property="og:title" content="La Liga | Fútbol y competición">
-    <meta property="og:description" content="Partidos, resultados, clasificación y equipos. Toda la competición, al día.">
+    <meta property="og:description" content="Calendario, resultados, clasificación y equipos. Sigue cada jornada de fútbol en un solo lugar.">
+    <meta property="og:image" content="https://planadeu.onrender.com/static/preview-logo.svg">
+    <meta property="og:image:alt" content="La Liga — Fútbol y competición">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="La Liga | Fútbol y competición">
+    <meta name="twitter:description" content="Calendario, resultados, clasificación y equipos. Sigue cada jornada de fútbol en un solo lugar.">
+    <meta name="twitter:image" content="https://planadeu.onrender.com/static/preview-logo.svg">
     <meta property="og:type" content="website">
 
     <title>{% block title %}La Liga | Fútbol y competición{% endblock %}</title>
@@ -249,40 +255,74 @@
             color: #356da8;
         }
 
-        /* Ajustes para móviles y pantallas pequeñas. */
+        /* Menú móvil: panel compacto, táctil y claramente organizado. */
         @media (max-width: 991.98px) {
             .navbar .container {
-                padding: .65rem 1rem;
+                padding: .7rem 1rem;
                 align-items: center;
             }
 
             .navbar-collapse {
-                margin-top: .8rem;
-                padding: .55rem;
-                border: 1px solid rgba(255,255,255,.12);
-                border-radius: 16px;
-                background: #1b3046;
-                box-shadow: 0 14px 28px rgba(8,20,34,.2);
+                margin-top: .7rem;
+                padding: .7rem;
+                border: 1px solid rgba(201,163,77,.36);
+                border-radius: 18px;
+                background: linear-gradient(155deg, #1c334b 0%, #15283d 100%);
+                box-shadow: 0 18px 36px rgba(8,20,34,.32);
             }
 
-            .navbar-nav { width: 100%; gap: .2rem; }
-            .navbar-nav + .navbar-nav {
-                margin-top: .35rem;
-                padding-top: .45rem;
-                border-top: 1px solid rgba(255,255,255,.13);
+            .navbar-collapse .navbar-nav {
+                width: 100%;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: .4rem;
             }
 
-            .nav-link {
+            .navbar-collapse .navbar-nav + .navbar-nav {
+                display: flex;
+                flex-direction: column;
+                margin-top: .65rem;
+                padding-top: .65rem;
+                border-top: 1px solid rgba(255,255,255,.14);
+            }
+
+            .navbar-collapse .nav-item { min-width: 0; }
+
+            .navbar-collapse .nav-link {
                 display: flex;
                 align-items: center;
-                min-height: 46px;
-                padding: .72rem .85rem !important;
-                border-radius: 10px;
-                font-size: .98rem;
-                font-weight: 600;
+                min-height: 48px;
+                height: 100%;
+                padding: .7rem .75rem !important;
+                border: 1px solid rgba(255,255,255,.075);
+                border-radius: 12px;
+                background: rgba(255,255,255,.045);
+                color: #edf4fb !important;
+                font-size: .94rem;
+                font-weight: 650;
+                line-height: 1.25;
+                overflow-wrap: anywhere;
             }
-            .nav-link:hover, .nav-link:focus { background: rgba(255,255,255,.08); }
-            .navbar-nav .nav-item:last-child .nav-link { margin-bottom: 0; }
+
+            .navbar-collapse .nav-link:hover,
+            .navbar-collapse .nav-link:focus,
+            .navbar-collapse .nav-link:active {
+                color: #fff !important;
+                border-color: rgba(201,163,77,.6);
+                background: rgba(143,183,223,.16);
+            }
+
+            .navbar-collapse .navbar-nav:last-child .nav-link {
+                min-height: 44px;
+                background: rgba(255,255,255,.075);
+            }
+
+            .navbar-toggler {
+                flex: 0 0 auto;
+                margin-left: .5rem;
+                background: rgba(255,255,255,.045);
+            }
+
             main.container {
                 min-height: 65vh;
                 margin-top: 1rem !important;
