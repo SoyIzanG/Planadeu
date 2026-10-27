@@ -72,6 +72,11 @@ def norm(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
 
 
+def compact(value: str) -> str:
+    """Normalize punctuation/spacing variants such as 'U.E. Rubí' vs 'UE Rubí'."""
+    return norm(value).replace(" ", "")
+
+
 class CandidateParser(HTMLParser):
     """Collect likely fixture rows/cards without assuming one specific HTML layout."""
     def __init__(self):
@@ -175,9 +180,12 @@ def parse_round(html: str, official_teams: list[str]):
     parser = CandidateParser()
     parser.feed(html)
     team_lookup = {norm(team): team for team in official_teams}
+    # Match canonical database names irrespective of punctuation, then attach the
+    # source-side names. For example, "U.E. Rubí" and "UE Rubí" are equivalent.
     for team in official_teams:
+        team_compact = compact(team)
         for canonical_key, aliases in TEAM_ALIASES.items():
-            if norm(team) == canonical_key:
+            if team_compact == compact(canonical_key):
                 for alias in aliases:
                     team_lookup[norm(alias)] = team
     fixtures = {}
@@ -213,7 +221,9 @@ def parse_round(html: str, official_teams: list[str]):
     bye = None
     # Futbuteo labels the resting club "Descans" (Catalan), often immediately
     # followed by its abbreviated club name rather than "Descansa: Team".
-    bye_match = re.search(r"\bdescans(?:a)?\b", full_text, re.I)
+    # In Futbuteo's compacted text, team badges can touch the word (e.g.
+    # "DEDescansMAMATADEPERENC"), so word boundaries are unreliable here.
+    bye_match = re.search(r"descans(?:a)?", full_text, re.I)
     if bye_match:
         bye_tail = norm(full_text[bye_match.end():bye_match.end() + 220])
         possible = []
