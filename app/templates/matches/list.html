@@ -22,8 +22,22 @@
 
                 <div class="match-teams">
                   <a href="{{ url_for('matches.detail', match_id=m.id) }}" class="text-decoration-none text-dark"> 
-                    <div class="team">{{ m.home_team.name }}</div>
-                    <div class="team">{{ m.away_team.name }}</div>
+                    <div class="team d-flex align-items-center gap-2">
+                      {% if m.home_team.logo_filename %}
+                      <img src="{{ m.home_team.logo_filename|asset_url('team') }}" alt="Escudo de {{ m.home_team.name }}" loading="lazy" style="width:28px;height:28px;object-fit:contain;flex-shrink:0;">
+                      {% else %}
+                      <span class="d-inline-flex align-items-center justify-content-center bg-light border rounded-circle" style="width:28px;height:28px;flex-shrink:0;"><i class="bi bi-shield-fill text-secondary"></i></span>
+                      {% endif %}
+                      <span>{{ m.home_team.name }}</span>
+                    </div>
+                    <div class="team d-flex align-items-center gap-2">
+                      {% if m.away_team.logo_filename %}
+                      <img src="{{ m.away_team.logo_filename|asset_url('team') }}" alt="Escudo de {{ m.away_team.name }}" loading="lazy" style="width:28px;height:28px;object-fit:contain;flex-shrink:0;">
+                      {% else %}
+                      <span class="d-inline-flex align-items-center justify-content-center bg-light border rounded-circle" style="width:28px;height:28px;flex-shrink:0;"><i class="bi bi-shield-fill text-secondary"></i></span>
+                      {% endif %}
+                      <span>{{ m.away_team.name }}</span>
+                    </div>
                   </a>
                 </div>
 
