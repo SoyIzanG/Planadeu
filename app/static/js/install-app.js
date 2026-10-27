@@ -52,9 +52,14 @@
     .install-modal-backdrop.device-iphone .install-modal { animation:installIphoneUp .78s cubic-bezier(.2,1.35,.35,1) .03s both; }
     .install-modal-backdrop.device-samsung .install-modal { animation:installSamsungUp .72s cubic-bezier(.16,1.2,.3,1) .03s both; box-shadow:0 -20px 70px rgba(22,80,115,.32); }
     .install-modal-backdrop.device-android .install-modal { animation:installAndroidUp .68s cubic-bezier(.2,.9,.25,1) .03s both; }
-    .install-modal-backdrop.device-ipad .install-modal,.install-modal-backdrop.device-tablet .install-modal,.install-modal-backdrop.device-samsung-tablet .install-modal { width:min(590px,calc(100vw - 2rem)); margin-bottom:1.5rem; border-radius:25px; border-bottom:1px solid rgba(255,255,255,.8); animation:installTabletLift .72s cubic-bezier(.16,1,.3,1) .03s both; transform-origin:bottom center; }
+    .install-modal-backdrop.device-ipad .install-modal,.install-modal-backdrop.device-tablet .install-modal,.install-modal-backdrop.device-samsung-tablet .install-modal { width:min(590px,calc(100vw - 2rem)); margin-bottom:1.5rem; border-radius:25px; border-bottom:1px solid rgba(255,255,255,.8); transform-origin:bottom center; }
+    .install-modal-backdrop.device-ipad .install-modal { animation:installIPadLift .78s cubic-bezier(.2,1.25,.3,1) .03s both; }
+    .install-modal-backdrop.device-tablet .install-modal { animation:installTabletLift .68s cubic-bezier(.18,.95,.28,1) .03s both; }
+    .install-modal-backdrop.device-samsung-tablet .install-modal { animation:installSamsungTabLift .76s cubic-bezier(.16,1.15,.28,1) .03s both; box-shadow:0 -20px 70px rgba(22,80,115,.3); }
     .install-modal-backdrop.device-desktop,.install-modal-backdrop.device-mac { align-items:flex-end; justify-content:flex-end; padding:1.25rem; }
-    .install-modal-backdrop.device-desktop .install-modal,.install-modal-backdrop.device-mac .install-modal { width:min(470px,calc(100vw - 2.5rem)); max-height:76vh; margin-bottom:.5rem; border-radius:24px; border-bottom:1px solid rgba(255,255,255,.8); transform-origin:bottom right; animation:installDesktopRise .62s cubic-bezier(.18,1,.3,1) .02s both; }
+    .install-modal-backdrop.device-desktop .install-modal,.install-modal-backdrop.device-mac .install-modal { width:min(470px,calc(100vw - 2.5rem)); max-height:76vh; margin-bottom:.5rem; border-radius:24px; border-bottom:1px solid rgba(255,255,255,.8); transform-origin:bottom right; }
+    .install-modal-backdrop.device-desktop .install-modal { animation:installDesktopRise .62s cubic-bezier(.18,1,.3,1) .02s both; }
+    .install-modal-backdrop.device-mac .install-modal { animation:installMacRise .68s cubic-bezier(.2,1,.3,1) .02s both; }
     .install-modal .install-device-note { display:flex; gap:.6rem; align-items:center; padding:.7rem .8rem; border-radius:13px; background:rgba(224,235,247,.72); margin:.8rem 0; color:#314d68; font-size:.9rem; }
     .install-modal .install-device-note .device-symbol { font-size:1.35rem; }
     .install-modal .install-device-note strong { display:block; color:#243b53; }
@@ -65,7 +70,10 @@
     @keyframes installSamsungUp { 0% { transform:translateY(115%) rotate(1deg); opacity:.65; filter:blur(3px); } 65% { transform:translateY(-8px) rotate(0); opacity:1; filter:blur(0); } 100% { transform:translateY(0); opacity:1; filter:blur(0); } }
     @keyframes installAndroidUp { 0% { transform:translateY(115%); opacity:.65; } 75% { transform:translateY(-5px); opacity:1; } 100% { transform:translateY(0); opacity:1; } }
     @keyframes installTabletLift { 0% { transform:translateY(80px) scale(.96); opacity:0; } 70% { transform:translateY(-5px) scale(1.008); opacity:1; } 100% { transform:translateY(0) scale(1); opacity:1; } }
+    @keyframes installIPadLift { 0% { transform:translateY(95px) rotateX(9deg) scale(.93); opacity:0; filter:blur(3px); } 68% { transform:translateY(-6px) rotateX(0) scale(1.01); opacity:1; filter:blur(0); } 100% { transform:translateY(0) rotateX(0) scale(1); opacity:1; filter:blur(0); } }
+    @keyframes installSamsungTabLift { 0% { transform:translateY(105px) translateX(14px) scale(.94); opacity:0; } 65% { transform:translateY(-6px) translateX(0) scale(1.01); opacity:1; } 100% { transform:translateY(0) translateX(0) scale(1); opacity:1; } }
     @keyframes installDesktopRise { 0% { transform:translateY(75px) scale(.94); opacity:0; } 70% { transform:translateY(-4px) scale(1.005); opacity:1; } 100% { transform:translateY(0) scale(1); opacity:1; } }
+    @keyframes installMacRise { 0% { transform:translateY(70px) translateX(18px) scale(.93); opacity:0; } 68% { transform:translateY(-5px) translateX(0) scale(1.01); opacity:1; } 100% { transform:translateY(0) translateX(0) scale(1); opacity:1; } }
     @media(max-width:600px) {
       .install-modal-backdrop.device-desktop,.install-modal-backdrop.device-mac { justify-content:center; padding:0; }
       .install-modal-backdrop.device-desktop .install-modal,.install-modal-backdrop.device-mac .install-modal { width:100%; margin:0; border-radius:26px 26px 0 0; border-bottom:0; animation:installSheetUp .72s cubic-bezier(.16,1,.3,1) .03s both; }
