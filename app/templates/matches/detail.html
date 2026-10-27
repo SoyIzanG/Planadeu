@@ -22,7 +22,7 @@
             <div class="text-center mb-4">
                 <div class="competition-kicker"><span class="competition-dot"></span>LA LIGA <span class="competition-separator">·</span> JUVENIL · GRUP 29</div>
                 <div class="small text-uppercase fw-bold text-secondary tracking-wide mt-2">
-                    {% if match.matchday == 0 %}Historial anterior{% else %}Jornada {{ match.matchday }}{% endif %}
+                    {% if match.matchday == 0 %}Historial anterior{% else %}Jornada {{ 1 if match.matchday == 5 else match.matchday }}{% endif %}
                 </div>
                 <div class="text-secondary mt-2"><i class="bi bi-calendar3 me-2"></i>{% if planadeu_pending %}Fecha y hora pendientes de confirmación{% else %}{{ match.kickoff.strftime('%A, %d de %B de %Y · %H:%M') }}{% endif %}</div>
             </div>
