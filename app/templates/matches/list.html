@@ -28,9 +28,13 @@
                 </div>
 
                 <div class="match-score">
-                  <a href="{{ url_for('matches.detail', match_id=m.id) }}" class="text-decoration-none text-dark">
-                    {{ m.score_display1 | safe }}
-                  </a>
+                  {% if m.home_team.name == "UE Planadeu" or m.away_team.name == "UE Planadeu" %}
+                    <small class="text-warning fw-bold">PARTIDO PENDIENTE DE CONFIRMAR</small>
+                  {% else %}
+                    <a href="{{ url_for('matches.detail', match_id=m.id) }}" class="text-decoration-none text-dark">
+                      {{ m.score_display1 | safe }}
+                    </a>
+                  {% endif %}
                 </div>
             </li>
 
