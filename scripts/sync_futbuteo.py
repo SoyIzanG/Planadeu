@@ -248,16 +248,23 @@ def parse_round(html: str, official_teams: list[str]):
         and set(used) | {bye} == set(official_teams)
     )
     if not valid:
-        # Explain which stage is empty so a blocked/changed source can be
-        # distinguished from a team-name or date parser problem.
-        visible_text = norm(html_lib.unescape(re.sub(r"<[^>]+>", " ", html)))
-        team_hits = sum(1 for team in official_teams if norm(team) and norm(team) in visible_text)
-        date_hits = len(SHORT_DATE_RE.findall(html_lib.unescape(re.sub(r"<[^>]+>", " ", html))))
+        # Diagnostic counts canonical names and source aliases, so different
+        # naming conventions do not incorrectly look like an empty source.
+        visible_html = html_lib.unescape(re.sub(r"<[^>]+>", " ", html))
+        visible_text = norm(visible_html)
+        recognized_teams = {
+            team for key, team in team_lookup.items()
+            if key and key in visible_text
+        }
+        date_hits = len(SHORT_DATE_RE.findall(visible_html))
         return None, (
             f"validación incompleta: {len(fixtures_list)} partidos candidatos, "
-            f"{len(set(used))} equipos distintos, descanso={'detectado' if bye else 'no detectado'}; "
-            f"diagnóstico fuente: HTML={len(html)} caracteres, tarjetas={len(parser.candidates)}, "
-            f"nombres oficiales reconocidos en texto={team_hits}/15, fechas visibles={date_hits}"
+            f"{len(set(used))} equipos distintos, "
+            f"descanso={'detectado' if bye else 'no detectado'}; "
+            f"diagnóstico fuente: HTML={len(html)} caracteres, "
+            f"tarjetas={len(parser.candidates)}, "
+            f"nombres oficiales/alias reconocidos en texto={len(recognized_teams)}/15, "
+            f"fechas visibles={date_hits}"
         )
     return {"fixtures": fixtures_list, "bye": bye}, None
 
