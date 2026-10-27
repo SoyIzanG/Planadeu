@@ -94,12 +94,6 @@
 
     .private-notification-page { padding: .5rem 0 2rem; min-height:55vh; animation:contentReveal .25s ease-out both; }
     .private-notification-page .result-notifications { margin-top:1rem; }
-    .app-settings-menu { position:relative; margin-left:.5rem; }
-    .app-settings-trigger { border:1px solid rgba(255,255,255,.28); color:#fff; background:rgba(255,255,255,.06); border-radius:12px; width:44px; height:44px; font-size:1.4rem; line-height:1; }
-    .app-settings-popover { position:absolute; z-index:1085; right:0; top:calc(100% + .65rem); width:min(290px,calc(100vw - 2rem)); padding:.8rem; border:1px solid #d6e0eb; border-radius:16px; background:#fff; color:#243b53; box-shadow:0 16px 42px rgba(8,20,34,.24); animation:settingsPop .24s cubic-bezier(.2,.8,.2,1); }
-    .app-settings-popover[hidden] { display:none; }
-    .app-settings-popover button { display:flex; width:100%; align-items:center; gap:.6rem; padding:.7rem; border:0; border-radius:10px; background:transparent; color:inherit; text-align:left; font-weight:650; }
-    .app-settings-popover button:hover { background:#edf4fb; }
     .notify-intro-backdrop { position:fixed; inset:0; z-index:1090; display:flex; align-items:flex-end; justify-content:center; background:rgba(8,20,34,.55); backdrop-filter:blur(5px); animation:installBackdropIn .3s ease both; }
     .notify-intro-window { width:min(560px,100%); padding:1.5rem 1.25rem max(1.35rem,env(safe-area-inset-bottom)); border-radius:24px 24px 0 0; color:#243b53; background:linear-gradient(145deg,#fff,#eaf3fc); box-shadow:0 -16px 60px rgba(0,0,0,.25); animation:notifyIntroRise .64s cubic-bezier(.16,1,.3,1) both; }
     .notify-intro-window h2 { font-size:1.35rem; margin:.2rem 0 .5rem; }
@@ -113,7 +107,7 @@
     .notify-intro-backdrop.device-samsung .notify-intro-window { animation:notifyIntroRise .58s cubic-bezier(.18,.9,.22,1) both; }
     .notify-intro-backdrop.device-desktop,.notify-intro-backdrop.device-mac { align-items:flex-end; justify-content:flex-end; padding:1rem; }
     .notify-intro-backdrop.device-desktop .notify-intro-window,.notify-intro-backdrop.device-mac .notify-intro-window { width:min(430px,calc(100vw - 2rem)); border-radius:22px; margin-bottom:.5rem; animation:settingsPop .32s cubic-bezier(.2,.8,.2,1) both; }
-    @media(prefers-reduced-motion:reduce) { .notify-intro-window,.notify-intro-backdrop,.app-settings-popover { animation:none !important; } }
+    @media(prefers-reduced-motion:reduce) { .notify-intro-window,.notify-intro-backdrop }
     @keyframes leagueToastIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
     @media(prefers-reduced-motion:reduce) { .league-toast { animation:none; } }
   `;
@@ -396,7 +390,7 @@
     backdrop.className = "notify-intro-backdrop device-" + deviceType;
     backdrop.setAttribute("role","dialog");
     backdrop.setAttribute("aria-modal","true");
-    backdrop.innerHTML = '<section class="notify-intro-window"><h2>🔔 Configura tus notificaciones</h2><p>Elige si quieres avisos de resultados. Puedes cambiarlo cuando quieras desde el menú ⋮.</p><div class="intro-actions"><button type="button" data-action="configure">Configurar ahora</button><button type="button" class="secondary" data-action="later">Ahora no</button></div></section>';
+    backdrop.innerHTML = '<section class="notify-intro-window"><h2>🔔 Configura tus notificaciones</h2><p>Elige si quieres avisos de resultados. Puedes cambiarlo cuando quieras desde el menú de las tres barras.</p><div class="intro-actions"><button type="button" data-action="configure">Configurar ahora</button><button type="button" class="secondary" data-action="later">Ahora no</button></div></section>';
     document.body.appendChild(backdrop);
     backdrop.querySelector('[data-action="configure"]').addEventListener("click", () => {
       backdrop.remove();
