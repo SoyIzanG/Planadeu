@@ -15,8 +15,8 @@
     <style>
         :root {
             --league-primary: #ffffff;
-            --league-secondary: #dce9f8;
-            --league-background: #ffffff;
+            --league-secondary: #d9e2ec;
+            --league-background: #f5f7fa;
             --league-text: #202a35;
         }
 
@@ -141,7 +141,7 @@
         }
 
         body { line-height: 1.55; }
-        .navbar { position: sticky; top: 0; z-index: 1030; box-shadow: 0 6px 24px rgba(0,0,0,.12); }
+        .navbar { position: sticky; top: 0; z-index: 1030; box-shadow: 0 3px 14px rgba(20,35,55,.055); }
         .navbar .container { min-height: 68px; }
         h1, h2, h3 { letter-spacing: -.035em; font-weight: 800; }
         .card { overflow: hidden; box-shadow: 0 8px 26px rgba(16,24,32,.055); transition: box-shadow .18s ease; }
@@ -202,7 +202,7 @@
         }
 
         footer {
-            border-top: 1px solid #e0e5e9;
+            border-top: 1px solid #e3e8ee;
             margin-top: 2rem;
         }
 
@@ -282,7 +282,7 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container">
             <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
                 <i class="bi bi-trophy-fill brand-mark"></i>
