@@ -10,7 +10,7 @@
 {% if by_matchday %}
 {% for matchday in by_matchday.keys()|sort %}
 <div class="card shadow mb-4">
-    <div class="card-header">Matchday {{ matchday }}</div>
+    <div class="card-header">{% if matchday == 0 %}Historial anterior{% else %}Matchday {{ matchday }}{% endif %}</div>
     <div class="card-body p-0">
         <ul class="list-group list-group-flush">
             {% for m in by_matchday[matchday] %}
