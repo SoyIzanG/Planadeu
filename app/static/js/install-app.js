@@ -300,7 +300,7 @@
     const main = document.querySelector("main.container");
     if (!main || document.querySelector(".result-notifications")) return;
     const panel = document.createElement("section");
-    panel.className = "result-notifications";
+    panel.className = "result-notifications no-print";
     panel.innerHTML = `
       <strong>🔔 Ajustes de notificaciones</strong>
       <p>Elige qué avisos quieres recibir. Por ahora se envían mientras La Liga está abierta en este navegador.</p>
