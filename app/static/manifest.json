@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "La Liga · Fútbol y competición",
+  "short_name": "La Liga",
+  "description": "Calendario, partidos, resultados y clasificación de la competición.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#eaf0f6",
+  "theme_color": "#243b53",
+  "icons": [
+    {
+      "src": "/static/league-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
