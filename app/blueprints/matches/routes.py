@@ -2,7 +2,8 @@
 Matches routes - fixtures list, match detail.
 """
 
-from flask import jsonify, render_template, request, url_for
+from flask import jsonify, render_template, request, url_for, redirect
+from flask_login import current_user
 from app.blueprints.matches import matches_bp
 from app.models import Match, MatchEvent, Season
 
@@ -76,3 +77,11 @@ def detail(match_id):
         match=match,
         events=events,
     )
+
+
+@matches_bp.route("/notificaciones")
+def notification_settings():
+    """Private notification preferences page for signed-in users only."""
+    if not current_user.is_authenticated:
+        return redirect(url_for("auth.login", next=request.path))
+    return render_template("matches/notifications.html")
