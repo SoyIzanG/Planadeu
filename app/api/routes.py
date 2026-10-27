@@ -34,6 +34,7 @@ def table():
                 "position_change": s.position_change,
                 "team_id": s.team_id,
                 "team_name": s.team.name,
+                "team_logo": s.team.logo_filename,
                 "team_short_name": s.team.short_name,
                 "played": s.played,
                 "won": s.won,
