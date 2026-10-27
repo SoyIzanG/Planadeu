@@ -46,6 +46,24 @@ MONTHS = {
 }
 SHORT_DATE_RE = re.compile(r"\b(\d{1,2})\s+(gen(?:er)?|ene(?:ro)?|feb(?:rer|rero)?|mar(?:ç|c|zo)?|abr(?:il)?|mai|mayo|jun(?:y|io)?|jul(?:iol|io)?|ago(?:st|sto)?|set(?:embre)?|sep(?:tiembre)?|oct(?:ubre)?|nov(?:embre|iembre)?|des(?:embre)?|dic(?:iembre)?)\b", re.I)
 TIME_RE = re.compile(r"(?<!\d)([01]?\d|2[0-3]):([0-5]\d)(?!\d)")
+# Names used by Futbuteo can differ from the club names stored in Supabase.
+TEAM_ALIASES = {
+    "cef viladecavalls": ["escola de futbol viladecavalls"],
+    "club natacio terrassa": ["natacio terrassa"],
+    "terrassa fc": ["fundacio terrassa fc 1906"],
+    "club de futbol vacarisses": ["vacarisses club futbol", "vacarisses"],
+    "club de futbol matadepera": ["matadepera fc", "matadepera f c"],
+    "unio fb jabac terrassa": ["unio f base jabac i terrassa", "jabac i terrassa"],
+    "cp san cristobal": ["san cristobal cp", "san cristobal"],
+    "ue rubi": ["rubi ue"],
+    "can trias": ["can trias ud"],
+    "can parellada cd": ["can parellada"],
+    "pueblo nuevo 2002 cf": ["pueblo nuevo 2002"],
+    "athletic matadeperenc": ["matadeperenc athletic", "matadeperenc"],
+    "sant pere nord cf": ["sant pere nord"],
+    "escola futbol can boada": ["escola futbol can boada"],
+    "escola pia terrassa": ["escola pia terrassa"],
+}
 
 
 def norm(value: str) -> str:
@@ -157,6 +175,11 @@ def parse_round(html: str, official_teams: list[str]):
     parser = CandidateParser()
     parser.feed(html)
     team_lookup = {norm(team): team for team in official_teams}
+    for team in official_teams:
+        for canonical_key, aliases in TEAM_ALIASES.items():
+            if norm(team) == canonical_key:
+                for alias in aliases:
+                    team_lookup[norm(alias)] = team
     fixtures = {}
     for candidate, date_context in parser.candidates:
         candidate_norm = norm(candidate)
@@ -188,12 +211,21 @@ def parse_round(html: str, official_teams: list[str]):
     fixtures_list = list(fixtures.values())
     full_text = " ".join(parser.full_text)
     bye = None
-    bye_match = re.search(r"descansa(?:\s*[:\-]?\s+)([^|·\n]+)", full_text, re.I)
+    # Futbuteo labels the resting club "Descans" (Catalan), often immediately
+    # followed by its abbreviated club name rather than "Descansa: Team".
+    bye_match = re.search(r"\bdescans(?:a)?\b", full_text, re.I)
     if bye_match:
-        bye_text = norm(bye_match.group(1))
-        possible = [team for team in official_teams if norm(team) in bye_text]
-        if len(possible) == 1:
-            bye = possible[0]
+        bye_tail = norm(full_text[bye_match.end():bye_match.end() + 220])
+        possible = []
+        for alias, team in team_lookup.items():
+            position = bye_tail.find(alias)
+            if position >= 0:
+                possible.append((position, team))
+        if possible:
+            earliest = min(position for position, _ in possible)
+            nearest = list(dict.fromkeys(team for position, team in possible if position == earliest))
+            if len(nearest) == 1:
+                bye = nearest[0]
 
     used = [team for f in fixtures_list for team in (f["home"], f["away"])]
     valid = (
