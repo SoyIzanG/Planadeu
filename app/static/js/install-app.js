@@ -1,5 +1,8 @@
 (() => {
   "use strict";
+  // Evita inicializar dos veces si la plantilla o una caché incluye el script duplicado.
+  if (window.__laLigaInstallAppInitialized) return;
+  window.__laLigaInstallAppInitialized = true;
   const ua = navigator.userAgent || "";
   const platform = navigator.platform || "";
   const isIPad = /iPad/i.test(ua) || (platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -317,10 +320,15 @@
 
 
   function addSettingsMenu() {
-    if (!(isInstalledApp() || localStorage.getItem(installedFlagKey) === "1")) return;
+    const existingLinks = Array.from(document.querySelectorAll("#nav-notifications-link"));
+    existingLinks.slice(1).forEach(link => link.closest(".nav-item")?.remove());
+    if (!(isInstalledApp() || localStorage.getItem(installedFlagKey) === "1")) {
+      existingLinks.forEach(link => link.closest(".nav-item")?.remove());
+      return;
+    }
     const nav = document.querySelector("#nav");
     const list = nav?.querySelector(".navbar-nav.me-auto");
-    if (!nav || !list || document.querySelector("#nav-notifications-link")) return;
+    if (!nav || !list || existingLinks.length) return;
     // Enlace solo dentro del menú desplegable; no aparece como página pública ni en el pie.
     const item = document.createElement("li");
     item.className = "nav-item";
@@ -401,9 +409,11 @@
   }
 
   function addNotificationSettings() {
+    const existingPanels = Array.from(document.querySelectorAll(".result-notifications"));
+    existingPanels.slice(1).forEach(panel => panel.remove());
     if (!(isInstalledApp() || localStorage.getItem(installedFlagKey) === "1") || !("Notification" in window)) return;
     const main = document.querySelector("main.container");
-    if (!main || document.querySelector(".result-notifications")) return;
+    if (!main || existingPanels.length) return;
     const panel = document.createElement("section");
     panel.className = "result-notifications no-print";
     panel.innerHTML = `
