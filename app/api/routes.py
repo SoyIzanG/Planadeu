@@ -2,7 +2,7 @@
 REST API routes - JSON responses for /api/table, /api/teams, etc.
 """
 
-from flask import jsonify, request
+from flask import jsonify, request, url_for
 
 from app.api import api_bp
 from app.models import Season, Standing, Team, Player, Match
@@ -34,7 +34,7 @@ def table():
                 "position_change": s.position_change,
                 "team_id": s.team_id,
                 "team_name": s.team.name,
-                "team_logo": s.team.logo_filename,
+                "team_logo": (s.team.logo_filename if s.team.logo_filename and s.team.logo_filename.startswith(("http://", "https://")) else (url_for("logo_equipo", filename=s.team.logo_filename) if s.team.logo_filename else None)),
                 "team_short_name": s.team.short_name,
                 "played": s.played,
                 "won": s.won,
