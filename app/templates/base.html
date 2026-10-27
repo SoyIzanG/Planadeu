@@ -88,6 +88,58 @@
             padding-bottom: 2rem;
         }
 
+        /* Animación global de entrada para las páginas y sus componentes. */
+        @keyframes pageEnter {
+            from { opacity: 0; transform: translate3d(0, 16px, 0); }
+            to { opacity: 1; transform: translate3d(0, 0, 0); }
+        }
+
+        @keyframes pageEnterSoft {
+            from { opacity: 0; transform: translate3d(0, 9px, 0) scale(.99); }
+            to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+        }
+
+        main.container {
+            animation: pageEnter .48s cubic-bezier(.2, .7, .25, 1) both;
+        }
+
+        main.container.page-enter > * {
+            animation: pageEnterSoft .48s cubic-bezier(.2, .7, .25, 1) both;
+        }
+
+        main.container.page-enter > *:nth-child(1) { animation-delay: .04s; }
+        main.container.page-enter > *:nth-child(2) { animation-delay: .09s; }
+        main.container.page-enter > *:nth-child(3) { animation-delay: .14s; }
+        main.container.page-enter > *:nth-child(4) { animation-delay: .19s; }
+        main.container.page-enter > *:nth-child(5) { animation-delay: .24s; }
+
+        main.container.page-enter .card,
+        main.container.page-enter .alert,
+        main.container.page-enter .list-group-item,
+        main.container.page-enter .table tbody tr {
+            animation: pageEnterSoft .42s cubic-bezier(.2, .7, .25, 1) both;
+        }
+
+        main.container.page-enter .table tbody tr:nth-child(1) { animation-delay: .04s; }
+        main.container.page-enter .table tbody tr:nth-child(2) { animation-delay: .07s; }
+        main.container.page-enter .table tbody tr:nth-child(3) { animation-delay: .10s; }
+        main.container.page-enter .table tbody tr:nth-child(4) { animation-delay: .13s; }
+        main.container.page-enter .table tbody tr:nth-child(5) { animation-delay: .16s; }
+        main.container.page-enter .table tbody tr:nth-child(n+6) { animation-delay: .19s; }
+
+        @media (prefers-reduced-motion: reduce) {
+            main.container,
+            main.container.page-enter > *,
+            main.container.page-enter .card,
+            main.container.page-enter .alert,
+            main.container.page-enter .list-group-item,
+            main.container.page-enter .table tbody tr {
+                animation: none !important;
+                transition: none !important;
+                transform: none !important;
+            }
+        }
+
         body { line-height: 1.55; }
         .navbar { position: sticky; top: 0; z-index: 1030; box-shadow: 0 6px 24px rgba(0,0,0,.12); }
         .navbar .container { min-height: 68px; }
@@ -288,7 +340,7 @@
         </div>
     </nav>
 
-    <main class="container my-4">
+    <main class="container my-4 page-enter">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, msg in messages %}
