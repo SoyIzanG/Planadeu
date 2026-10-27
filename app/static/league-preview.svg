@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+<title id="title">La Liga — Fútbol y competición</title>
+<desc id="desc">Previsualización de La Liga, con un escudo deportivo estilizado y referencias a partidos y clasificación.</desc>
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#172b40"/><stop offset=".58" stop-color="#243b53"/><stop offset="1" stop-color="#356da8"/></linearGradient>
+  <linearGradient id="silver" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#8fb7df"/></linearGradient>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="16" stdDeviation="14" flood-color="#081522" flood-opacity=".35"/></filter>
+</defs>
+<rect width="1200" height="630" rx="0" fill="url(#bg)"/>
+<circle cx="1040" cy="90" r="240" fill="#fff" opacity=".035"/><circle cx="1070" cy="600" r="300" fill="#8fb7df" opacity=".07"/>
+<path d="M0 520 Q260 430 500 530 T1200 480 V630 H0Z" fill="#0d2032" opacity=".34"/>
+<g transform="translate(130 100)" filter="url(#shadow)">
+  <path d="M130 0 L245 38 L232 190 Q215 275 130 330 Q45 275 28 190 L15 38Z" fill="#0d2032" stroke="#8fb7df" stroke-width="8"/>
+  <path d="M130 18 L226 49 L214 185 Q200 254 130 300 Q60 254 46 185 L34 49Z" fill="url(#silver)" stroke="#f8fbff" stroke-width="3"/>
+  <path d="M52 83 H208 L204 121 H56Z" fill="#243b53"/>
+  <text x="130" y="110" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="27" font-weight="800" fill="#fff" letter-spacing="4">LIGA</text>
+  <circle cx="130" cy="183" r="51" fill="#243b53" stroke="#fff" stroke-width="4"/>
+  <path d="M130 148 L151 163 L143 188 L117 188 L109 163Z" fill="#f8fbff"/>
+  <path d="M109 163 L91 157 L82 178 L98 195 L117 188 M151 163 L169 157 L178 178 L162 195 L143 188 M98 195 L104 218 L130 230 L156 218 L162 195" fill="none" stroke="#f8fbff" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M65 250 L90 267 M195 250 L170 267" stroke="#356da8" stroke-width="6" stroke-linecap="round"/>
+</g>
+<g font-family="Arial,Helvetica,sans-serif" fill="#fff">
+  <text x="445" y="238" font-size="28" font-weight="700" fill="#a9c9e8" letter-spacing="7">FÚTBOL · COMPETICIÓN</text>
+  <text x="438" y="330" font-size="88" font-weight="900" letter-spacing="-3">La Liga</text>
+  <rect x="445" y="365" width="105" height="6" rx="3" fill="#8fb7df"/>
+  <text x="445" y="423" font-size="31" font-weight="500" fill="#edf4fb">Partidos · Resultados · Clasificación</text>
+  <text x="445" y="474" font-size="22" fill="#c9d9e9">Toda la temporada, en un solo lugar.</text>
+</g>
+</svg>
