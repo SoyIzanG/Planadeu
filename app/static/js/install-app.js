@@ -32,9 +32,21 @@
     .install-app-card .install-button { background:#243b53; color:#fff; }
     .install-app-card .install-dismiss { position:absolute; top:.65rem; right:.65rem; background:#eaf0f6; color:#243b53; font-size:.8rem; }
     .install-app-card .install-hint { color:#526579; font-size:.83rem; margin-top:.65rem; }
-    .result-notifications { margin:1rem 0; padding:1rem; border-radius:14px; background:#fff; border:1px solid #cbd9e8; color:#243b53; display:flex; align-items:center; justify-content:space-between; gap:.75rem; flex-wrap:wrap; }
-    .result-notifications p { margin:.2rem 0 0; font-size:.88rem; color:#526579; }
+    .install-modal-backdrop { position:fixed; inset:0; z-index:1100; display:grid; place-items:center; padding:1rem; background:rgba(12,25,40,.62); backdrop-filter:blur(4px); }
+    .install-modal { width:min(460px,100%); max-height:90vh; overflow:auto; position:relative; padding:1.4rem; border-radius:20px; background:#fff; color:#243b53; box-shadow:0 24px 80px rgba(0,0,0,.3); }
+    .install-modal h2 { font-size:1.35rem; margin:.4rem 2rem .6rem 0; }
+    .install-modal p { color:#526579; }
+    .install-modal .modal-actions { display:flex; gap:.6rem; flex-wrap:wrap; margin-top:1rem; }
+    .install-modal button { border:0; border-radius:9px; padding:.65rem .9rem; font-weight:700; cursor:pointer; background:#243b53; color:#fff; }
+    .install-modal button.secondary { background:#eaf0f6; color:#243b53; }
+    .install-modal .modal-close { position:absolute; right:.7rem; top:.7rem; background:#eaf0f6; color:#243b53; }
+    .result-notifications { margin:1rem 0; padding:1rem; border-radius:14px; background:#fff; border:1px solid #cbd9e8; color:#243b53; }
+    .result-notifications p { margin:.2rem 0 .8rem; font-size:.88rem; color:#526579; }
+    .notification-controls { display:grid; gap:.65rem; }
+    .notification-controls label { display:flex; align-items:center; gap:.55rem; font-size:.92rem; }
+    .notification-actions { display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.8rem; }
     .result-notifications button { border:0; border-radius:9px; background:#243b53; color:#fff; padding:.6rem .85rem; font-weight:700; }
+    .result-notifications button.secondary { background:#eaf0f6; color:#243b53; }
     .result-notifications button:disabled { opacity:.7; }
     @keyframes leagueToastIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
     @media(prefers-reduced-motion:reduce) { .league-toast { animation:none; } }
@@ -76,52 +88,54 @@
 
   function addInstallCard() {
     if (isStandalone || localStorage.getItem(installDismissKey) === "1" ||
-        document.querySelector(".install-app-card")) return;
-    const main = document.querySelector("main.container");
-    if (!main) return;
-    const card = document.createElement("section");
-    card.className = "install-app-card";
-    card.setAttribute("aria-labelledby", "install-app-title");
-    card.innerHTML = `
-      <button type="button" class="install-dismiss" id="dismiss-install">Ahora no ✕</button>
-      <span class="install-platform" id="install-platform">📲 Instala La Liga</span>
-      <h2 id="install-app-title">Lleva La Liga contigo</h2>
-      <p>Abre el calendario y los resultados desde tu pantalla de inicio o escritorio.</p>
+        document.querySelector(".install-modal-backdrop")) return;
+    const backdrop = document.createElement("div");
+    backdrop.className = "install-modal-backdrop";
+    backdrop.setAttribute("role", "dialog");
+    backdrop.setAttribute("aria-modal", "true");
+    backdrop.setAttribute("aria-labelledby", "install-app-title");
+    const modal = document.createElement("section");
+    modal.className = "install-modal";
+    modal.innerHTML = `
+      <button type="button" class="modal-close" aria-label="Cerrar">×</button>
+      <span class="install-platform">📲 LA LIGA EN TU DISPOSITIVO</span>
+      <h2 id="install-app-title">¿Quieres añadir esto como una aplicación?</h2>
+      <p>Ten el calendario y los resultados de La Liga a mano desde tu pantalla de inicio.</p>
       <ol id="install-steps"></ol>
-      <button type="button" class="install-button" id="install-app-button" hidden>Instalar La Liga</button>
-      <p class="install-hint" id="install-hint">Puedes rechazar este aviso con «Ahora no».</p>`;
-    main.appendChild(card);
-    const steps = card.querySelector("#install-steps");
-    const platformLabel = card.querySelector("#install-platform");
-    const hint = card.querySelector("#install-hint");
-    const button = card.querySelector("#install-app-button");
-    card.querySelector("#dismiss-install").addEventListener("click", () => {
-      localStorage.setItem(installDismissKey, "1");
-      card.remove();
-    });
+      <div class="modal-actions">
+        <button type="button" id="install-app-button" hidden>Añadir aplicación</button>
+        <button type="button" class="secondary" id="dismiss-install">Ahora no</button>
+      </div>
+      <p class="install-hint" id="install-hint">Puedes rechazarlo ahora y cambiar de opinión cuando quieras desde los ajustes del navegador.</p>`;
+    backdrop.appendChild(modal);
+    document.body.appendChild(backdrop);
+    const steps = modal.querySelector("#install-steps");
+    const button = modal.querySelector("#install-app-button");
+    const hint = modal.querySelector("#install-hint");
+    const close = () => backdrop.remove();
+    const dismiss = () => { localStorage.setItem(installDismissKey, "1"); close(); };
+    modal.querySelector(".modal-close").addEventListener("click", dismiss);
+    modal.querySelector("#dismiss-install").addEventListener("click", dismiss);
+    backdrop.addEventListener("click", event => { if (event.target === backdrop) dismiss(); });
     if (isIOS) {
-      platformLabel.textContent = "🍏 Instalar en iPhone o iPad";
-      steps.innerHTML = "<li>Abre la web con <strong>Safari</strong>.</li><li>Pulsa <strong>Compartir</strong> y después <strong>Añadir a pantalla de inicio</strong>.</li><li>Confirma la instalación y abre el icono de La Liga.</li>";
+      steps.innerHTML = "<li>Abre esta web con <strong>Safari</strong>.</li><li>Pulsa <strong>Compartir → Añadir a pantalla de inicio</strong>.</li><li>Confirma y abre el icono de La Liga.</li>";
     } else if (isSamsung) {
-      platformLabel.textContent = "📱 Instalar en Samsung";
-      steps.innerHTML = "<li>Abre la web con Samsung Internet o Chrome.</li><li>Abre el menú del navegador.</li><li>Pulsa <strong>Añadir a pantalla de inicio</strong> o <strong>Instalar aplicación</strong>, si aparece.</li>";
+      steps.innerHTML = "<li>Abre el menú de Samsung Internet o Chrome.</li><li>Elige <strong>Añadir a pantalla de inicio</strong> o <strong>Instalar aplicación</strong>.</li>";
     } else if (isAndroid) {
-      platformLabel.textContent = "🤖 Instalar en Android";
-      steps.innerHTML = "<li>Abre la web con Chrome.</li><li>Abre ⋮ y pulsa <strong>Instalar aplicación</strong> o <strong>Añadir a pantalla de inicio</strong>.</li><li>Confirma.</li>";
+      steps.innerHTML = "<li>En Chrome, abre el menú ⋮.</li><li>Elige <strong>Instalar aplicación</strong> o <strong>Añadir a pantalla de inicio</strong>.</li>";
     } else {
-      platformLabel.textContent = "💻 Instalar en ordenador";
-      steps.innerHTML = "<li>En Chrome o Edge, busca el icono de instalación junto a la barra de direcciones o en el menú.</li><li>Selecciona <strong>Instalar La Liga</strong> y confirma.</li><li>En macOS con Safari, busca <strong>Compartir → Añadir al Dock</strong>.</li>";
+      steps.innerHTML = "<li>En Chrome o Edge, usa el icono de instalación de la barra de direcciones o el menú.</li><li>En Safari para macOS, usa <strong>Compartir → Añadir al Dock</strong>.</li>";
     }
     if (deferredPrompt) button.hidden = false;
     button.addEventListener("click", async () => {
       if (!deferredPrompt) {
-        hint.textContent = "Usa las instrucciones anteriores para instalarla desde el menú del navegador.";
+        hint.textContent = "Sigue las instrucciones anteriores para añadirla desde el menú del navegador.";
         return;
       }
       deferredPrompt.prompt();
       try { await deferredPrompt.userChoice; } catch (_) {}
       deferredPrompt = null;
-      button.hidden = true;
+      close();
     });
   }
 
@@ -133,7 +147,7 @@
   });
   window.addEventListener("appinstalled", () => {
     localStorage.setItem(installDismissKey, "1");
-    document.querySelector(".install-app-card")?.remove();
+    document.querySelector(".install-modal-backdrop")?.remove();
     showToast("La Liga instalada", "La app ya está lista en tu dispositivo.");
   });
 
@@ -143,43 +157,93 @@
     if (!main || document.querySelector(".result-notifications")) return;
     const panel = document.createElement("section");
     panel.className = "result-notifications";
-    panel.innerHTML = '<div><strong>🔔 Avisos de resultados</strong><p>Activa las notificaciones para enterarte de los marcadores nuevos o actualizados mientras tengas La Liga abierta.</p></div><button type="button">Activar avisos</button>';
-    const button = panel.querySelector("button");
-    const syncButton = () => {
-      if (Notification.permission === "granted" && localStorage.getItem(notificationsKey) === "1") {
-        button.textContent = "Avisos activados";
-        button.disabled = true;
-      } else if (Notification.permission === "denied") {
-        button.textContent = "Permiso bloqueado";
-        button.disabled = true;
-      }
+    panel.innerHTML = `
+      <strong>🔔 Ajustes de notificaciones</strong>
+      <p>Elige qué avisos quieres recibir. Por ahora se envían mientras La Liga está abierta en este navegador.</p>
+      <div class="notification-controls">
+        <label><input type="checkbox" id="notify-enabled"> Activar notificaciones</label>
+        <label><input type="checkbox" id="notify-new"> Avisarme de resultados nuevos</label>
+        <label><input type="checkbox" id="notify-updated"> Avisarme si cambia un resultado</label>
+      </div>
+      <div class="notification-actions">
+        <button type="button" id="notify-save">Guardar preferencias</button>
+        <button type="button" class="secondary" id="notify-test">Enviar notificación de prueba</button>
+      </div>
+      <p id="notify-status" aria-live="polite"></p>`;
+    main.prepend(panel);
+    const enabled = panel.querySelector("#notify-enabled");
+    const newResults = panel.querySelector("#notify-new");
+    const updatedResults = panel.querySelector("#notify-updated");
+    const status = panel.querySelector("#notify-status");
+    const readPrefs = () => {
+      try { return JSON.parse(localStorage.getItem(notificationsKey) || "{}"); }
+      catch (_) { return {}; }
     };
-    button.addEventListener("click", async () => {
-      if (!("Notification" in window)) return;
+    const prefs = readPrefs();
+    enabled.checked = prefs.enabled === true;
+    newResults.checked = prefs.newResults !== false;
+    updatedResults.checked = prefs.updatedResults !== false;
+    if (Notification.permission === "denied") {
+      status.textContent = "El permiso está bloqueado en el navegador. Cámbialo en los ajustes del sitio para poder activar avisos.";
+    } else if (enabled.checked && Notification.permission === "granted") {
+      status.textContent = "Notificaciones activadas en este navegador.";
+    } else {
+      status.textContent = "Notificaciones desactivadas hasta que las actives y concedas permiso.";
+    }
+
+    panel.querySelector("#notify-save").addEventListener("click", async () => {
+      if (!enabled.checked) {
+        localStorage.setItem(notificationsKey, JSON.stringify({
+          enabled:false, newResults:newResults.checked, updatedResults:updatedResults.checked
+        }));
+        status.textContent = "Notificaciones desactivadas. Puedes volver a activarlas cuando quieras.";
+        return;
+      }
+      if (Notification.permission === "denied") {
+        status.textContent = "El navegador bloquea los permisos. Actívalos desde los ajustes del sitio.";
+        return;
+      }
+      let permission = Notification.permission;
+      if (permission !== "granted") {
+        try { permission = await Notification.requestPermission(); }
+        catch (_) { permission = "denied"; }
+      }
+      if (permission !== "granted") {
+        enabled.checked = false;
+        status.textContent = "No se concedió permiso. Puedes cambiarlo desde los ajustes del navegador.";
+        return;
+      }
+      localStorage.setItem(notificationsKey, JSON.stringify({
+        enabled:true, newResults:newResults.checked, updatedResults:updatedResults.checked
+      }));
+      status.textContent = "Preferencias guardadas.";
+      await checkResults(true);
+    });
+
+    panel.querySelector("#notify-test").addEventListener("click", async () => {
+      if (Notification.permission !== "granted") {
+        status.textContent = "Primero activa las notificaciones y concede el permiso del navegador.";
+        return;
+      }
       try {
-        const permission = await Notification.requestPermission();
-        if (permission === "granted") {
-          localStorage.setItem(notificationsKey, "1");
-          button.textContent = "Avisos activados";
-          button.disabled = true;
-          await checkResults(true);
-          showToast("Avisos activados", "Te avisaremos cuando se registren o cambien resultados con La Liga abierta.");
-        } else {
-          button.textContent = permission === "denied" ? "Permiso bloqueado" : "Puedes activarlos después";
-          showToast("Avisos no activados", "Puedes cambiar los permisos de notificación en los ajustes de tu navegador.");
-        }
+        const notification = new Notification("Notificación de prueba · La Liga", {
+          body:"¡Todo listo! Así verás los avisos de resultados.",
+          icon:"/static/league-logo.svg",
+          tag:"league-test-notification"
+        });
+        notification.onclick = () => { window.focus(); notification.close(); };
+        status.textContent = "Notificación de prueba enviada a este dispositivo.";
       } catch (_) {
-        showToast("No se pudieron activar", "Comprueba que estás usando una conexión segura y un navegador compatible.");
+        status.textContent = "No se pudo mostrar la prueba. Comprueba el permiso del navegador.";
       }
     });
-    main.prepend(panel);
-    syncButton();
   }
 
-  async function checkResults(firstCheck = false) {
+    async function checkResults(firstCheck = false) {
+    let prefs = {};
+    try { prefs = JSON.parse(localStorage.getItem(notificationsKey) || "{}"); } catch (_) {}
     if (checkInProgress || !("Notification" in window) ||
-        Notification.permission !== "granted" ||
-        localStorage.getItem(notificationsKey) !== "1") return;
+        Notification.permission !== "granted" || prefs.enabled !== true) return;
     checkInProgress = true;
     try {
       const response = await fetch("/matches/api/results", {
@@ -195,7 +259,7 @@
         const id = String(item.id);
         const oldSignature = knownResults.get(id);
         const isNew = oldSignature === undefined;
-        if ((isNew && !firstCheck) || (!isNew && oldSignature !== item.signature)) {
+        if ((isNew && !firstCheck && prefs.newResults !== false) || (!isNew && oldSignature !== item.signature && prefs.updatedResults !== false)) {
           const body = item.home + " " + item.home_goals + " – " + item.away_goals + " " + item.away;
           try {
             const notification = new Notification(isNew ? "Nuevo resultado · La Liga" : "Resultado actualizado · La Liga", {
