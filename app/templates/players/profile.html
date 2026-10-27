@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ player.full_name }} - League Site{% endblock %}
+{% block title %}{{ player.full_name }} | UE Planadeu{% endblock %}
 
 {% block content %}
 <div class="row">
@@ -12,22 +12,23 @@
         </div>
         {% endif %}
         <h2 class="mt-2">{{ player.full_name }}</h2>
-        <p class="text-muted">{{ player.team.name }} · {{ player.position }}{% if player.jersey_number %} #{{ player.jersey_number }}{% endif %}{% if player.age %} · {{ player.age }} yrs{% endif %}</p>
+        <p class="text-muted">{{ player.team.name }} · {{ player.position }}{% if player.jersey_number %} #{{ player.jersey_number }}{% endif %}{% if player.age %} · {{ player.age }} años{% endif %}</p>
     </div>
     <div class="col-md-8">
         <div class="card shadow mb-4">
-            <div class="card-header">Estadísticas</div>
+            <div class="card-header d-flex align-items-center justify-content-between"><span>Estadísticas</span><span class="badge bg-warning text-dark">EN CONSTRUCCIÓN</span></div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-4 col-md-2 text-center"><div class="fw-bold">{{ player.appearances }}</div><small class="text-muted">Apps</small></div>
-                    <div class="col-4 col-md-2 text-center"><div class="fw-bold">{{ player.goals }}</div><small class="text-muted">Goals</small></div>
-                    <div class="col-4 col-md-2 text-center"><div class="fw-bold">{{ player.assists }}</div><small class="text-muted">Assists</small></div>
+                <div class="alert alert-warning"><i class="bi bi-cone-striped me-2"></i>La información de jugadores está en construcción y se publicará cuando esté revisada.</div>
+                {% if false %}<div class="row">
+                    <div class="col-4 col-md-2 text-center"><div class="fw-bold">{{ player.appearances }}</div><small class="text-muted">Partidos</small></div>
+                    <div class="col-4 col-md-2 text-center"><div class="fw-bold">{{ player.goals }}</div><small class="text-muted">Goles</small></div>
+                    <div class="col-4 col-md-2 text-center"><div class="fw-bold">{{ player.assists }}</div><small class="text-muted">Asistencias</small></div>
                     <div class="col-4 col-md-2 text-center"><div class="fw-bold">{{ player.yellow_cards }}</div><small class="text-muted">Yellow</small></div>
                     <div class="col-4 col-md-2 text-center"><div class="fw-bold">{{ player.red_cards }}</div><small class="text-muted">Red</small></div>
                     {% if player.is_goalkeeper_or_defender() %}
                     <div class="col-4 col-md-2 text-center"><div class="fw-bold">{{ player.clean_sheets }}</div><small class="text-muted">Clean</small></div>
                     {% endif %}
-                </div>
+                </div>{% endif %}
             </div>
         </div>
     </div>
