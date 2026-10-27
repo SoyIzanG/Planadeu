@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">La Liga</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#356da8"/>
+      <stop offset="1" stop-color="#172b42"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f5df9b"/>
+      <stop offset="1" stop-color="#c9a34d"/>
+    </linearGradient>
+  </defs>
+  <path d="M64 5 113 23v36c0 30-19 50-49 64C34 109 15 89 15 59V23Z" fill="url(#bg)" stroke="#c9a34d" stroke-width="4"/>
+  <path d="M64 16 101 30v28c0 23-13 39-37 51C40 97 27 81 27 58V30Z" fill="none" stroke="#ffffff" stroke-opacity=".35" stroke-width="2"/>
+  <path d="M47 31h34v8H70v31c0 9-5 14-15 14H43v-9h10c4 0 6-2 6-6V39H47Z" fill="#fff"/>
+  <path d="M43 89h42v7H43z" fill="url(#gold)"/>
+  <circle cx="64" cy="25" r="4" fill="url(#gold)"/>
+</svg>
