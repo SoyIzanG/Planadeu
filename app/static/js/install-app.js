@@ -425,6 +425,12 @@
       page.innerHTML = '<button type="button" class="btn btn-outline-secondary mb-3" id="notification-page-back">← Volver</button><h1 class="h3">Notificaciones</h1><p>Configura los avisos de resultados para este dispositivo.</p>';
       main.appendChild(page);
     }
+    // La página puede haberse creado antes de que existiera el panel; conecta siempre el botón.
+    const backButton = page.querySelector("#notification-page-back");
+    if (backButton && !backButton.dataset.backHandlerAttached) {
+      backButton.dataset.backHandlerAttached = "1";
+      backButton.addEventListener("click", closeNotificationPage);
+    }
     if (page.querySelector(".result-notifications")) return;
     const panel = document.createElement("section");
     panel.className = "result-notifications no-print";
