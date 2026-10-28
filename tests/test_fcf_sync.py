@@ -137,8 +137,8 @@ class DailySyncParserTests(unittest.TestCase):
     def test_missing_planadeu_slot_is_reconstructed_only_from_named_bye(self):
         teams = [f"Team {i}" for i in range(1, 16)] + ["UE Planadeu"]
         source_html = self.fixture_html(include_planadeu=False).replace(
-            "<h2>Jornada 1</h2>",
-            "<h2>Jornada 1</h2><p>Descans: Team 15</p>",
+            "<p>Temporada 2026-2027</p>",
+            "<p>Temporada 2026-2027</p><p>Descans: Team 15</p>",
         )
         parsed, error = sync_futbuteo.parse_round(source_html, teams, 1, "test")
         self.assertIsNone(error)
@@ -154,8 +154,8 @@ class DailySyncParserTests(unittest.TestCase):
     def test_bye_reconstruction_is_rejected_when_the_named_resting_team_differs(self):
         teams = [f"Team {i}" for i in range(1, 16)] + ["UE Planadeu"]
         source_html = self.fixture_html(include_planadeu=False).replace(
-            "<h2>Jornada 1</h2>",
-            "<h2>Jornada 1</h2><p>Descans: Team 13</p>",
+            "<p>Temporada 2026-2027</p>",
+            "<p>Temporada 2026-2027</p><p>Descans: Team 13</p>",
         )
         parsed, error = sync_futbuteo.parse_round(source_html, teams, 1, "test")
         self.assertIsNone(parsed)
