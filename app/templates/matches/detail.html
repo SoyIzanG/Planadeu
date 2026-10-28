@@ -4,7 +4,7 @@
 {% block content %}
 {% set home = match.home_team %}
 {% set away = match.away_team %}
-{% set planadeu_pending = home.name == "UE Planadeu" or away.name == "UE Planadeu" %}
+{% set planadeu_pending = match.is_internal or not match.kickoff_confirmed %}
 {% set played = match.is_played and match.home_goals is not none and match.away_goals is not none %}
 
 <div class="match-sheet">
