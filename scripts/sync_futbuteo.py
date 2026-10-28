@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Conservative daily sync for Juvenil Segona Divisió, Grup 29.
+"""Conservative sync for the club-agreed Juvenil C, Grup 29 schedule.
 
-Only writes a matchday after the source page yields all seven official fixtures,
-all 15 official teams exactly once (14 playing + one bye), and a date for every
-fixture. Unparseable or incomplete pages are reported and left untouched.
+Planadeu is part of the agreed 2026-2027 roster even if public listings omit it.
+A round is importable only with all 16 teams and 8 fixtures, including Planadeu.
+Public pages with 15 teams/7 fixtures and a bye are incomplete and are never
+written. Writes are disabled unless ENABLE_FOOTBALL_IMPORT=true is set.
 """
 from __future__ import annotations
 
@@ -22,8 +23,12 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 BASE_URL = "https://futbuteo.com/catalunya/resultados/juvenil-segona-divisio/grup-29/"
+ELFUTBOL_URL = os.getenv("ELFUTBOL_URL", "https://elfutbol.co/en/competitions/juvenil-segona-divisio/grup-29")
 SEASON_NAME = "2026-2027"
-SEASON_ID = int(os.getenv("SEASON_ID", "1"))
+SEASON_ID_ENV = os.getenv("SEASON_ID", "").strip()
+ENABLE_IMPORT = os.getenv("ENABLE_FOOTBALL_IMPORT", "false").strip().lower() == "true"
+EXPECTED_TEAMS = 16
+EXPECTED_FIXTURES = 8
 # Futbuteo's j=5 page is internal matchday 1, j=6 is matchday 2, etc.
 J_VALUES = range(5, 35)
 USER_AGENT = "Planadeu-LeagueSync/1.0 (+scheduled fixture verification)"
@@ -64,6 +69,14 @@ TEAM_ALIASES = {
     "sant pere nord cf": ["sant pere nord"],
     "escola futbol can boada": ["escola futbol can boada"],
     "escola pia terrassa": ["escola pia terrassa"],
+    # The agreed team must be present in every round; do not alias another
+    # Planadeu squad (for example a public page that says Grup 28) to Juvenil C.
+    "ue planadeu": [
+        "planadeu c",
+        "planadeu",
+        "planadeu roureda unio esportiva futbol c",
+        "planadeu unio esportiva club futbol c",
+    ],
 }
 
 
