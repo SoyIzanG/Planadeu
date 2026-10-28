@@ -191,7 +191,7 @@ def discover_modern_fcf_endpoints() -> dict[str, Any]:
                     value = match.strip()
                     if value.startswith(("http://", "https://", "/")) and len(value) < 300:
                         candidates.add(urljoin(homepage, value))
-                for token in re.finditer(r"api|fetch\\s*\\(|axios|HttpClient|temporadaId|grupId", source, flags=re.I):
+                for token in re.finditer(r"api|fetch\s*\(|axios|HttpClient|temporadaId|grupId", source, flags=re.I):
                     snippet = source[max(0, token.start() - 120):min(len(source), token.end() + 220)]
                     if any(word in snippet.lower() for word in ("api/", "fetch(", "axios", "httpclient", "grupid", "temporadaid")):
                         api_snippets.append({"script": script_url, "snippet": snippet[:420]})
