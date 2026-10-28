@@ -1,6 +1,11 @@
 name: Actualización diaria de la liga
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/sync_futbuteo.py"
+      - ".github/workflows/daily-league-sync.yml"
   schedule:
     # Todos los días a las 16:10 UTC (17:10 en Catalunya durante el horario de invierno).
     - cron: "10 16 * * *"
@@ -32,10 +37,10 @@ jobs:
       - name: Validar fuentes y, solo si está autorizado, sincronizar jornadas
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          ENABLE_FOOTBALL_IMPORT: "true" # Activado expresamente; el script omite jornadas no validadas y emparejamientos inferidos.
+          ENABLE_FOOTBALL_IMPORT: "true" # Importa jornadas validadas y asigna a Planadeu el equipo que descansa cuando el complemento es único.
           CLUB_FIXTURES_URL: ${{ vars.CLUB_FIXTURES_URL }}
           CLUB_FIXTURES_TOKEN: ${{ secrets.CLUB_FIXTURES_TOKEN }}
           # A focused round can be selected with repository variable SYNC_MATCHDAY.
-          # With it unset, the run validates every available round (dry-run by default).
+          # With it unset, the run checks every round from 1 to 30.
           SYNC_MATCHDAY: ${{ vars.SYNC_MATCHDAY }}
         run: python scripts/sync_futbuteo.py
