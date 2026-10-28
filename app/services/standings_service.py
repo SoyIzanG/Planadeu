@@ -4,7 +4,6 @@ Ranking: 1) Points 2) Goal difference 3) Goals scored 4) Head-to-head
 """
 
 from collections import defaultdict
-from datetime import datetime
 from app.extensions import db
 from app.models import Season, Team, Match, Standing
 
@@ -28,7 +27,7 @@ class StandingsService:
         season = Season.query.get_or_404(season_id)
         
         # Get teams in this season
-        team_ids = [t.id for t in season.teams if t.name != 'UE Planadeu']
+        team_ids = [t.id for t in season.teams]
         if not team_ids:
             return
 
@@ -54,7 +53,6 @@ class StandingsService:
             Match.home_goals.isnot(None),
             Match.away_goals.isnot(None),
             Match.is_internal.is_(False),
-            Match.kickoff >= datetime(2026, 10, 26),
         ).all()
 
         for match in matches:
@@ -134,7 +132,7 @@ class StandingsService:
         """Build form string (W/D/L) for last 5 matches per team."""
         matches = (
             Match.query.filter_by(season_id=season_id, is_played=True)
-            .filter(Match.home_goals.isnot(None), Match.away_goals.isnot(None), Match.is_internal.is_(False), Match.kickoff >= datetime(2026, 10, 26))
+            .filter(Match.home_goals.isnot(None), Match.away_goals.isnot(None), Match.is_internal.is_(False))
             .order_by(Match.kickoff.desc())
             .all()
         )
