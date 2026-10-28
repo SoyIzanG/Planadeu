@@ -65,7 +65,7 @@ TEAM_ALIASES = {
     "club de futbol matadepera": ["matadepera fc", "matadepera f c"],
     "unio fb jabac terrassa": ["unio f base jabac i terrassa", "jabac i terrassa"],
     "cp san cristobal": ["san cristobal cp", "san cristobal"],
-    "ue rubi": ["rubi ue"],
+    "ue rubi": ["rubi ue", "rubi u e", "rubi u e c"],
     "ud can trias": ["can trias ud", "can trias"],
     "can parellada cd": ["can parellada"],
     "pueblo nuevo 2002 cf": ["pueblo nuevo 2002"],
@@ -449,10 +449,10 @@ def fetch_page(j_value: int) -> str:
     return _fetch_html(f"{BASE_URL}?j={j_value}")
 
 def futbuteo_query_for_matchday(matchday: int) -> int:
-    """Futbuteo uses j=5 for Jornada 1, so its source index is round + 4."""
+    """Futbuteo's j parameter is the actual displayed matchday number."""
     if not 1 <= matchday <= 30:
         raise ValueError("La jornada debe estar entre 1 y 30")
-    return matchday + 4
+    return matchday
 
 
 
