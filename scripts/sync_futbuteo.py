@@ -99,6 +99,8 @@ class CandidateParser(HTMLParser):
         self.candidates = []
         self.full_text = []
         self.current_date = None
+        self.current_matchday = None
+        self.has_round_labels = False
         self.recent_text = ""
 
     def handle_starttag(self, tag, attrs):
@@ -110,7 +112,11 @@ class CandidateParser(HTMLParser):
             tag.lower() in {"div", "article", "section"}
             and (CANDIDATE_CLASS_RE.search(classes or "") is not None or tag.lower() == "div")
         )
-        node = {"tag": tag.lower(), "attrs": attrs, "text": [], "date_context": self.current_date} if candidate else None
+        node = {
+            "tag": tag.lower(), "attrs": attrs, "text": [],
+            "date_context": self.current_date,
+            "matchday_context": self.current_matchday,
+        } if candidate else None
         if node:
             self.stack.append(node)
         for node in self.stack:
@@ -128,13 +134,19 @@ class CandidateParser(HTMLParser):
                 for node in closed:
                     text = " ".join(node["text"])
                     if text.strip():
-                        self.candidates.append((text, node["date_context"]))
+                        self.candidates.append((text, node["date_context"], node["matchday_context"]))
                 break
 
     def handle_data(self, data):
         if data.strip():
             self.full_text.append(data.strip())
             self.recent_text = (self.recent_text + " " + data.strip())[-180:]
+            # Some providers expose all rounds on one SSR page. Capture the
+            # nearest round heading so the fallback can safely select one round.
+            round_heading = re.search(r"\\b(?:jornada|matchday|round)\\s*([0-9]{1,2})\\b", data, re.I)
+            if round_heading:
+                self.current_matchday = int(round_heading.group(1))
+                self.has_round_labels = True
             # The source labels fixture sections with yearless headings such as
             # "Sábado 31 oct". Remember that date for following fixture cards.
             short = SHORT_DATE_RE.search(self.recent_text)
