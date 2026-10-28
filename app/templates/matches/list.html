@@ -6,19 +6,13 @@
     Partidos y resultados
     {% if season %}<small class="text-muted">{{ season.name }}</small>{% endif %}
 </h1>
-<div class="mb-3">
-  <a href="{{ url_for('matches.export_matches') }}" class="btn btn-outline-primary">
-    <i class="bi bi-download me-1"></i> Exportar jornadas
-  </a>
-</div>
-
 {% if by_matchday %}
-{% for matchday in by_matchday.keys()|sort if matchday > 0 %}
+{% for matchday in by_matchday.keys()|sort if matchday >= 5 %}
 <div class="card shadow mb-4">
-    <div class="card-header">{% if matchday == 0 %}Historial anterior{% else %}Jornada {{ matchday }}{% endif %}</div>
+    <div class="card-header">Jornada {{ matchday - 4 }}</div>
     <div class="card-body p-0">
         <ul class="list-group list-group-flush">
-            {% for m in by_matchday[matchday] if not m.kickoff or m.kickoff.strftime('%Y-%m-%d') >= '2026-10-31' %}
+            {% for m in by_matchday[matchday] if m.kickoff and m.kickoff.strftime('%Y-%m-%d') >= '2026-10-31' %}
             
             <li class="list-group-item match-row">
                 <div class="match-time">
