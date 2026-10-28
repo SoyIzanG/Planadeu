@@ -15,19 +15,20 @@ considered operational. If `FCF_GROUP_ID` is not configured, the preflight probe
 teams (Planadeu and Can Trias). This is a discovery check, not proof that 29 is
 the internal code for all future requests.
 
-## Important competition identity mismatch found (2026-2027)
+## Competition context supplied by the club (2026-2027)
 
-The public Futbuteo page for Juvenil Segona Divisió Grup 29 in 2026-2027 lists
-Can Trias U.D. B but does not list Planadeu. Its current page for Grup 32 lists
-Planadeu, Unió Esportiva Club Futbol B. This is a strong signal that the
-database's assumed "Planadeu vs Can Trias" pairing is not an official fixture
-in one group. Treat this as an identity mismatch to resolve against the official
-FCF competition, not as permission to change the group silently.
+The target is **Juvenil C, Juvenil Segona Divisió, Grup 29**. The club has
+explained that Planadeu is not displayed in the public listing because of an
+administrative/payment issue, while an agreement exists for the team to
+participate in this group. Therefore, the absence of Planadeu from a public
+third-party listing must **not** be used to redirect the importer to Grup 32 or
+to reject Grup 29 as the intended competition.
 
-The script no longer guesses that public group number `29` is the historical
-API's internal `id_grupo`. With no verified `FCF_GROUP_ID`, it runs read-only
-discovery of the current FCF site and exits non-zero. It must not import from the
-wrong group merely to make the workflow green.
+The importer must still distinguish the public competition number `29` from
+the legacy API's internal `id_grupo`. It will only query a verified internal
+ID (or a confirmed modern FCF competition/group ID), and must validate returned
+fixtures against the agreed Juvenil C / Grup 29 schedule. Do not require the
+public listing to contain Planadeu as the sole group-selection test.
 
 ## Sources
 
@@ -83,6 +84,6 @@ Optional settings: `FCF_API_BASE`, `FCF_MATCHDAY`, and `FUTBOTEO_URL`.
 ## Still required before enabling automated imports
 
 The live legacy API has not yet been confirmed to respond with current JSON, and
-the internal FCF group code is not known. The Supabase migration has not been
+the internal FCF group code is not known. The current FCF API routes return HTTP 403 from GitHub Actions. The Supabase migration has not been
 run. Confirm the repository's migration chain, test a dry-run against a known
 official matchday, and keep database writes disabled until that succeeds.
