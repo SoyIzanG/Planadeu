@@ -291,6 +291,8 @@ def parse_score(text: str, kickoff):
     # Remove dates first so the date's hyphens cannot be mistaken for a score.
     cleaned = ISO_DATE_RE.sub(" ", text)
     cleaned = DATE_RE.sub(" ", cleaned)
+    # A kickoff such as 12:00 must never be interpreted as a 12–0 score.
+    cleaned = TIME_RE.sub(" ", cleaned)
     scores = []
     for match in SCORE_RE.finditer(cleaned):
         a, b = map(int, match.groups())
