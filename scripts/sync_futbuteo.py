@@ -24,7 +24,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 BASE_URL = "https://futbuteo.com/catalunya/resultados/juvenil-segona-divisio/grup-29/"
-ELFUTBOL_URL = os.getenv("ELFUTBOL_URL", "https://elfutbol.co/en/competitions/juvenil-segona-divisio/grup-29?results=all&season=2627&tab=results")
+ELFUTBOL_URL = os.getenv("ELFUTBOL_URL", "https://elfutbol.co/es/competitions/juvenil-segona-divisio/grup-29?results=all&season=2627&tab=results")
 CLUB_FIXTURES_URL = os.getenv("CLUB_FIXTURES_URL", "").strip()
 CLUB_FIXTURES_TOKEN = os.getenv("CLUB_FIXTURES_TOKEN", "").strip()
 SEASON_NAME = "2026-2027"
