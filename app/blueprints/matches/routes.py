@@ -32,6 +32,8 @@ def list_matches():
     if season:
         matches = (
             Match.query.filter_by(season_id=season.id)
+            .filter(Match.matchday > 0)
+            .filter((Match.kickoff.is_(None)) | (Match.kickoff >= datetime(2026, 10, 31)))
             .order_by(Match.matchday.asc(), Match.kickoff.asc(), Match.id.asc())
             .all()
         )
