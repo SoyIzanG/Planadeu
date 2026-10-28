@@ -179,6 +179,7 @@ def discover_modern_fcf_endpoints() -> dict[str, Any]:
         report["reachable"] = True
         script_urls = [urljoin(homepage, src) for src in re.findall(r"""<script[^>]+src=["']([^"']+)["']""", html, flags=re.I)]
         report["script_count"] = len(script_urls)
+        report["script_assets"] = script_urls[:15]
         candidates: set[str] = set()
         api_snippets: list[dict[str, str]] = []
         pattern = re.compile(r"""["']([^"']*(?:api|result|resultat|compet|partit|jornada|calendari|match)[^"']*)["']""", re.I)
@@ -191,10 +192,9 @@ def discover_modern_fcf_endpoints() -> dict[str, Any]:
                     value = match.strip()
                     if value.startswith(("http://", "https://", "/")) and len(value) < 300:
                         candidates.add(urljoin(homepage, value))
-                for token in re.finditer(r"api|fetch\s*\(|axios|HttpClient|temporadaId|grupId", source, flags=re.I):
+                for token in re.finditer(r"\b(?:api|fetch\s*\(|axios|HttpClient|temporadaId|grupId)\b", source, flags=re.I):
                     snippet = source[max(0, token.start() - 120):min(len(source), token.end() + 220)]
-                    if any(word in snippet.lower() for word in ("api/", "fetch(", "axios", "httpclient", "grupid", "temporadaid")):
-                        api_snippets.append({"script": script_url, "snippet": snippet[:420]})
+                    api_snippets.append({"script": script_url, "snippet": snippet[:420]})
                     if len(api_snippets) >= 20:
                         break
             except Exception:
