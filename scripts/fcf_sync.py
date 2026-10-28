@@ -188,8 +188,15 @@ def main() -> int:
         if not FCF_GROUP_ID:
             raise ValueError("FCF_GROUP_ID is missing; configure the official FCF internal group code in repository variables")
         matchday = int(FCF_MATCHDAY) if FCF_MATCHDAY.isdigit() else None
-        payload = post_fcf_results(FCF_GROUP_ID, matchday)
+        # Probe public group number 29 only when no verified internal code is set.
+        # Query all rounds so the team identity check also works when a team rests.
+        group_id = FCF_GROUP_ID or "29"
+        payload = post_fcf_results(group_id)
         rows = extract_result_rows(payload)
+        if not FCF_GROUP_ID:
+            team_names = {normalize_text(str(row.get(field) or "")) for row in rows for field in ("equipo_local_nombre", "equipo_visitante_nombre")}
+            if not any("planadeu" in name for name in team_names) or not any("can trias" in name for name in team_names):
+                raise ValueError("Candidate API group id 29 did not identify both Planadeu and Can Trias; set FCF_GROUP_ID to the verified internal code")
         summary = summarize_results(rows, matchday)
         report["official_source"].update({"http_json_ok": True, "api_rows_returned": len(rows), **summary})
         report["ok"] = summary["ok"]
