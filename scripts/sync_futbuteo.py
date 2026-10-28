@@ -65,7 +65,7 @@ TEAM_ALIASES = {
     "unio fb jabac terrassa": ["unio f base jabac i terrassa", "jabac i terrassa"],
     "cp san cristobal": ["san cristobal cp", "san cristobal"],
     "ue rubi": ["rubi ue"],
-    "can trias": ["can trias ud"],
+    "ud can trias": ["can trias ud", "can trias"],
     "can parellada cd": ["can parellada"],
     "pueblo nuevo 2002 cf": ["pueblo nuevo 2002"],
     "athletic matadeperenc": ["matadeperenc athletic", "matadeperenc"],
@@ -624,6 +624,10 @@ def parse_round(html: str, official_teams: list[str], target_matchday: int, sour
             if alias and alias in visible_text
         }
         date_hits = len(SHORT_DATE_RE.findall(visible_text))
+        missing_names = sorted(set(official_teams) - recognized_teams)
+        round_contexts = sorted({
+            item[2] for item in parser.candidates if item[2] is not None
+        })
         return None, (
             f"jornada incompleta desde {source_name}: {len(fixtures_list)} partidos "
             f"(se exigen {EXPECTED_FIXTURES}), {len(set(used))} equipos distintos "
@@ -631,7 +635,8 @@ def parse_round(html: str, official_teams: list[str], target_matchday: int, sour
             f"{'presente' if any('planadeu' in norm(team) for team in used) else 'ausente'}, "
             f"descanso={'detectado' if bye_match else 'no detectado'}; "
             f"nombres reconocidos={len(recognized_teams)}/{EXPECTED_TEAMS}, "
-            f"fechas visibles={date_hits}"
+            f"nombres ausentes={','.join(missing_names)}, candidatos={len(parser.candidates)}, "
+            f"jornadas_detectadas={round_contexts}, fechas visibles={date_hits}"
         )
     return {"fixtures": fixtures_list, "bye": None, "source": source_name}, None
 
