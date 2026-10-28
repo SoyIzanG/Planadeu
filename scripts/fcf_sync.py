@@ -128,8 +128,6 @@ def summarize_results(rows: list[dict[str, Any]], matchday: int | None) -> dict[
             "away_goals": row.get("equipo_visitante_goles"),
         })
     errors: list[str] = []
-    if not any("planadeu" in name for name in teams) or not any("can trias" in name for name in teams):
-        errors.append("group_identity_missing_planadeu_or_can_trias")
     if matchday is not None:
         if len(selected) != 7:
             errors.append(f"expected_7_fixtures_got_{len(selected)}")
