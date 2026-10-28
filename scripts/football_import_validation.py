@@ -29,6 +29,7 @@ class Fixture:
     away: str
     matchday: int
     kickoff: datetime | None = None
+    kickoff_confirmed: bool = False
     home_goals: int | None = None
     away_goals: int | None = None
     result_is_final: bool = False
@@ -87,9 +88,11 @@ def validate_matchday(data: Matchday, aliases: dict[str, str]) -> list[str]:
                 errors.append("invalid_score")
             if not fixture.result_is_final:
                 errors.append("score_not_confirmed_final")
-        if fixture.kickoff is not None and fixture.kickoff.time().isoformat() == "00:00:00":
-            # Midnight may be legitimate, but this source has historically used it
-            # as a placeholder. Require an explicit confirmation before importing.
+        if fixture.kickoff is not None and not fixture.kickoff_confirmed:
+            errors.append("kickoff_not_confirmed")
+        if fixture.kickoff is not None and fixture.kickoff.time().isoformat() == "00:00:00" and not fixture.kickoff_confirmed:
+            # Midnight may be legitimate, but placeholder midnight must never be
+            # imported without explicit confirmation from the source.
             errors.append("midnight_kickoff_requires_confirmation")
     if len(set(used)) != len(used):
         errors.append("team_appears_more_than_once")
