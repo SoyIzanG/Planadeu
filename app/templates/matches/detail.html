@@ -24,7 +24,7 @@
                 <div class="small text-uppercase fw-bold text-secondary tracking-wide mt-2">
                     {% if match.matchday == 0 %}Historial anterior{% else %}Jornada {{ match.matchday }}{% endif %}
                 </div>
-                <div class="text-secondary mt-2"><i class="bi bi-calendar3 me-2"></i>{% if planadeu_pending %}Fecha y hora pendientes de confirmación{% else %}{% set dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'] %}{% set meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'] %}{{ dias[match.kickoff.weekday()] }}, {{ '%02d'|format(match.kickoff.day) }} de {{ meses[match.kickoff.month - 1] }} de {{ match.kickoff.year }}{% if match.kickoff_confirmed and match.kickoff.strftime('%H:%M') != '12:00' %} · {{ match.kickoff.strftime('%H:%M') }}{% else %} · Hora por confirmar{% endif %}{% endif %}</div>
+                <div class="text-secondary mt-2"><i class="bi bi-calendar3 me-2"></i>{% if match.kickoff %}{% set dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'] %}{% set meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'] %}{{ dias[match.kickoff.weekday()] }}, {{ '%02d'|format(match.kickoff.day) }} de {{ meses[match.kickoff.month - 1] }} de {{ match.kickoff.year }}{% if planadeu_pending or not match.kickoff_confirmed or match.kickoff.strftime('%H:%M') == '12:00' %} · Tiempo pendiente de confirmar{% else %} · {{ match.kickoff.strftime('%H:%M') }}{% endif %}{% else %}Fecha pendiente de confirmar{% endif %}</div>
             </div>
 
             {% if planadeu_pending %}
