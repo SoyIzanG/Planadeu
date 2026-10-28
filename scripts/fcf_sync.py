@@ -180,6 +180,7 @@ def discover_modern_fcf_endpoints() -> dict[str, Any]:
         script_urls = [urljoin(homepage, src) for src in re.findall(r"""<script[^>]+src=["']([^"']+)["']""", html, flags=re.I)]
         report["script_count"] = len(script_urls)
         candidates: set[str] = set()
+        api_snippets: list[dict[str, str]] = []
         pattern = re.compile(r"""["']([^"']*(?:api|result|resultat|compet|partit|jornada|calendari|match)[^"']*)["']""", re.I)
         for script_url in script_urls[:15]:
             try:
@@ -190,9 +191,16 @@ def discover_modern_fcf_endpoints() -> dict[str, Any]:
                     value = match.strip()
                     if value.startswith(("http://", "https://", "/")) and len(value) < 300:
                         candidates.add(urljoin(homepage, value))
+                for token in re.finditer(r"api|fetch\\s*\\(|axios|HttpClient|temporadaId|grupId", source, flags=re.I):
+                    snippet = source[max(0, token.start() - 120):min(len(source), token.end() + 220)]
+                    if any(word in snippet.lower() for word in ("api/", "fetch(", "axios", "httpclient", "grupid", "temporadaid")):
+                        api_snippets.append({"script": script_url, "snippet": snippet[:420]})
+                    if len(api_snippets) >= 20:
+                        break
             except Exception:
                 continue
         report["endpoint_candidates"] = sorted(candidates)[:40]
+        report["api_snippets"] = api_snippets[:20]
         probes: list[dict[str, Any]] = []
         for page_url in sorted(candidates):
             if "/competicio?" not in page_url or len(probes) >= 10:
