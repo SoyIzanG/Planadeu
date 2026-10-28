@@ -783,18 +783,26 @@ def main():
         # the requested round. If it cannot, the strict validator rejects it.
         for source_round in J_VALUES:
             matchday = source_round - 4
-            attempts = [
-                ("Futbuteo", lambda value=source_round: fetch_page(value)),
-                ("elFutbol", fetch_elfutbol_page),
-            ]
+            attempts = []
+            if CLUB_FIXTURES_URL:
+                attempts.append(("Club feed", fetch_club_feed, True))
+            attempts.extend([
+                ("Futbuteo", lambda value=source_round: fetch_page(value), False),
+                ("elFutbol", fetch_elfutbol_page, False),
+            ])
             parsed = None
             last_error = None
-            for source_name, fetcher in attempts:
+            for source_name, fetcher, is_structured_feed in attempts:
                 try:
-                    html = fetcher()
-                    candidate, error = parse_round(
-                        html, official_teams, matchday, source_name
-                    )
+                    source_payload = fetcher()
+                    if is_structured_feed:
+                        candidate, error = parse_club_feed(
+                            source_payload, official_teams, matchday
+                        )
+                    else:
+                        candidate, error = parse_round(
+                            source_payload, official_teams, matchday, source_name
+                        )
                     if error:
                         last_error = error
                         print(f"Jornada {matchday}: {source_name} rechazada — {error}")
