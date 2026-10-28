@@ -1202,6 +1202,23 @@ def main():
                     f"Jornada {matchday}: VALIDADA en seco por {parsed['source']}; "
                     f"{len(parsed['fixtures'])} partidos, Planadeu incluido{detail}. Sin escrituras."
                 )
+                for fixture in parsed["fixtures"]:
+                    kickoff = fixture.get("kickoff")
+                    if fixture.get("kickoff_confirmed") and kickoff is not None:
+                        kickoff_label = kickoff.strftime("%Y-%m-%d %H:%M")
+                    elif kickoff is not None:
+                        kickoff_label = "fecha/hora pendiente de confirmar"
+                    else:
+                        kickoff_label = "fecha/hora no publicada"
+                    if fixture.get("result_is_final"):
+                        score_label = f"{fixture.get('home_goals')} - {fixture.get('away_goals')} (final)"
+                    else:
+                        score_label = "sin resultado final confirmado"
+                    provisional_label = " [EMPAREJAMIENTO PROVISIONAL]" if fixture.get("fixture_inferred") else ""
+                    print(
+                        f"  - {fixture['home']} vs {fixture['away']} | "
+                        f"{kickoff_label} | {score_label}{provisional_label}"
+                    )
                 continue
 
             try:
