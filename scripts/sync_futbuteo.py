@@ -389,7 +389,7 @@ def parse_club_feed(payload: dict, official_teams: list[str], target_matchday: i
                     raise ValueError("boolean score")
                 if isinstance(value, int):
                     score = value
-                elif isinstance(value, str) and re.fullmatch(r"\\d{1,2}", value.strip()):
+                elif isinstance(value, str) and re.fullmatch(r"\d{1,2}", value.strip()):
                     score = int(value.strip())
                 else:
                     raise ValueError("non-integer score")
@@ -583,7 +583,7 @@ def parse_round(html: str, official_teams: list[str], target_matchday: int, sour
 
     fixtures_list = list(fixtures.values())
     full_text = " ".join(parser.full_text)
-    bye_match = re.search(r"\\bdescans(?:a)?\\b|\\brest(?:s|ing)?\\b", full_text, re.I)
+    bye_match = re.search(r"\bdescans(?:a)?\b|\brest(?:s|ing)?\b", full_text, re.I)
     used = [team for fixture in fixtures_list for team in (fixture["home"], fixture["away"])]
     valid = (
         len(fixtures_list) == EXPECTED_FIXTURES
