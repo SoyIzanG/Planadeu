@@ -519,15 +519,16 @@ def _find_resting_team(full_text: str, team_lookup: dict[str, str], planadeu_nam
                 continue
             p_after = after.find(alias)
             if p_after >= 0:
-                hits.append((p_after, team))
+                hits.append((p_after, -len(alias), team))
                 continue
             p_before = before.rfind(alias)
             if p_before >= 0:
-                hits.append((len(before) - p_before, team))
+                distance = len(before) - (p_before + len(alias))
+                hits.append((distance, -len(alias), team))
         if hits:
-            hits.sort(key=lambda hit: hit[0])
-            closest_distance = hits[0][0]
-            closest = {team for distance, team in hits if distance == closest_distance}
+            hits.sort(key=lambda hit: (hit[0], hit[1]))
+            best = hits[0][:2]
+            closest = {team for distance, alias_len, team in hits if (distance, alias_len) == best}
             if len(closest) == 1:
                 return closest.pop()
     return None
