@@ -208,13 +208,19 @@ class DailySyncParserTests(unittest.TestCase):
         self.assertIsNone(wrong_round)
         self.assertIsNotNone(wrong_error)
 
-    def test_15_team_public_schedule_is_rejected(self):
+    def test_15_team_public_schedule_can_infer_unique_missing_slot_without_named_bye(self):
         parsed, error = sync_futbuteo.parse_round(
             self.fixture_html(include_planadeu=False), self.teams, 1, "test"
         )
-        self.assertIsNone(parsed)
-        self.assertIn("se exigen 8", error)
-        self.assertIn("Planadeu=ausente", error)
+        self.assertIsNone(error)
+        self.assertEqual(len(parsed["fixtures"]), 8)
+        self.assertTrue(parsed["inferred_planadeu_fixture"])
+        inferred = next(f for f in parsed["fixtures"] if f.get("fixture_inferred"))
+        self.assertIn("UE Planadeu", {inferred["home"], inferred["away"]})
+        self.assertIn("Team 15", {inferred["home"], inferred["away"]})
+        self.assertFalse(inferred["kickoff_confirmed"])
+        self.assertIsNone(inferred["home_goals"])
+        self.assertIsNone(inferred["away_goals"])
 
     def club_feed(self, **overrides):
         teams = [f"Team {i}" for i in range(1, 16)] + ["UE Planadeu"]
