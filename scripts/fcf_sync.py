@@ -291,6 +291,48 @@ def discover_modern_fcf_endpoints() -> dict[str, Any]:
             }
         except Exception as exc:
             report["competition_search"] = {"url": search_url, "ok": False, "error": str(exc)}
+
+        # The current official frontend's bundles reveal these competition API
+        # routes. Probe them directly instead of guessing the legacy id_grupo.
+        try:
+            api_opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(CookieJar()))
+            with api_opener.open(homepage_request, timeout=10) as response:
+                response.read(100_000)
+            api_headers = {
+                "User-Agent": USER_AGENT,
+                "Accept": "application/json, text/plain, */*",
+                "Referer": competition_home,
+                "Origin": "https://www.fcf.cat",
+                "Accept-Language": "ca-ES,ca;q=0.9,es;q=0.8,en;q=0.7",
+            }
+            seasons_url = "https://www.fcf.cat/api/competition/temporadas"
+            req = urllib.request.Request(seasons_url, headers=api_headers)
+            with api_opener.open(req, timeout=10) as response:
+                seasons_payload = json.loads(response.read(1_000_000).decode("utf-8", errors="replace"))
+            report["official_api_seasons"] = {"url": seasons_url, "ok": True, "payload": seasons_payload}
+            season_rows = seasons_payload if isinstance(seasons_payload, list) else seasons_payload.get("data", [])
+            season_rows = season_rows if isinstance(season_rows, list) else []
+            season_2026 = next(
+                (item for item in season_rows if isinstance(item, dict) and "2026" in str(item.get("label", item.get("name", "")))),
+                None,
+            )
+            season_ids = []
+            if isinstance(season_2026, dict):
+                season_ids = [str(season_2026[key]) for key in ("value", "id", "idTemporada", "temporadaId") if season_2026.get(key) is not None]
+            season_param = season_ids[0] if season_ids else "2026"
+            competitions_url = "https://www.fcf.cat/api/competition/competicions?" + urllib.parse.urlencode({
+                "disciplinaId": "19308233",
+                "temporada": season_param,
+            })
+            try:
+                req = urllib.request.Request(competitions_url, headers=api_headers)
+                with api_opener.open(req, timeout=10) as response:
+                    competitions_payload = json.loads(response.read(2_000_000).decode("utf-8", errors="replace"))
+                report["official_api_competitions"] = {"url": competitions_url, "ok": True, "payload": competitions_payload}
+            except Exception as exc:
+                report["official_api_competitions"] = {"url": competitions_url, "ok": False, "error": str(exc)}
+        except Exception as exc:
+            report["official_api_seasons"] = {"url": "https://www.fcf.cat/api/competition/temporadas", "ok": False, "error": str(exc)}
     except Exception as exc:
         report["error"] = str(exc)
     return report
