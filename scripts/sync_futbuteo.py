@@ -164,13 +164,110 @@ class CandidateParser(HTMLParser):
                 node["text"].append(data.strip())
 
 
+_PLAYWRIGHT = None
+_BROWSER = None
+_BROWSER_PAGE = None
+_ELFUTBOL_HTML = None
+
+
+def _looks_like_challenge(html: str) -> bool:
+    lower = (html or "").lower()
+    visible = norm(re.sub(r"<[^>]+>", " ", html_lib.unescape(html or "")))
+    explicit = (
+        "necesitas tener activado javascript" in visible
+        or "please enable javascript to continue" in visible
+        or "checking your browser" in visible
+        or "just a moment..." in visible
+    )
+    weak_challenge = (
+        ("sessionstorage" in lower or "javascript" in visible)
+        and not ("juvenil segona divisio" in visible and "grup 29" in visible)
+    )
+    return explicit or weak_challenge
+
+
+def _is_captcha(html: str) -> bool:
+    lower = (html or "").lower()
+    return any(token in lower for token in ("cf-turnstile", "g-recaptcha", "hcaptcha", "captcha challenge"))
+
+
+def _get_browser_page():
+    global _PLAYWRIGHT, _BROWSER, _BROWSER_PAGE
+    if _BROWSER_PAGE is None:
+        try:
+            from playwright.sync_api import sync_playwright
+        except ImportError as exc:
+            raise RuntimeError("La fuente exige navegador; instala Playwright y Chromium.") from exc
+        _PLAYWRIGHT = sync_playwright().start()
+        _BROWSER = _PLAYWRIGHT.chromium.launch(headless=True)
+        _BROWSER_PAGE = _BROWSER.new_page(
+            locale="ca-ES",
+            user_agent=USER_AGENT,
+            viewport={"width": 1365, "height": 900},
+        )
+    return _BROWSER_PAGE
+
+
+def _fetch_html(url: str) -> str:
+    direct_error = None
+    try:
+        request = Request(url, headers={
+            "User-Agent": USER_AGENT,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "ca-ES,ca;q=0.9,es;q=0.8,en;q=0.7",
+        })
+        with urlopen(request, timeout=25) as response:
+            html = response.read(4_000_000).decode("utf-8", errors="replace")
+        if response.status == 200 and not _looks_like_challenge(html):
+            return html
+        if _is_captcha(html):
+            raise RuntimeError("La fuente exige resolver un CAPTCHA; no se intenta eludirlo.")
+    except Exception as exc:
+        direct_error = exc
+
+    # Execute the site's normal JavaScript/cookie flow when the raw HTML is
+    # only a client-side shell. This is not a CAPTCHA solver or proxy bypass.
+    try:
+        page = _get_browser_page()
+        response = page.goto(url, wait_until="domcontentloaded", timeout=30000)
+        page.wait_for_timeout(1200)
+        html = page.content()
+        if response is not None and response.status >= 400:
+            raise RuntimeError(f"El navegador recibió HTTP {response.status}")
+        if _is_captcha(html):
+            raise RuntimeError("La fuente exige resolver un CAPTCHA; no se intenta eludirlo.")
+        if _looks_like_challenge(html):
+            raise RuntimeError("El contenido sigue siendo una pantalla de JavaScript/desafío.")
+        return html
+    except Exception as browser_error:
+        if isinstance(browser_error, RuntimeError):
+            raise
+        raise RuntimeError(
+            f"No se pudo leer la fuente ni por HTTP ni en navegador ({type(direct_error).__name__ if direct_error else 'HTTP'} / {type(browser_error).__name__})."
+        ) from browser_error
+
+
 def fetch_page(j_value: int) -> str:
-    url = f"{BASE_URL}?j={j_value}"
-    request = Request(url, headers={"User-Agent": USER_AGENT, "Accept": "text/html"})
-    with urlopen(request, timeout=25) as response:
-        if response.status != 200:
-            raise RuntimeError(f"HTTP {response.status}")
-        return response.read().decode("utf-8", errors="replace")
+    return _fetch_html(f"{BASE_URL}?j={j_value}")
+
+
+def fetch_elfutbol_page() -> str:
+    """Fallback provider: public whole-season group page, filtered by round."""
+    global _ELFUTBOL_HTML
+    if _ELFUTBOL_HTML is None:
+        _ELFUTBOL_HTML = _fetch_html(ELFUTBOL_URL)
+    return _ELFUTBOL_HTML
+
+
+def close_fetch_browser() -> None:
+    global _PLAYWRIGHT, _BROWSER, _BROWSER_PAGE
+    try:
+        if _BROWSER is not None:
+            _BROWSER.close()
+        if _PLAYWRIGHT is not None:
+            _PLAYWRIGHT.stop()
+    finally:
+        _PLAYWRIGHT = _BROWSER = _BROWSER_PAGE = None
 
 
 def parse_date(text: str):
