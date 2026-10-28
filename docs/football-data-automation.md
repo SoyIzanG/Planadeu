@@ -1,37 +1,43 @@
 # Automatic football data integration
 
-## Current stage: source preflight only
+## Current stage: read-only FCF API adapter
 
-The GitHub Actions workflow `Football source preflight` runs daily and can also be
-started manually. It checks whether the official FCF competition page and the
-complementary Futboteo page are reachable and still identify **Juvenil Segona
-Divisió, Grup 29**. It uploads a JSON report as an Actions artifact.
+The GitHub Actions workflow `Football source preflight` runs daily and on demand.
+It now calls the legacy FCF results API contract recovered from
+`pauruiz/fcf`: `POST https://m.fcf.cat/data/json_resultados.php` with
+`id_grupo` and optional `jornada`. The adapter parses JSON and emits a
+structural report; it does not write to PostgreSQL/Supabase.
 
-**It intentionally does not write to PostgreSQL/Supabase.** A page returning
-HTTP 200 is not enough to prove that all fixtures are complete or that a score
-is final. This safety gate must pass before an importer is allowed to modify
-matches.
+The API was documented by a project last updated in 2014. The endpoint and its
+current response format still need to pass a live request before this can be
+considered operational. Do not infer that public group number 29 is the API's
+internal group ID.
 
 ## Sources
 
-- Official FCF: `https://www.fcf.cat/resultats/2627/futbol-11/juvenil-segona-divisio/grup-29`
-- Complementary schedule/results: `https://futbuteo.com/catalunya/resultados/juvenil-segona-divisio/grup-29/`
-- Legacy research reference: `https://github.com/pauruiz/fcf`
+- Official FCF results page: `https://www.fcf.cat/resultats/2627/futbol-11/juvenil-segona-divisio/grup-29`
+- Legacy FCF API reference: `https://github.com/pauruiz/fcf`
+- Complementary results: `https://futbuteo.com/catalunya/resultados/juvenil-segona-divisio/grup-29/`
 
-The legacy repository documents Objective-C methods for results, standings and
-match acts. Its implementation explicitly targets `http://m.fcf.cat/data/` and
-was marked as working in January 2014. The current FCF website is available over
-HTTPS, but the legacy API is not considered verified until a read-only request
-returns valid JSON for a known group and its response schema is checked.
+Futbuteo's server response may be a JavaScript/cookie challenge. That source is
+secondary and its challenge must not override a verified official FCF response.
+
+## GitHub Actions configuration
+
+Set repository variable `FCF_GROUP_ID` to the **internal group code returned by
+the FCF system**, not the public group number, once verified. Optionally set
+`FCF_MATCHDAY` to a round number (1-30) to validate one round; if omitted, the
+API response is summarized without asserting that it is a complete matchday.
+The current script accepts no credentials and performs no writes.
 
 ## Run locally
 
 ```bash
-python scripts/fcf_sync.py
-python -m unittest discover -s tests
+FCF_GROUP_ID=<verified-internal-code> python scripts/fcf_sync.py
+python -m unittest discover -s tests -v
 ```
 
-Optional source URL overrides: `FUTBOTEO_URL` and `FCF_URL`.
+Optional settings: `FCF_API_BASE`, `FCF_MATCHDAY`, and `FUTBOTEO_URL`.
 
 ## Required safeguards before database writes
 
@@ -47,13 +53,11 @@ Optional source URL overrides: `FUTBOTEO_URL` and `FCF_URL`.
 7. Test that internal fixtures never affect official standings.
 8. Keep all database credentials in GitHub Actions secrets; never print them.
 
-
-## Validation and database safeguards added
+## Validation and database safeguards already added
 
 - `scripts/football_import_validation.py` normalizes Catalan/Spanish accents and
   validates the expected 15-team, seven-fixture matchday shape, unique team
-  identities, a single resting team, and final-score confirmation. It is a
-  validation layer, not a source-page parser or a database writer.
+  identities, a single resting team, and final-score confirmation.
 - The `matches` model and migration add `is_internal` and
   `kickoff_confirmed`. The migration marks only the existing unplayed
   2026-2027 UD Can Trias–UE Planadeu midnight placeholder as internal and
@@ -62,9 +66,7 @@ Optional source URL overrides: `FUTBOTEO_URL` and `FCF_URL`.
 
 ## Still required before enabling automated imports
 
-The source pages could not be fetched reliably from this session, so the current
-HTML structure and the legacy FCF JSON endpoint response have not been verified.
-No production database migration was run. Do not merge/deploy until the migration
-chain is confirmed, the tests pass in GitHub Actions, the real source adapter is
-implemented against captured current HTML/JSON, and a dry-run report matches a
-known official matchday. Database writes must remain disabled until then.
+The live legacy API has not yet been confirmed to respond with current JSON, and
+the internal FCF group code is not known. The Supabase migration has not been
+run. Confirm the repository's migration chain, test a dry-run against a known
+official matchday, and keep database writes disabled until that succeeds.
