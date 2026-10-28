@@ -170,6 +170,7 @@ _PLAYWRIGHT = None
 _BROWSER = None
 _BROWSER_PAGE = None
 _ELFUTBOL_HTML = None
+_CLUB_FEED_PAYLOAD = None
 
 
 def _looks_like_challenge(html: str) -> bool:
@@ -250,7 +251,10 @@ def _fetch_html(url: str) -> str:
 
 
 def fetch_club_feed() -> dict:
-    """Fetch an authorised club-owned JSON export; never bypass a site challenge."""
+    """Fetch and cache an authorised club-owned JSON export; never bypass a challenge."""
+    global _CLUB_FEED_PAYLOAD
+    if _CLUB_FEED_PAYLOAD is not None:
+        return _CLUB_FEED_PAYLOAD
     if not CLUB_FIXTURES_URL:
         raise RuntimeError("No está configurada CLUB_FIXTURES_URL")
     if not CLUB_FIXTURES_URL.lower().startswith("https://"):
@@ -271,6 +275,7 @@ def fetch_club_feed() -> dict:
     payload = json.loads(raw.decode("utf-8-sig"))
     if not isinstance(payload, dict):
         raise ValueError("El feed del club debe tener un objeto JSON en la raíz")
+    _CLUB_FEED_PAYLOAD = payload
     return payload
 
 
@@ -324,7 +329,7 @@ def parse_club_feed(payload: dict, official_teams: list[str], target_matchday: i
         return None, "el feed del club no confirma la temporada 2026-2027"
     competition = norm(str(payload.get("competition") or ""))
     expected_competition = norm("Juvenil Segona Divisió Grup 29")
-    if competition != expected_competition:
+    if expected_competition not in competition:
         return None, "el feed del club no confirma Juvenil Segona Divisió Grup 29"
 
     roster = payload.get("teams")
@@ -379,12 +384,22 @@ def parse_club_feed(payload: dict, official_teams: list[str], target_matchday: i
         hg = fixture.get("home_goals", fixture.get("goles_local"))
         ag = fixture.get("away_goals", fixture.get("goles_visitante"))
         if final:
+            def strict_goal(value):
+                if isinstance(value, bool):
+                    raise ValueError("boolean score")
+                if isinstance(value, int):
+                    score = value
+                elif isinstance(value, str) and re.fullmatch(r"\\d{1,2}", value.strip()):
+                    score = int(value.strip())
+                else:
+                    raise ValueError("non-integer score")
+                if score < 0:
+                    raise ValueError("negative score")
+                return score
             try:
-                hg, ag = int(hg), int(ag)
-            except (TypeError, ValueError):
-                return None, "un resultado marcado como final no tiene dos goles válidos"
-            if hg < 0 or ag < 0:
-                return None, "el feed contiene un marcador negativo"
+                hg, ag = strict_goal(hg), strict_goal(ag)
+            except ValueError:
+                return None, "un resultado marcado como final no tiene dos goles enteros válidos"
         else:
             hg, ag = None, None
         selected.append({
