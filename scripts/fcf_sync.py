@@ -193,6 +193,28 @@ def discover_modern_fcf_endpoints() -> dict[str, Any]:
             except Exception:
                 continue
         report["endpoint_candidates"] = sorted(candidates)[:40]
+        probes: list[dict[str, Any]] = []
+        for page_url in sorted(candidates):
+            if "/competicio?" not in page_url or len(probes) >= 10:
+                continue
+            try:
+                req = urllib.request.Request(page_url, headers={"User-Agent": USER_AGENT, "Accept": "text/html"})
+                with urllib.request.urlopen(req, timeout=6) as response:
+                    page = response.read(1_500_000).decode("utf-8", errors="replace")
+                    status = response.status
+                page_text = normalize_text(re.sub(r"<[^>]+>", " ", page))
+                probes.append({
+                    "url": page_url,
+                    "http_status": status,
+                    "juvenil_segona_divisio": "juvenil segona divisio" in page_text,
+                    "grup_29": "grup 29" in page_text,
+                    "planadeu": "planadeu" in page_text,
+                    "can_trias": "can trias" in page_text,
+                    "excerpt": re.sub(r"\\s+", " ", re.sub(r"<[^>]+>", " ", page))[:350],
+                })
+            except Exception as exc:
+                probes.append({"url": page_url, "error": str(exc)})
+        report["competition_page_probes"] = probes
     except Exception as exc:
         report["error"] = str(exc)
     return report
