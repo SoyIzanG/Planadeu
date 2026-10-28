@@ -333,6 +333,45 @@ def discover_modern_fcf_endpoints() -> dict[str, Any]:
                 report["official_api_competitions"] = {"url": competitions_url, "ok": False, "error": str(exc)}
         except Exception as exc:
             report["official_api_seasons"] = {"url": "https://www.fcf.cat/api/competition/temporadas", "ok": False, "error": str(exc)}
+
+    # FCF's WAF returns 403 to plain urllib requests in hosted runners. Retry
+    # from a real Chromium page context, which uses the same browser fetch path
+    # as the public frontend. Playwright is optional for local unit tests and is
+    # installed in the scheduled workflow.
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
+            page = browser.new_page(locale="ca-ES", user_agent=USER_AGENT)
+            page.goto(homepage, wait_until="domcontentloaded", timeout=25000)
+            browser_probe = page.evaluate("""async () => {
+              const request = async (url) => {
+                try {
+                  const response = await fetch(url, {headers: {Accept: 'application/json, text/plain, */*'}});
+                  const text = await response.text();
+                  let payload;
+                  try { payload = JSON.parse(text); } catch { payload = text.slice(0, 500); }
+                  return {url, status: response.status, ok: response.ok, payload};
+                } catch (error) { return {url, ok: false, error: String(error)}; }
+              };
+              const seasons = await request('/api/competition/temporadas');
+              const search = await request('/api/search?q=juvenil%20segona%20divisio%20grup%2029&locale=ca');
+              let season = null;
+              if (seasons.ok && Array.isArray(seasons.payload)) {
+                season = seasons.payload.find(item => String(item.label || '').includes('2026')) || null;
+              }
+              let competitions = null;
+              if (season && season.value != null) {
+                competitions = await request('/api/competition/competicions?disciplinaId=19308233&temporada=' + encodeURIComponent(season.value));
+              }
+              return {pageUrl: location.href, title: document.title, seasons, search, selectedSeason: season, competitions};
+            }""")
+            browser.close()
+        report["browser_api_probe"] = browser_probe
+    except Exception as exc:
+        report["browser_api_probe"] = {"ok": False, "error": str(exc)}
+    except_base = None
     except Exception as exc:
         report["error"] = str(exc)
     return report
