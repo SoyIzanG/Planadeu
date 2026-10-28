@@ -264,27 +264,27 @@ def main() -> int:
             "The legacy API contract comes from https://github.com/pauruiz/fcf and must be live-verified before enabling writes.",
         ],
     }
-    try:
-        matchday = int(FCF_MATCHDAY) if FCF_MATCHDAY.isdigit() else None
-        # Probe public group number 29 only when no verified internal code is set.
-        # Query all rounds so the team identity check also works when a team rests.
-        group_id = FCF_GROUP_ID or "29"
-        payload = post_fcf_results(group_id)
-        rows = extract_result_rows(payload)
-        if not FCF_GROUP_ID:
-            team_names = {normalize_text(str(row.get(field) or "")) for row in rows for field in ("equipo_local_nombre", "equipo_visitante_nombre")}
-            if not any("planadeu" in name for name in team_names) or not any("can trias" in name for name in team_names):
-                raise ValueError("Candidate API group id 29 did not identify both Planadeu and Can Trias; set FCF_GROUP_ID to the verified internal code")
-        summary = summarize_results(rows, matchday)
-        report["official_source"].update({"http_json_ok": True, "api_rows_returned": len(rows), **summary})
-        report["ok"] = summary["ok"]
-        if not summary["ok"]:
-            report["error"] = "FCF API response failed structural validation"
-    except Exception as exc:
-        report["official_source"]["http_json_ok"] = False
-        report["error"] = str(exc)
+    if not FCF_GROUP_ID:
+        # The public competition number (e.g. Grup 29) is not the legacy API's
+        # internal id. Never send "29" as if it were verified configuration.
+        report["error"] = "FCF_GROUP_ID is not configured; public group number cannot safely be used as the legacy API id"
         report["modern_fcf_discovery"] = discover_modern_fcf_endpoints()
         report["ok"] = False
+    else:
+        try:
+            matchday = int(FCF_MATCHDAY) if FCF_MATCHDAY.isdigit() else None
+            payload = post_fcf_results(FCF_GROUP_ID)
+            rows = extract_result_rows(payload)
+            summary = summarize_results(rows, matchday)
+            report["official_source"].update({"http_json_ok": True, "api_rows_returned": len(rows), **summary})
+            report["ok"] = summary["ok"]
+            if not summary["ok"]:
+                report["error"] = "FCF API response failed structural validation"
+        except Exception as exc:
+            report["official_source"]["http_json_ok"] = False
+            report["error"] = str(exc)
+            report["modern_fcf_discovery"] = discover_modern_fcf_endpoints()
+            report["ok"] = False
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0 if report["ok"] else 1
 
