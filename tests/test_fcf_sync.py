@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import patch
 
 import scripts.fcf_sync as fcf_sync
+import scripts.sync_futbuteo as sync_futbuteo
 
 from scripts.fcf_sync import (
     extract_result_rows,
@@ -82,6 +83,70 @@ class FcfApiAdapterTests(unittest.TestCase):
         summary = summarize_results([fixture], None)
         self.assertEqual(summary["fixtures"][0]["acta_closed"], False)
         self.assertEqual(summary["fixtures"][0]["provisional"], True)
+
+
+class DailySyncParserTests(unittest.TestCase):
+    def setUp(self):
+        self.teams = [f"Team {i}" for i in range(1, 16)] + ["UE Planadeu"]
+
+    def fixture_html(self, count=8, include_planadeu=True, final=False):
+        teams = list(self.teams)
+        if not include_planadeu:
+            teams = [team for team in teams if team != "UE Planadeu"]
+        cards = []
+        pairs = list(zip(teams[::2], teams[1::2]))
+        if not include_planadeu:
+            pairs = pairs[:7]
+        else:
+            pairs = pairs[:count]
+        for i, (home, away) in enumerate(pairs):
+            score = " 2 - 1 FT" if final else " 2 - 1"
+            cards.append(
+                '<div class="fixture">'
+                f'{home} vs {away} '
+                f'<time datetime="2026-10-{31-i:02d}T12:00"></time> '
+                '12:00'
+                f'{score}</div>'
+            )
+        return (
+            "<html><body><h1>Juvenil Segona Divisió Grup 29</h1>"
+            "<p>Temporada 2026-2027</p>"
+            + "".join(cards)
+            + "</body></html>"
+        )
+
+    def test_target_round_requires_all_16_teams_and_eight_fixtures(self):
+        parsed, error = sync_futbuteo.parse_round(
+            self.fixture_html(), self.teams, 1, "test"
+        )
+        self.assertIsNone(error)
+        self.assertEqual(len(parsed["fixtures"]), 8)
+        self.assertIn("UE Planadeu", [t for item in parsed["fixtures"] for t in (item["home"], item["away"])])
+
+    def test_15_team_public_schedule_is_rejected(self):
+        parsed, error = sync_futbuteo.parse_round(
+            self.fixture_html(include_planadeu=False), self.teams, 1, "test"
+        )
+        self.assertIsNone(parsed)
+        self.assertIn("se exigen 8", error)
+        self.assertIn("Planadeu=ausente", error)
+
+    def test_kickoff_clock_is_not_misread_as_score(self):
+        parsed, error = sync_futbuteo.parse_round(
+            self.fixture_html(final=False), self.teams, 1, "test"
+        )
+        self.assertIsNone(error)
+        self.assertTrue(all(item["home_goals"] is None for item in parsed["fixtures"]))
+        self.assertTrue(all(item["away_goals"] is None for item in parsed["fixtures"]))
+
+    def test_only_explicitly_final_scores_are_imported(self):
+        parsed, error = sync_futbuteo.parse_round(
+            self.fixture_html(final=True), self.teams, 1, "test"
+        )
+        self.assertIsNone(error)
+        self.assertTrue(all(item["result_is_final"] for item in parsed["fixtures"]))
+        self.assertEqual(parsed["fixtures"][0]["home_goals"], 2)
+        self.assertEqual(parsed["fixtures"][0]["away_goals"], 1)
 
 
 if __name__ == "__main__":
