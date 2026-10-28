@@ -224,6 +224,21 @@ def discover_modern_fcf_endpoints() -> dict[str, Any]:
             except Exception as exc:
                 probes.append({"url": page_url, "error": str(exc)})
         report["competition_page_probes"] = probes
+        # The current FCF site exposes a public search API used by its own UI.
+        # Use it to discover competition IDs before attempting a fixture endpoint.
+        search_url = homepage.replace("/es", "") + "/api/search?q=juvenil%20segona%20divisio%20grup%2029&locale=ca"
+        try:
+            req = urllib.request.Request(search_url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
+            with urllib.request.urlopen(req, timeout=10) as response:
+                raw_search = response.read(1_000_000).decode("utf-8", errors="replace")
+                search_payload = json.loads(raw_search)
+            report["competition_search"] = {
+                "url": search_url,
+                "ok": True,
+                "payload": search_payload,
+            }
+        except Exception as exc:
+            report["competition_search"] = {"url": search_url, "ok": False, "error": str(exc)}
     except Exception as exc:
         report["error"] = str(exc)
     return report
