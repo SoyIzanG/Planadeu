@@ -62,29 +62,29 @@
         </div>
 
         <div class="card shadow">
-            <div class="card-header d-flex align-items-center justify-content-between"><span>Plantilla</span><span class="badge bg-warning text-dark">EN CONSTRUCCIÓN</span></div>
-            <div class="card-body p-0">
-                <div class="alert alert-warning rounded-0 mb-0 border-0"><i class="bi bi-cone-striped me-2"></i>La sección de jugadores está en construcción. Los datos se están preparando para su publicación.</div>
-                {% if false and team.players.count() %}
-                <table class="table table-sm mb-0">
-                    <thead><tr><th>#</th><th>Jugador</th><th>Posición</th><th>Partidos</th><th>Goles</th><th>Asistencias</th></tr></thead>
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span>Plantilla</span>
+                <span class="badge bg-warning text-dark">ESTADÍSTICAS PENDIENTES</span>
+            </div>
+            {% if team.players.count() %}
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead><tr><th>#</th><th>Jugador</th><th>Posición</th><th>Estadísticas</th></tr></thead>
                     <tbody>
                         {% for p in team.players.order_by('jersey_number') %}
                         <tr>
                             <td>{{ p.jersey_number or '-' }}</td>
                             <td><a href="{{ url_for('players.profile', player_id=p.id) }}">{{ p.full_name }}</a></td>
                             <td>{{ p.position }}</td>
-                            <td>{{ p.appearances }}</td>
-                            <td>{{ p.goals }}</td>
-                            <td>{{ p.assists }}</td>
+                            <td><span class="badge bg-secondary">Pendiente de actualizar</span></td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-                {% else %}
-                <p class="p-3 mb-0 text-muted">Plantilla en preparación.</p>
-                {% endif %}
             </div>
+            {% else %}
+            <div class="card-body text-muted">La plantilla está pendiente de actualizar.</div>
+            {% endif %}
         </div>
     </div>
 </div>
