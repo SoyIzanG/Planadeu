@@ -564,7 +564,11 @@ def parse_round(html: str, official_teams: list[str], target_matchday: int, sour
 
     fixtures = {}
     for candidate, date_context, candidate_matchday in parser.candidates:
-        if parser.has_round_labels and candidate_matchday != target_matchday:
+        # Futbuteo's round-specific ?j= URL already selects this round. The
+        # same page also contains news and next-round headings, so a global
+        # has_round_labels flag can filter out every current-round card.
+        # Only apply per-card heading filtering to the whole-season provider.
+        if source_name.lower() == "elfutbol" and parser.has_round_labels and candidate_matchday != target_matchday:
             continue
         candidate_norm = norm(candidate)
         # Keep source text order (home first, away second) rather than the order
