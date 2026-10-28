@@ -454,8 +454,211 @@ def parse_club_feed(payload: dict, official_teams: list[str], target_matchday: i
     return {"fixtures": selected, "bye": None, "source": "Club feed"}, None
 
 
-def fetch_page(j_value: int) -> str:
-    return _fetch_html(f"{BASE_URL}?j={j_value}")
+def _synthetic_futbuteo_html(matchday: int, fixtures: list[dict], resting_team: str | None) -> str:
+    """Build a minimal document from visible, date-scoped fixture cards."""
+    rows = []
+    for item in fixtures:
+        text = html_lib.escape(str(item["text"]))
+        kickoff_date = html_lib.escape(str(item["date"]), quote=True)
+        rows.append(
+            '<div class="fixture" data-date="' + kickoff_date + '">'
+            + text + "</div>"
+        )
+    if resting_team:
+        rows.append("<p>Descans " + html_lib.escape(resting_team) + "</p>")
+    return (
+        "<html><body><h1>Juvenil Segona Divisio Grup 29</h1>"
+        "<p>Temporada 2026-2027</p><h2>Jornada " + str(matchday) + "</h2>"
+        + "".join(rows) + "</body></html>"
+    )
+
+
+def _fetch_futbuteo_dom_round(url: str, official_teams: list[str], matchday: int) -> str:
+    """Read visible fixtures from the browser DOM, scoped to the requested round dates."""
+    page = _get_browser_page()
+    response = page.goto(url, wait_until="domcontentloaded", timeout=30000)
+    page.wait_for_timeout(1000)
+    rendered = page.content()
+    if response is not None and response.status >= 400:
+        raise RuntimeError("Futbuteo respondió HTTP " + str(response.status))
+    if _is_captcha(rendered) or _looks_like_challenge(rendered):
+        raise RuntimeError("Futbuteo no entregó el calendario renderizado; no se intenta eludir el bloqueo")
+
+    team_records = []
+    for team in official_teams:
+        aliases = [team]
+        for canonical, alternatives in TEAM_ALIASES.items():
+            if compact(team) == compact(canonical):
+                aliases.extend(alternatives)
+        team_records.append({
+            "canonical": team,
+            "aliases": sorted(set(aliases), key=len, reverse=True),
+        })
+
+    browser_result = page.evaluate(r"""({teams, matchday}) => {
+      const normalize = value => String(value || '').normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '').toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ').trim();
+      const monthNumber = token => {
+        const m = normalize(token);
+        if (m.startsWith('gen') || m.startsWith('ene')) return 1;
+        if (m.startsWith('feb')) return 2;
+        if (m.startsWith('mar')) return 3;
+        if (m.startsWith('abr')) return 4;
+        if (m.startsWith('mai') || m.startsWith('may')) return 5;
+        if (m.startsWith('jun')) return 6;
+        if (m.startsWith('jul')) return 7;
+        if (m.startsWith('ago')) return 8;
+        if (m.startsWith('set') || m.startsWith('sep')) return 9;
+        if (m.startsWith('oct')) return 10;
+        if (m.startsWith('nov')) return 11;
+        if (m.startsWith('des') || m.startsWith('dic')) return 12;
+        return null;
+      };
+      const datesIn = value => {
+        const n = normalize(value);
+        const re = /\b(\d{1,2})\s+(gen\w*|ene\w*|feb\w*|mar\w*|abr\w*|mai\w*|may\w*|jun\w*|jul\w*|ago\w*|set\w*|sep\w*|oct\w*|nov\w*|des\w*|dic\w*)\b/g;
+        const found = [];
+        let m;
+        while ((m = re.exec(n)) !== null) {
+          const month = monthNumber(m[2]);
+          if (!month) continue;
+          const year = month >= 8 ? 2026 : 2027;
+          found.push(String(year) + '-' + String(month).padStart(2, '0') + '-' + String(Number(m[1])).padStart(2, '0'));
+        }
+        return [...new Set(found)];
+      };
+      const dateFromAttr = value => {
+        const s = String(value || '');
+        const iso = s.match(/(20\d{2}-\d{2}-\d{2})/);
+        if (iso) return iso[1];
+        const dmy = s.match(/(\d{1,2})[./-](\d{1,2})[./-](20\d{2})/);
+        if (dmy) return dmy[3] + '-' + String(Number(dmy[2])).padStart(2, '0') + '-' + String(Number(dmy[1])).padStart(2, '0');
+        return null;
+      };
+      const getText = el => (el.innerText || '').replace(/\s+/g, ' ').trim();
+      const aliasIndex = [];
+      for (const record of teams) {
+        for (const alias of record.aliases) {
+          const n = normalize(alias);
+          if (n) aliasIndex.push({canonical: record.canonical, alias: n});
+        }
+      }
+      aliasIndex.sort((a,b) => b.alias.length-a.alias.length);
+      const findTeams = value => {
+        const n = normalize(value);
+        const hits = [];
+        for (const item of aliasIndex) {
+          const pos = n.indexOf(item.alias);
+          if (pos >= 0) hits.push({canonical:item.canonical, alias:item.alias, pos});
+        }
+        hits.sort((a,b) => a.pos-b.pos || b.alias.length-a.alias.length);
+        const result = [];
+        let blockedUntil = -1;
+        for (const hit of hits) {
+          if (hit.pos < blockedUntil || result.some(item => item.canonical === hit.canonical)) continue;
+          result.push(hit);
+          blockedUntil = hit.pos + hit.alias.length;
+        }
+        return result;
+      };
+      const roundSelector = /(?:jornada\s*|j\s*)(\d{1,2})\b/i;
+      const headingNodes = [...document.querySelectorAll('h1,h2,h3,h4,h5,h6,p,span,div,section,article')]
+        .map(el => ({el, text:getText(el)}))
+        .filter(item => item.text.length >= 10 && item.text.length <= 180
+          && roundSelector.test(item.text)
+          && Number(item.text.match(roundSelector)[1]) === Number(matchday)
+          && datesIn(item.text).length >= 1)
+        .sort((a,b) => a.text.length-b.text.length);
+      const targetHeading = headingNodes.length ? headingNodes[0] : null;
+      const targetDates = targetHeading ? datesIn(targetHeading.text) : [];
+      const targetDateSet = new Set(targetDates);
+
+      const allElements = [...document.querySelectorAll('h1,h2,h3,h4,h5,h6,p,span,small,div,li,section,article,tr')];
+      const order = new Map(allElements.map((el,i) => [el,i]));
+      const dayHeadings = allElements.map(el => ({el, text:getText(el)}))
+        .filter(item => item.text.length >= 4 && item.text.length <= 55
+          && /^(lunes|martes|miercoles|jueves|viernes|sabado|domingo|lun|mar|mie|jue|vie|sab|dom)\b/i.test(normalize(item.text))
+          && datesIn(item.text).length === 1)
+        .map(item => ({el:item.el, date:datesIn(item.text)[0], index:order.get(item.el)}));
+      const nearestDay = el => {
+        const elIndex = order.get(el);
+        let chosen = null;
+        for (const item of dayHeadings) {
+          if (item.index < elIndex && (!chosen || item.index > chosen.index)) chosen = item;
+        }
+        return chosen ? chosen.date : null;
+      };
+      const candidateNodes = [...document.querySelectorAll('tr,li,article,section,div')];
+      const candidates = [];
+      for (const el of candidateNodes) {
+        if (!el.getClientRects().length) continue;
+        const text = getText(el);
+        if (text.length < 8 || text.length > 340) continue;
+        const hits = findTeams(text);
+        if (hits.length !== 2) continue;
+        const timeNode = el.querySelector('time[datetime], [data-date], [data-kickoff], [datetime]');
+        const dateAttr = dateFromAttr(
+          el.getAttribute('data-date') || el.getAttribute('data-kickoff')
+          || el.getAttribute('datetime')
+          || (timeNode && (timeNode.getAttribute('datetime') || timeNode.getAttribute('data-date') || timeNode.getAttribute('data-kickoff')))
+        );
+        const fromText = datesIn(text)[0] || null;
+        const date = dateAttr || fromText || nearestDay(el);
+        if (!date || (targetDateSet.size && !targetDateSet.has(date))) continue;
+        candidates.push({date, text, teams:hits.map(hit => hit.canonical), length:text.length});
+      }
+      candidates.sort((a,b) => a.length-b.length);
+      const fixtureByPair = new Map();
+      for (const item of candidates) {
+        const key = [...item.teams].sort().join('|');
+        if (!fixtureByPair.has(key)) fixtureByPair.set(key, item);
+      }
+      const fixtures = [...fixtureByPair.values()].sort((a,b) => a.date.localeCompare(b.date));
+      const byes = [];
+      for (const el of candidateNodes) {
+        if (!el.getClientRects().length) continue;
+        const text = getText(el);
+        if (text.length < 7 || text.length > 180 || !/\bdescans(?:a)?\b/i.test(normalize(text))) continue;
+        const hits = findTeams(text);
+        if (hits.length === 1) byes.push({team:hits[0].canonical, length:text.length});
+      }
+      byes.sort((a,b) => a.length-b.length);
+      return {
+        heading: targetHeading ? targetHeading.text : null,
+        targetDates,
+        fixtures,
+        restingTeam: byes.length ? byes[0].team : null,
+        fixtureCandidateCount: candidates.length,
+        pageTitle: document.title,
+        bodyStart: normalize(getText(document.body)).slice(0,450)
+      };
+    }""", {"teams": team_records, "matchday": target_matchday})
+
+    if not isinstance(browser_result, dict):
+        raise RuntimeError("Futbuteo no devolvió datos DOM válidos")
+    fixtures = browser_result.get("fixtures") or []
+    resting_team = browser_result.get("restingTeam")
+    if not browser_result.get("targetDates"):
+        raise RuntimeError(
+            "No se pudo identificar la fecha de la jornada solicitada en Futbuteo: "
+            + json.dumps({key: browser_result.get(key) for key in ("heading", "pageTitle", "bodyStart")}, ensure_ascii=False)
+        )
+    if len(fixtures) < 7:
+        raise RuntimeError(
+            f"Futbuteo: DOM detectó {len(fixtures)} de los 7 partidos públicos esperados; "
+            f"candidatos={browser_result.get('fixtureCandidateCount')}, "
+            f"cabecera={browser_result.get('heading')}, "
+            f"descanso={resting_team!r}, inicio={browser_result.get('bodyStart')!r}"
+        )
+    return _synthetic_futbuteo_html(target_matchday, fixtures, resting_team)
+
+
+def fetch_page(j_value: int, official_teams: list[str] | None = None, target_matchday: int | None = None) -> str:
+    url = f"{BASE_URL}?j={j_value}"
+    if official_teams is not None and target_matchday is not None:
+        return _fetch_futbuteo_dom_round(url, official_teams, target_matchday)
+    return _fetch_html(url)
 
 def futbuteo_query_for_matchday(matchday: int) -> int:
     """Futbuteo's j parameter is the actual displayed matchday number."""
@@ -978,7 +1181,7 @@ def main():
             if CLUB_FIXTURES_URL:
                 attempts.append(("Club feed", fetch_club_feed, True))
             attempts.extend([
-                ("Futbuteo", lambda value=futbuteo_query_for_matchday(matchday): fetch_page(value), False),
+                ("Futbuteo", lambda value=futbuteo_query_for_matchday(matchday): fetch_page(value, official_teams, matchday), False),
                 ("elFutbol", fetch_elfutbol_page, False),
             ])
             parsed = None
