@@ -15,13 +15,14 @@ matches.
 ## Sources
 
 - Official FCF: `https://www.fcf.cat/resultats/2627/futbol-11/juvenil-segona-divisio/grup-29`
-- Complementary schedule/results: `https://futboteo.com/catalunya/resultados/juvenil-segona-divisio/grup-29/`
+- Complementary schedule/results: `https://futbuteo.com/catalunya/resultados/juvenil-segona-divisio/grup-29/`
 - Legacy research reference: `https://github.com/pauruiz/fcf`
 
 The legacy repository documents Objective-C methods for results, standings and
-match acts, but was marked as working in January 2014 and uses HTTP endpoints
-under `m.fcf.cat/data/`. Do not treat those endpoints as live until they have
-been independently verified.
+match acts. Its implementation explicitly targets `http://m.fcf.cat/data/` and
+was marked as working in January 2014. The current FCF website is available over
+HTTPS, but the legacy API is not considered verified until a read-only request
+returns valid JSON for a known group and its response schema is checked.
 
 ## Run locally
 
