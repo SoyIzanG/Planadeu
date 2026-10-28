@@ -361,11 +361,25 @@ def discover_modern_fcf_endpoints() -> dict[str, Any]:
                   if (seasons.ok && Array.isArray(seasons.payload)) {
                     season = seasons.payload.find(item => String(item.label || '').includes('2026')) || null;
                   }
-                  let competitions = null;
+                  let competitions = null, selectedCompetition = null, groups = null, selectedGroup = null, matches = null, teams = null;
+                  const listOf = value => Array.isArray(value) ? value : (Array.isArray(value?.data) ? value.data : []);
+                  const labelOf = value => String(value?.label || value?.nombre || value?.name || value?.descripcion || '');
                   if (season && season.value != null) {
                     competitions = await request('/api/competition/competicions?disciplinaId=19308233&temporada=' + encodeURIComponent(season.value));
+                    selectedCompetition = listOf(competitions?.payload).find(item => /juvenil.*segona.*divisi/i.test(labelOf(item))) || null;
                   }
-                  return {pageUrl: location.href, title: document.title, seasons, search, selectedSeason: season, competitions};
+                  if (selectedCompetition && selectedCompetition.value != null) {
+                    groups = await request('/api/competition/grupos?competicioId=' + encodeURIComponent(selectedCompetition.value));
+                    selectedGroup = listOf(groups?.payload).find(item => /grup\s*29/i.test(labelOf(item)) || String(item?.label || item?.nombre || '').trim() === '29') || null;
+                  }
+                  if (selectedGroup) {
+                    const groupId = selectedGroup.value ?? selectedGroup.id ?? selectedGroup.grupId;
+                    if (groupId != null) {
+                      matches = await request('/api/competition/partidos?grupId=' + encodeURIComponent(groupId));
+                      teams = await request('/api/competition/equipos?grupId=' + encodeURIComponent(groupId));
+                    }
+                  }
+                  return {pageUrl: location.href, title: document.title, seasons, search, selectedSeason: season, competitions, selectedCompetition, groups, selectedGroup, matches, teams};
                 }""")
                 browser.close()
             report["browser_api_probe"] = browser_probe
