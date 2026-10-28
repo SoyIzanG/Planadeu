@@ -15,6 +15,20 @@ considered operational. If `FCF_GROUP_ID` is not configured, the preflight probe
 teams (Planadeu and Can Trias). This is a discovery check, not proof that 29 is
 the internal code for all future requests.
 
+## Important competition identity mismatch found (2026-2027)
+
+The public Futbuteo page for Juvenil Segona Divisió Grup 29 in 2026-2027 lists
+Can Trias U.D. B but does not list Planadeu. Its current page for Grup 32 lists
+Planadeu, Unió Esportiva Club Futbol B. This is a strong signal that the
+database's assumed "Planadeu vs Can Trias" pairing is not an official fixture
+in one group. Treat this as an identity mismatch to resolve against the official
+FCF competition, not as permission to change the group silently.
+
+The script no longer guesses that public group number `29` is the historical
+API's internal `id_grupo`. With no verified `FCF_GROUP_ID`, it runs read-only
+discovery of the current FCF site and exits non-zero. It must not import from the
+wrong group merely to make the workflow green.
+
 ## Sources
 
 - Official FCF results page: `https://www.fcf.cat/resultats/2627/futbol-11/juvenil-segona-divisio/grup-29`
