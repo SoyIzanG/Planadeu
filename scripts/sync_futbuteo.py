@@ -557,68 +557,129 @@ def sync_round(conn, matchday: int, parsed, team_ids: dict, season_id: int):
 
 
 def main():
-    print(f"Planadeu sync | temporada {SEASON_NAME} | Futbuteo Grup 29")
+    mode = "WRITE" if ENABLE_IMPORT else "DRY RUN (sin escrituras)"
+    print(f"Planadeu sync | Juvenil C | Juvenil Segona Divisió Grup 29 | temporada {SEASON_NAME} | {mode}")
     conn = connect()
     total_written = 0
     verified = 0
     skipped = []
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT id, name FROM seasons WHERE id=%s AND name=%s", (SEASON_ID, SEASON_NAME))
-            season = cur.fetchone()
-            if not season:
-                raise RuntimeError(f"No se encuentra la temporada {SEASON_NAME} (id={SEASON_ID}).")
+            if SEASON_ID_ENV.isdigit():
+                cur.execute(
+                    "SELECT id, name FROM seasons WHERE id=%s AND name=%s",
+                    (int(SEASON_ID_ENV), SEASON_NAME),
+                )
+            else:
+                cur.execute("SELECT id, name FROM seasons WHERE name=%s ORDER BY id", (SEASON_NAME,))
+            seasons = cur.fetchall()
+            if len(seasons) != 1:
+                raise RuntimeError(
+                    f"Se esperaba una única temporada {SEASON_NAME}; se encontraron {len(seasons)}. "
+                    "No se escribe nada."
+                )
+            season = seasons[0]
+            season_id = season["id"]
             cur.execute(
                 """SELECT t.id, t.name FROM teams t
                    JOIN season_teams st ON st.team_id=t.id
-                   WHERE st.season_id=%s AND t.name <> 'UE Planadeu'
+                   WHERE st.season_id=%s
                    ORDER BY t.name""",
-                (SEASON_ID,),
+                (season_id,),
             )
             rows = cur.fetchall()
-        if len(rows) != 15:
-            raise RuntimeError(f"Se esperaban 15 equipos oficiales en {SEASON_NAME}; hay {len(rows)}. No se escribe nada.")
-        official_teams = [r["name"] for r in rows]
-        team_ids = {norm(r["name"]): r["id"] for r in rows}
-        # Build the parser map with canonical display names, while DB lookup is normalized.
-        for j_value in J_VALUES:
-            matchday = j_value - 4
+
+        if len(rows) != EXPECTED_TEAMS:
+            raise RuntimeError(
+                f"Se esperaban {EXPECTED_TEAMS} equipos asociados a {SEASON_NAME}; hay {len(rows)}. "
+                "No se importa ninguna jornada."
+            )
+        official_teams = [row["name"] for row in rows]
+        team_ids = {norm(row["name"]): row["id"] for row in rows}
+        planadeu = [name for name in official_teams if "planadeu" in norm(name)]
+        if len(planadeu) != 1:
+            raise RuntimeError(
+                f"Se esperaba exactamente un equipo Planadeu en la temporada y hay {len(planadeu)}. "
+                "No se escribe nada."
+            )
+        print(f"Plantilla de base de datos verificada: {len(official_teams)} equipos, incluye {planadeu[0]}.")
+
+        if ENABLE_IMPORT:
+            require_import_schema(conn)
+            print("Escrituras habilitadas por configuración explícita y esquema verificado.")
+        else:
+            print("Modo seguro: únicamente se inspeccionan fuentes; Supabase no se modifica.")
+
+        # Futbuteo's old query parameter uses j=5 for internal round 1.
+        # Each round is independently validated. The alternative provider is a
+        # whole-season page, usable only if its visible round headings identify
+        # the requested round. If it cannot, the strict validator rejects it.
+        for source_round in J_VALUES:
+            matchday = source_round - 4
+            attempts = [
+                ("Futbuteo", lambda value=source_round: fetch_page(value)),
+                ("elFutbol", fetch_elfutbol_page),
+            ]
+            parsed = None
+            last_error = None
+            for source_name, fetcher in attempts:
+                try:
+                    html = fetcher()
+                    candidate, error = parse_round(
+                        html, official_teams, matchday, source_name
+                    )
+                    if error:
+                        last_error = error
+                        print(f"Jornada {matchday}: {source_name} rechazada — {error}")
+                        continue
+                    parsed = candidate
+                    break
+                except Exception as exc:
+                    last_error = f"fuente no disponible ({type(exc).__name__})"
+                    print(f"Jornada {matchday}: {source_name} no disponible ({type(exc).__name__}).")
+
+            if parsed is None:
+                skipped.append((matchday, last_error or "ninguna fuente válida"))
+                continue
+
+            verified += 1
+            if not ENABLE_IMPORT:
+                print(
+                    f"Jornada {matchday}: VALIDADA en seco por {parsed['source']}; "
+                    f"{len(parsed['fixtures'])} partidos, Planadeu incluido. Sin escrituras."
+                )
+                continue
+
             try:
-                html = fetch_page(j_value)
-                parsed, error = parse_round(html, official_teams)
+                written, error = sync_round(conn, matchday, parsed, team_ids, season_id)
                 if error:
+                    conn.rollback()
                     skipped.append((matchday, error))
                     print(f"Jornada {matchday}: OMITIDA — {error}")
                     continue
-                written, error = sync_round(conn, matchday, parsed, team_ids)
-                if error:
-                    skipped.append((matchday, error))
-                    print(f"Jornada {matchday}: OMITIDA — {error}")
-                    continue
-                verified += 1
                 total_written += written
-                print(f"Jornada {matchday}: verificada; descanso {parsed['bye']}; partidos sincronizados {written}.")
-            except (HTTPError, URLError, TimeoutError, UnicodeError, ValueError) as exc:
-                conn.rollback()
-                reason = f"fuente inaccesible o error de lectura ({type(exc).__name__})"
-                skipped.append((matchday, reason))
-                print(f"Jornada {matchday}: OMITIDA — {reason}")
+                print(
+                    f"Jornada {matchday}: sincronizada desde {parsed['source']}; "
+                    f"{written} partidos."
+                )
             except Exception as exc:
                 conn.rollback()
-                # Do not print URLs, connection strings, or secrets.
                 reason = f"error seguro de sincronización ({type(exc).__name__})"
                 skipped.append((matchday, reason))
                 print(f"Jornada {matchday}: OMITIDA — {reason}")
-            time.sleep(0.7)
+            time.sleep(0.5)
     finally:
         conn.close()
+        close_fetch_browser()
 
-    print(f"RESUMEN: {verified} jornadas verificadas; {total_written} partidos insertados/actualizados; {len(skipped)} jornadas omitidas.")
+    print(
+        f"RESUMEN: {verified} jornadas validadas; {total_written} partidos escritos; "
+        f"{len(skipped)} jornadas no validadas. Modo: {mode}."
+    )
     if skipped:
         print("Pendientes de revisión:")
         for matchday, reason in skipped:
             print(f"- Jornada {matchday}: {reason}")
-    # Incomplete source access is a reportable state, not a fake successful sync.
     if verified == 0:
         return 2
     return 0
