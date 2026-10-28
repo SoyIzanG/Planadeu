@@ -10,6 +10,7 @@ from scripts.fcf_sync import (
     extract_result_rows,
     result_matchday,
     summarize_results,
+    normalize_modern_fixture_rows,
 )
 
 
@@ -42,6 +43,26 @@ class FcfApiAdapterTests(unittest.TestCase):
     def test_matchday_is_normalized(self):
         self.assertEqual(result_matchday(row("A", "B", "5")), 5)
         self.assertIsNone(result_matchday({"jornada_numero": "unknown"}))
+
+    def test_normalizes_modern_fcf_fixture_fields(self):
+        rows = normalize_modern_fixture_rows({
+            "data": [{
+                "jornada": 5,
+                "equipLocal": {"nom": "Planadeu C"},
+                "equipVisitant": {"nom": "Can Trias B"},
+                "data": "2026-10-31",
+                "hora": "12:00",
+                "golsLocal": 2,
+                "golsVisitant": 1,
+            }]
+        })
+        self.assertEqual(rows[0]["equipo_local_nombre"], "Planadeu C")
+        self.assertEqual(rows[0]["equipo_visitante_nombre"], "Can Trias B")
+        self.assertEqual(rows[0]["equipo_local_goles"], 2)
+
+    def test_rejects_unknown_modern_fixture_schema(self):
+        with self.assertRaisesRegex(ValueError, "schema is not recognized"):
+            normalize_modern_fixture_rows([{"id": 123, "foo": "bar"}])
 
     def test_complete_matchday_shape_passes(self):
         teams = [f"Team {i}" for i in range(1, 15)]
