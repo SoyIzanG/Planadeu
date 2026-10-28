@@ -177,10 +177,10 @@ def discover_modern_fcf_endpoints() -> dict[str, Any]:
         with urllib.request.urlopen(request, timeout=8) as response:
             html = response.read(2_000_000).decode("utf-8", errors="replace")
         report["reachable"] = True
-        script_urls = [urljoin(homepage, src) for src in re.findall(r'<script[^>]+src=["\\']([^"\\']+)["\\']', html, flags=re.I)]
+        script_urls = [urljoin(homepage, src) for src in re.findall(r"""<script[^>]+src=["']([^"']+)["']""", html, flags=re.I)]
         report["script_count"] = len(script_urls)
         candidates: set[str] = set()
-        pattern = re.compile(r'["\\']([^"\\']*(?:api|result|resultat|compet|partit|jornada|calendari|match)[^"\\']*)["\\']', re.I)
+        pattern = re.compile(r"""["']([^"']*(?:api|result|resultat|compet|partit|jornada|calendari|match)[^"']*)["']""", re.I)
         for script_url in script_urls[:15]:
             try:
                 req = urllib.request.Request(script_url, headers={"User-Agent": USER_AGENT})
