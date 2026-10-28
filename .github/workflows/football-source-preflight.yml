@@ -21,7 +21,7 @@ jobs:
   preflight:
     # Set repository variable FCF_RUNNER_LABELS to a JSON array such as
     # ["self-hosted","linux","x64"] when GitHub-hosted IPs are blocked by FCF.
-    runs-on: ${{ fromJSON(vars.FCF_RUNNER_LABELS || '["ubuntu-latest"]') }}
+    runs-on: ${{ fromJSON(vars.FCF_RUNNER_LABELS || '["ubuntu-24.04"]') }}
     timeout-minutes: 10
     steps:
       - name: Checkout
