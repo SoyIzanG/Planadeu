@@ -36,6 +36,31 @@
         </div>
         {% endif %}
 
+        <div class="card shadow mb-4">
+            <div class="card-header"><i class="bi bi-calendar-event me-2"></i>Próximos partidos</div>
+            {% if upcoming_matches %}
+            <div class="list-group list-group-flush">
+                {% for m in upcoming_matches %}
+                <a href="{{ url_for('matches.detail', match_id=m.id) }}" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between gap-3">
+                    <div>
+                        <div class="fw-semibold">{{ m.home_team.name }} <span class="text-muted">vs</span> {{ m.away_team.name }}</div>
+                        <small class="text-muted">Jornada {{ 1 if m.matchday == 5 else m.matchday }}</small>
+                    </div>
+                    <div class="text-end text-nowrap">
+                        {% if m.home_team.name == 'UE Planadeu' or m.away_team.name == 'UE Planadeu' %}
+                        <small class="text-warning fw-semibold">Fecha por confirmar</small>
+                        {% else %}
+                        <small>{{ m.kickoff.strftime('%d/%m/%Y · %H:%M') }}</small>
+                        {% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="card-body text-muted">No hay próximos partidos pendientes de jugar para esta temporada.</div>
+            {% endif %}
+        </div>
+
         <div class="card shadow">
             <div class="card-header d-flex align-items-center justify-content-between"><span>Plantilla</span><span class="badge bg-warning text-dark">EN CONSTRUCCIÓN</span></div>
             <div class="card-body p-0">
