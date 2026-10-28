@@ -149,7 +149,7 @@ class CandidateParser(HTMLParser):
             self.recent_text = (self.recent_text + " " + data.strip())[-180:]
             # Some providers expose all rounds on one SSR page. Capture the
             # nearest round heading so the fallback can safely select one round.
-            round_heading = re.search(r"\b(?:jornada|matchday|round)\s*([0-9]{1,2})\b", data, re.I)
+            round_heading = re.search(r"\b(?:jornada|matchday|round|j)\s*([0-9]{1,2})\b", data, re.I)
             if round_heading:
                 self.current_matchday = int(round_heading.group(1))
                 self.has_round_labels = True
