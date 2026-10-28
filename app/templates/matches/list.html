@@ -13,12 +13,12 @@
 </div>
 
 {% if by_matchday %}
-{% for matchday in by_matchday.keys()|sort %}
+{% for matchday in by_matchday.keys()|sort if matchday > 0 %}
 <div class="card shadow mb-4">
     <div class="card-header">{% if matchday == 0 %}Historial anterior{% else %}Jornada {{ matchday }}{% endif %}</div>
     <div class="card-body p-0">
         <ul class="list-group list-group-flush">
-            {% for m in by_matchday[matchday] %}
+            {% for m in by_matchday[matchday] if not m.kickoff or m.kickoff.strftime('%Y-%m-%d') >= '2026-10-31' %}
             
             <li class="list-group-item match-row">
                 <div class="match-time">
