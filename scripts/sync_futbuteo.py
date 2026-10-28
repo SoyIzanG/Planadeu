@@ -299,96 +299,134 @@ def parse_score(text: str, kickoff):
     return scores[-1] if scores else (None, None)
 
 
-def parse_round(html: str, official_teams: list[str]):
+def parse_round(html: str, official_teams: list[str], target_matchday: int, source_name: str):
     parser = CandidateParser()
     parser.feed(html)
+    visible_html = html_lib.unescape(re.sub(r"<[^>]+>", " ", html))
+    visible_text = norm(visible_html)
+    if "juvenil segona divisio" not in visible_text or not re.search(r"\\bgrup 29\\b", visible_text):
+        return None, "la página no confirma Juvenil Segona Divisió, Grup 29"
+    if not any(token in visible_text for token in ("2026 27", "2026 2027", "temporada 26 27")):
+        return None, "la página no confirma la temporada 2026-2027"
+
     team_lookup = {norm(team): team for team in official_teams}
-    # Match canonical database names irrespective of punctuation, then attach the
-    # source-side names. For example, "U.E. Rubí" and "UE Rubí" are equivalent.
+    # Add only known aliases for canonical database teams. The current public
+    # "Planadeu A" page in Grup 28 is deliberately NOT an alias for Juvenil C.
     for team in official_teams:
         team_compact = compact(team)
         for canonical_key, aliases in TEAM_ALIASES.items():
             if team_compact == compact(canonical_key):
                 for alias in aliases:
                     team_lookup[norm(alias)] = team
+
     fixtures = {}
-    for candidate, date_context in parser.candidates:
-        candidate_norm = norm(candidate)
-        found = [team for key, team in team_lookup.items() if key and key in candidate_norm]
-        # A fixture card must mention exactly two different official clubs.
-        unique = list(dict.fromkeys(found))
-        if len(unique) != 2:
+    for candidate, date_context, candidate_matchday in parser.candidates:
+        if parser.has_round_labels and candidate_matchday != target_matchday:
             continue
+        candidate_norm = norm(candidate)
+        # Keep source text order (home first, away second) rather than the order
+        # of database team IDs. Prefer the longest alias at the same character
+        # position so "Can Trias B" is not confused with "Can Trias".
+        hits_by_team = {}
+        for alias, team in team_lookup.items():
+            if not alias:
+                continue
+            position = candidate_norm.find(alias)
+            if position < 0:
+                continue
+            current = hits_by_team.get(team)
+            rank = (position, -len(alias))
+            if current is None or rank < current[0]:
+                hits_by_team[team] = (rank, alias)
+        hits = sorted(
+            ((rank[0], rank[1], team, alias) for team, (rank, alias) in hits_by_team.items()),
+            key=lambda item: (item[0], item[1]),
+        )
+        ordered_teams = []
+        occupied_until = -1
+        for position, negative_length, team, alias in hits:
+            if position < occupied_until:
+                continue
+            if team in ordered_teams:
+                continue
+            ordered_teams.append(team)
+            occupied_until = position + len(alias)
+        if len(ordered_teams) != 2:
+            continue
+
         kickoff = parse_date(candidate)
+        date_known = kickoff is not None
+        clock_match = TIME_RE.search(candidate)
         if kickoff is None and date_context is not None:
-            clock_match = TIME_RE.search(candidate)
             if clock_match:
                 hour, minute = map(int, clock_match.groups())
                 kickoff = datetime(date_context.year, date_context.month, date_context.day, hour, minute)
             else:
-                # Date is known but no kickoff time is shown; keep a neutral local noon.
+                # DB requires a timestamp, but the UI hides time while this flag
+                # is false. Noon is only a storage placeholder, never a claimed kickoff.
                 kickoff = datetime(date_context.year, date_context.month, date_context.day, 12, 0)
-        if kickoff is None:
+            date_known = True
+        if kickoff is None or not date_known:
             continue
-        hg, ag = parse_score(candidate, kickoff)
-        key = frozenset(unique)
-        fixtures[key] = {
-            "home": unique[0], "away": unique[1], "kickoff": kickoff,
-            "home_goals": hg, "away_goals": ag,
-            "is_played": hg is not None and ag is not None,
-        }
+        kickoff_confirmed = bool(clock_match)
 
-    # Deduplicate nested containers; accept only the exact 7 official fixtures.
+        hg, ag = parse_score(candidate, kickoff)
+        final_status = bool(
+            re.search(r"(?<![a-z])ft(?=\\s|\\d|$)", candidate, re.I)
+            or re.search(r"\\b(?:final|finalitzat|finalizada|finalizado|finished|acta tancada)\\b", candidate, re.I)
+        )
+        result_is_final = hg is not None and ag is not None and final_status
+        if not result_is_final:
+            # Never turn a live/provisional display into an official score.
+            hg, ag = None, None
+
+        key = frozenset(ordered_teams)
+        fixture = {
+            "home": ordered_teams[0],
+            "away": ordered_teams[1],
+            "kickoff": kickoff,
+            "kickoff_confirmed": kickoff_confirmed,
+            "home_goals": hg,
+            "away_goals": ag,
+            "result_is_final": result_is_final,
+            "is_played": result_is_final,
+            "source": source_name,
+        }
+        existing = fixtures.get(key)
+        # Prefer the most complete nested candidate for the same fixture.
+        if existing is None or (
+            (not existing["kickoff_confirmed"] and fixture["kickoff_confirmed"])
+            or (not existing["result_is_final"] and fixture["result_is_final"])
+        ):
+            fixtures[key] = fixture
+
     fixtures_list = list(fixtures.values())
     full_text = " ".join(parser.full_text)
-    bye = None
-    # Futbuteo labels the resting club "Descans" (Catalan), often immediately
-    # followed by its abbreviated club name rather than "Descansa: Team".
-    # In Futbuteo's compacted text, team badges can touch the word (e.g.
-    # "DEDescansMAMATADEPERENC"), so word boundaries are unreliable here.
-    bye_match = re.search(r"descans(?:a)?", full_text, re.I)
-    if bye_match:
-        bye_tail = norm(full_text[bye_match.end():bye_match.end() + 220])
-        possible = []
-        for alias, team in team_lookup.items():
-            position = bye_tail.find(alias)
-            if position >= 0:
-                possible.append((position, team))
-        if possible:
-            earliest = min(position for position, _ in possible)
-            nearest = list(dict.fromkeys(team for position, team in possible if position == earliest))
-            if len(nearest) == 1:
-                bye = nearest[0]
-
-    used = [team for f in fixtures_list for team in (f["home"], f["away"])]
+    bye_match = re.search(r"descans(?:a)?|rest(?:s|ing)?", full_text, re.I)
+    used = [team for fixture in fixtures_list for team in (fixture["home"], fixture["away"])]
     valid = (
-        len(fixtures_list) == 7
-        and len(set(used)) == 14
-        and set(used).issubset(set(official_teams))
-        and bye in set(official_teams)
-        and bye not in set(used)
-        and set(used) | {bye} == set(official_teams)
+        len(fixtures_list) == EXPECTED_FIXTURES
+        and len(set(used)) == EXPECTED_TEAMS
+        and set(used) == set(official_teams)
+        and bye_match is None
+        and any("planadeu" in norm(team) for team in used)
     )
     if not valid:
-        # Diagnostic counts canonical names and source aliases, so different
-        # naming conventions do not incorrectly look like an empty source.
-        visible_html = html_lib.unescape(re.sub(r"<[^>]+>", " ", html))
-        visible_text = norm(visible_html)
         recognized_teams = {
-            team for key, team in team_lookup.items()
-            if key and key in visible_text
+            team for alias, team in team_lookup.items()
+            if alias and alias in visible_text
         }
         date_hits = len(SHORT_DATE_RE.findall(visible_html))
         return None, (
-            f"validación incompleta: {len(fixtures_list)} partidos candidatos, "
-            f"{len(set(used))} equipos distintos, "
-            f"descanso={'detectado' if bye else 'no detectado'}; "
-            f"diagnóstico fuente: HTML={len(html)} caracteres, "
-            f"tarjetas={len(parser.candidates)}, "
-            f"nombres oficiales/alias reconocidos en texto={len(recognized_teams)}/15, "
+            f"jornada incompleta desde {source_name}: {len(fixtures_list)} partidos "
+            f"(se exigen {EXPECTED_FIXTURES}), {len(set(used)} equipos distintos "
+            f"(se exigen {EXPECTED_TEAMS}), Planadeu="
+            f"{'presente' if any('planadeu' in norm(team) for team in used) else 'ausente'}, "
+            f"descanso={'detectado' if bye_match else 'no detectado'}; "
+            f"nombres reconocidos={len(recognized_teams)}/{EXPECTED_TEAMS}, "
             f"fechas visibles={date_hits}"
         )
-    return {"fixtures": fixtures_list, "bye": bye}, None
+    return {"fixtures": fixtures_list, "bye": None, "source": source_name}, None
 
 
 def connect():
