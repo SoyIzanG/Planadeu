@@ -76,7 +76,6 @@ TEAM_ALIASES = {
     # Planadeu squad (for example a public page that says Grup 28) to Juvenil C.
     "ue planadeu": [
         "planadeu c",
-        "planadeu",
         "planadeu roureda unio esportiva futbol c",
         "planadeu unio esportiva club futbol c",
     ],
