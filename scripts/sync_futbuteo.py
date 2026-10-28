@@ -33,7 +33,8 @@ ENABLE_IMPORT = os.getenv("ENABLE_FOOTBALL_IMPORT", "false").strip().lower() == 
 EXPECTED_TEAMS = 16
 EXPECTED_FIXTURES = 8
 # Futbuteo uses j=<actual round number>; the page itself labels Jornada 5 for ?j=5.
-J_VALUES = range(1, 31)
+SYNC_MATCHDAY_ENV = os.getenv("SYNC_MATCHDAY", "").strip()
+J_VALUES = [int(SYNC_MATCHDAY_ENV)] if SYNC_MATCHDAY_ENV.isdigit() and 1 <= int(SYNC_MATCHDAY_ENV) <= 30 else range(1, 31)
 USER_AGENT = "Planadeu-LeagueSync/1.0 (+scheduled fixture verification)"
 DATE_RE = re.compile(r"(?<!\d)(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?!\d)")
 ISO_DATE_RE = re.compile(r"\b(20\d{2}-\d{2}-\d{2})(?:[T ](\d{1,2}:\d{2})(?::\d{2})?)?\b")
