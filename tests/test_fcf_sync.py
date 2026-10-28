@@ -70,8 +70,8 @@ class FcfApiAdapterTests(unittest.TestCase):
         fixtures = [row(teams[i], teams[i + 1], 5) for i in range(0, 16, 2)]
         summary = summarize_results(fixtures, 5)
         self.assertTrue(summary["ok"])
-        self.assertEqual(summary["fixture_count"], 7)
-        self.assertEqual(summary["distinct_team_count"], 14)
+        self.assertEqual(summary["fixture_count"], 8)
+        self.assertEqual(summary["distinct_team_count"], 16)
 
     def test_incomplete_matchday_fails(self):
         summary = summarize_results([row("A", "B", 5)], 5)
