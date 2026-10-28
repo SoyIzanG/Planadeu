@@ -194,7 +194,8 @@ def discover_modern_fcf_endpoints() -> dict[str, Any]:
                         candidates.add(urljoin(homepage, value))
                 for token in re.finditer(r"\b(?:api|fetch\s*\(|axios|HttpClient|temporadaId|grupId)\b", source, flags=re.I):
                     snippet = source[max(0, token.start() - 120):min(len(source), token.end() + 220)]
-                    api_snippets.append({"script": script_url, "snippet": snippet[:420]})
+                    if "/api/" in snippet.lower() or "axios" in snippet.lower():
+                        api_snippets.append({"script": script_url, "snippet": snippet[:420]})
                     if len(api_snippets) >= 20:
                         break
             except Exception:
