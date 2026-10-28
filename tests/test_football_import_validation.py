@@ -11,11 +11,11 @@ from scripts.football_import_validation import (
 
 class MatchdayValidationTests(unittest.TestCase):
     def setUp(self):
-        self.teams = tuple(f"Team {i}" for i in range(1, 16))
+        self.teams = tuple(f"Team {i}" for i in range(1, 17))
         self.aliases = {normalize_team_name(name): name for name in self.teams}
         self.fixtures = tuple(
             Fixture(self.teams[i], self.teams[i + 1], 1)
-            for i in range(0, 14, 2)
+            for i in range(0, 16, 2)
         )
         self.data = Matchday(
             competition="Juvenil Segona Divisió Grup 29",
@@ -23,11 +23,30 @@ class MatchdayValidationTests(unittest.TestCase):
             matchday=1,
             team_names=self.teams,
             fixtures=self.fixtures,
-            resting_team=self.teams[14],
         )
 
     def test_complete_matchday_passes(self):
         self.assertEqual(validate_matchday(self.data, self.aliases), [])
+
+    def test_old_public_15_team_shape_is_rejected(self):
+        old_shape = Matchday(
+            competition="Juvenil Segona Divisió Grup 29",
+            season="2026-2027",
+            matchday=1,
+            team_names=self.teams[:-1],
+            fixtures=self.fixtures[:-1],
+            resting_team=self.teams[-1],
+        )
+        errors = validate_matchday(old_shape, self.aliases)
+        self.assertIn("unexpected_team_count", errors)
+        self.assertIn("incomplete_matchday", errors)
+        self.assertIn("unexpected_resting_team_in_16_team_competition", errors)
+
+    def test_every_agreed_team_must_appear_exactly_once(self):
+        incomplete = Matchday(
+            **{**self.data.__dict__, "fixtures": self.data.fixtures[:-1]}
+        )
+        self.assertIn("team_fixture_coverage_mismatch", validate_matchday(incomplete, self.aliases))
 
     def test_incomplete_matchday_is_rejected(self):
         incomplete = Matchday(
