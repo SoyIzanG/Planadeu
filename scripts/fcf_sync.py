@@ -81,7 +81,7 @@ def extract_result_rows(payload: Any) -> list[dict[str, Any]]:
         rows = payload
     elif isinstance(payload, dict):
         rows = None
-        for key in ("resultados", "results", "data", "partidos"):
+        for key in ("resultados", "results", "data", "partidos", "partits", "fixtures", "items"):
             candidate = payload.get(key)
             if isinstance(candidate, list):
                 rows = candidate
