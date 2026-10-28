@@ -101,12 +101,15 @@ class DailySyncParserTests(unittest.TestCase):
             pairs = pairs[:count]
         for i, (home, away) in enumerate(pairs):
             score = " 2 - 1 FT" if final else " 2 - 1"
+            # Mirror the nested card markup used by the live provider.
+            # This guards against the parser dropping parent <div> candidates.
             cards.append(
-                '<div class="fixture">'
-                f'{home} vs {away} '
+                '<div class="fixture"><div class="teams">'
+                f'<span>{home}</span><span>vs</span><span>{away}</span>'
+                '</div><div class="kickoff">'
                 f'<time datetime="2026-10-{31-i:02d}T12:00"></time> '
-                '12:00'
-                f'{score}</div>'
+                '12:00</div><div class="score">'
+                f'{score}</div></div>'
             )
         return (
             "<html><body><h1>Juvenil Segona Divisió Grup 29</h1>"
