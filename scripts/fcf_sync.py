@@ -174,10 +174,12 @@ def summarize_results(rows: list[dict[str, Any]], matchday: int | None) -> dict[
         })
     errors: list[str] = []
     if matchday is not None:
-        if len(selected) != 7:
-            errors.append(f"expected_7_fixtures_got_{len(selected)}")
-        if len(teams) not in (14, 15):
-            errors.append(f"expected_14_or_15_distinct_teams_got_{len(teams)}")
+        if len(selected) != 8:
+            errors.append(f"expected_8_fixtures_got_{len(selected)}")
+        if len(teams) != 16:
+            errors.append(f"expected_16_distinct_teams_got_{len(teams)}")
+        if not any("planadeu" in name for name in teams):
+            errors.append("target_planadeu_missing_from_source")
         if any(not item["home"] or not item["away"] for item in normalized):
             errors.append("fixture_missing_team_name")
     elif not selected:
