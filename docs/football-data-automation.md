@@ -35,6 +35,8 @@ public listing to contain Planadeu as the sole group-selection test.
 - Official FCF results page: `https://www.fcf.cat/resultats/2627/futbol-11/juvenil-segona-divisio/grup-29`
 - Legacy FCF API reference: `https://github.com/pauruiz/fcf`
 - Complementary results: `https://futbuteo.com/catalunya/resultados/juvenil-segona-divisio/grup-29/`
+- Secondary provider: `https://elfutbol.co/en/competitions/juvenil-segona-divisio/grup-29?results=all&season=2627&tab=results`
+- Optional club-owned JSON feed: configured by `CLUB_FIXTURES_URL` (recommended while public listings omit the agreed team).
 
 Futbuteo's server response may be a JavaScript/cookie challenge. That source is
 secondary and its challenge must not override a verified official FCF response.
@@ -55,10 +57,11 @@ runner). The workflow keeps the Chromium fallback for that runner. Do not use a
 third-party proxy to evade the FCF block; obtain an approved API/feed or run the
 job from an authorized network.
 
-Once the runner can reach FCF, the browser probe discovers the current season,
-competition and group IDs and requests the group fixture endpoint. Keep the
-write path disabled until the returned response shape and Juvenil C Grup 29
-fixture list are validated.
+The hosted runner is now pinned to Ubuntu 24.04 because Playwright 1.55 does
+not support the newer hosted Ubuntu 26.04 image. A self-hosted runner is still
+available through `FCF_RUNNER_LABELS`. Even when a source page is reachable,
+a page listing only 15 teams, seven matches and a bye is rejected for this
+club-agreed 16-team, eight-match schedule.
 
 ## GitHub Actions configuration
 
@@ -66,7 +69,11 @@ Set repository variable `FCF_GROUP_ID` to the **internal group code returned by
 the FCF system**, not the public group number, once verified. Optionally set
 `FCF_MATCHDAY` to a round number (1-30) to validate one round; if omitted, the
 API response is summarized without asserting that it is a complete matchday.
-The current script accepts no credentials and performs no writes.
+`FCF_GROUP_ID` is only for the read-only legacy FCF adapter. The daily sync
+supports an approved, club-owned JSON feed (see below). All database writes are
+disabled by default and require `ENABLE_FOOTBALL_IMPORT=true`; writes also
+refuse to run until the `is_internal` and `kickoff_confirmed` migration has
+been applied.
 
 ## Run locally
 
@@ -91,11 +98,53 @@ Optional settings: `FCF_API_BASE`, `FCF_MATCHDAY`, and `FUTBOTEO_URL`.
 7. Test that internal fixtures never affect official standings.
 8. Keep all database credentials in GitHub Actions secrets; never print them.
 
+## Approved JSON feed contract (recommended alternative)
+
+Set repository variable `CLUB_FIXTURES_URL` to a club-owned HTTPS endpoint or
+an approved export URL that returns UTF-8 JSON. If the endpoint requires a
+Bearer token, store it as secret `CLUB_FIXTURES_TOKEN`. The feed must include
+the exact database team names and must not use another Planadeu squad as an
+alias for Juvenil C.
+
+Example shape (illustrative only; the team list and fixture values below are
+not real match data):
+
+```json
+{
+  "competition": "Juvenil Segona Divisió Grup 29",
+  "season": "2026-2027",
+  "teams": ["<exact database team 1>", "... exactly 16 database team names ..."],
+  "fixtures": [
+    {
+      "matchday": 1,
+      "home": "<exact home team name>",
+      "away": "<exact away team name>",
+      "date": "2026-10-31",
+      "time": "12:00",
+      "home_goals": null,
+      "away_goals": null,
+      "result_is_final": false
+    }
+  ]
+}
+```
+
+Each round must provide eight fixtures, and all 16 declared teams must play
+exactly once in that round. Dates are required. If a clock time is unknown,
+omit `time`; the app stores a noon placeholder with `kickoff_confirmed=false`
+so it is not presented as the real kickoff. A score is used only when
+`result_is_final` is `true` and both goal values are valid integers. The
+feed can contain the whole season; each fixture must carry `matchday`.
+
 ## Validation and database safeguards already added
 
-- `scripts/football_import_validation.py` normalizes Catalan/Spanish accents and
-  validates the expected 15-team, seven-fixture matchday shape, unique team
-  identities, a single resting team, and final-score confirmation.
+- `scripts/football_import_validation.py` validates the club-agreed 16-team,
+  eight-fixture matchday shape, unique team identities, complete team coverage
+  and final-score confirmation. A bye is not expected for this 16-team roster.
+- `scripts/sync_futbuteo.py` tries the optional club-owned JSON feed first,
+  followed by Futbuteo and elFutbol. It validates group, season, exact roster,
+  all eight fixtures, confirmed times, and explicitly final scores. It never
+  imports a public 15-team round that omits Planadeu.
 - The `matches` model and migration add `is_internal` and
   `kickoff_confirmed`. The migration marks only the existing unplayed
   2026-2027 UD Can Trias–UE Planadeu midnight placeholder as internal and
@@ -104,7 +153,10 @@ Optional settings: `FCF_API_BASE`, `FCF_MATCHDAY`, and `FUTBOTEO_URL`.
 
 ## Still required before enabling automated imports
 
-The live legacy API has not yet been confirmed to respond with current JSON, and
-the internal FCF group code is not known. The current FCF API routes return HTTP 403 from GitHub Actions. The Supabase migration has not been
-run. Confirm the repository's migration chain, test a dry-run against a known
-official matchday, and keep database writes disabled until that succeeds.
+The current FCF API routes return HTTP 403 from GitHub-hosted Actions, and the
+public secondary listings currently expose only 15 teams/seven matches in
+Grup 29, without Planadeu. Therefore they fail validation as designed. The
+internal FCF group code is not known; the Supabase migration has not been run.
+A valid club-owned JSON feed or an authorised source that actually returns the
+agreed 16-team schedule is still required before the real feed can be imported.
+Keep database writes disabled until that source and the migration are verified.
