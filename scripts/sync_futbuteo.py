@@ -143,7 +143,7 @@ class CandidateParser(HTMLParser):
             self.recent_text = (self.recent_text + " " + data.strip())[-180:]
             # Some providers expose all rounds on one SSR page. Capture the
             # nearest round heading so the fallback can safely select one round.
-            round_heading = re.search(r"\\b(?:jornada|matchday|round)\\s*([0-9]{1,2})\\b", data, re.I)
+            round_heading = re.search(r"\b(?:jornada|matchday|round)\s*([0-9]{1,2})\b", data, re.I)
             if round_heading:
                 self.current_matchday = int(round_heading.group(1))
                 self.has_round_labels = True
@@ -304,7 +304,7 @@ def parse_round(html: str, official_teams: list[str], target_matchday: int, sour
     parser.feed(html)
     visible_html = html_lib.unescape(re.sub(r"<[^>]+>", " ", html))
     visible_text = norm(visible_html)
-    if "juvenil segona divisio" not in visible_text or not re.search(r"\\bgrup 29\\b", visible_text):
+    if "juvenil segona divisio" not in visible_text or not re.search(r"\bgrup 29\b", visible_text):
         return None, "la página no confirma Juvenil Segona Divisió, Grup 29"
     if not any(token in visible_text for token in ("2026 27", "2026 2027", "temporada 26 27")):
         return None, "la página no confirma la temporada 2026-2027"
@@ -372,8 +372,8 @@ def parse_round(html: str, official_teams: list[str], target_matchday: int, sour
 
         hg, ag = parse_score(candidate, kickoff)
         final_status = bool(
-            re.search(r"(?<![a-z])ft(?=\\s|\\d|$)", candidate, re.I)
-            or re.search(r"\\b(?:final|finalitzat|finalizada|finalizado|finished|acta tancada)\\b", candidate, re.I)
+            re.search(r"(?<![a-z])ft(?=\s|\d|$)", candidate, re.I)
+            or re.search(r"\b(?:final|finalitzat|finalizada|finalizado|finished|acta tancada)\b", candidate, re.I)
         )
         result_is_final = hg is not None and ag is not None and final_status
         if not result_is_final:
@@ -419,7 +419,7 @@ def parse_round(html: str, official_teams: list[str], target_matchday: int, sour
         date_hits = len(SHORT_DATE_RE.findall(visible_html))
         return None, (
             f"jornada incompleta desde {source_name}: {len(fixtures_list)} partidos "
-            f"(se exigen {EXPECTED_FIXTURES}), {len(set(used)} equipos distintos "
+            f"(se exigen {EXPECTED_FIXTURES}), {len(set(used))} equipos distintos "
             f"(se exigen {EXPECTED_TEAMS}), Planadeu="
             f"{'presente' if any('planadeu' in norm(team) for team in used) else 'ausente'}, "
             f"descanso={'detectado' if bye_match else 'no detectado'}; "
