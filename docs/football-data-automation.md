@@ -7,7 +7,7 @@ Two separate workflows are used:
 - `Football source preflight` probes the official FCF endpoints and reports source reachability. It is read-only.
 - `Actualización diaria de la liga` validates the agreed Juvenil C / Grup 29 schedule. It stays in dry-run mode unless repository variable `ENABLE_FOOTBALL_IMPORT=true` is explicitly set. Even then, writes are refused until the migration adding `matches.is_internal` and `matches.kickoff_confirmed` exists.
 
-The modern FCF API is currently blocked from GitHub-hosted runners with HTTP 403. The legacy endpoint `https://m.fcf.cat/data/json_resultados.php` is based on an API contract documented in `pauruiz/fcf` in 2014 and has not been verified to work today. The integration therefore does not treat any source as operational until it returns a complete, validated round.
+The modern FCF API is currently blocked from GitHub-hosted runners with HTTP 403. The legacy endpoint `https://m.fcf.cat/data/json_resultados.php` is based on an API contract documented in `pauruiz/fcf` in 2014 and has not been verified to work today. As a practical fallback, the daily sync now parses Futbuteo's rendered page in Chromium and can reconstruct the missing Planadeu slot only when the public page names the resting team. On 2026-10-28, round 5 passed an end-to-end dry run with eight fixtures and Planadeu included; this is not yet a database import.
 
 The API was documented by a project last updated in 2014. The endpoint and its
 current response format still need to pass a live request before this can be
@@ -60,9 +60,11 @@ job from an authorized network.
 
 The hosted runner is now pinned to Ubuntu 24.04 because Playwright 1.55 does
 not support the newer hosted Ubuntu 26.04 image. A self-hosted runner is still
-available through `FCF_RUNNER_LABELS`. Even when a source page is reachable,
-a page listing only 15 teams, seven matches and a bye is rejected for this
-club-agreed 16-team, eight-match schedule.
+available through `FCF_RUNNER_LABELS`, but it is no longer required for the
+Futbuteo fallback. The parser handles nested card markup and isolates the
+named resting team before reconstructing the missing Planadeu fixture. The
+reconstructed fixture remains provisional with an unconfirmed kickoff and no
+score; the other seven fixtures must still validate as a complete round.
 
 ## GitHub Actions configuration
 
@@ -154,10 +156,11 @@ feed can contain the whole season; each fixture must carry `matchday`.
 
 ## Still required before enabling automated imports
 
-The current FCF API routes return HTTP 403 from GitHub-hosted Actions, and the
-public secondary listings currently expose only 15 teams/seven matches in
-Grup 29, without Planadeu. Therefore they fail validation as designed. The
-internal FCF group code is not known; the Supabase migration has not been run.
-A valid club-owned JSON feed or an authorised source that actually returns the
-agreed 16-team schedule is still required before the real feed can be imported.
-Keep database writes disabled until that source and the migration are verified.
+The current FCF API routes still return HTTP 403 from GitHub-hosted Actions, and the
+public secondary listing omits Planadeu. Round 5 has passed the alternative
+Futbuteo dry-run validator by reconstructing Planadeu's slot from the named
+bye; the all-round dry run is being checked separately. The internal FCF group
+code is unknown and the Supabase migration has not been applied. Database
+writes remain disabled until the full available schedule is validated and the
+migration is verified. A club-owned feed remains the most authoritative option
+for confirming any reconstructed Planadeu fixture and its kickoff.
