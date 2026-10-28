@@ -69,13 +69,11 @@
             {% if team.players.count() %}
             <div class="table-responsive">
                 <table class="table table-sm table-hover align-middle mb-0">
-                    <thead><tr><th>#</th><th>Jugador</th><th>Posición</th><th>Estadísticas</th></tr></thead>
+                    <thead><tr><th>Jugador</th><th>Estadísticas</th></tr></thead>
                     <tbody>
                         {% for p in team.players.order_by('jersey_number') %}
                         <tr>
-                            <td>{{ p.jersey_number or '-' }}</td>
                             <td><a href="{{ url_for('players.profile', player_id=p.id) }}">{{ p.full_name }}</a></td>
-                            <td>{{ p.position }}</td>
                             <td><span class="badge bg-secondary">Pendiente de actualizar</span></td>
                         </tr>
                         {% endfor %}
