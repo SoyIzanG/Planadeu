@@ -1,5 +1,10 @@
+import contextlib
+import io
+import json
 import unittest
 from unittest.mock import patch
+
+import scripts.fcf_sync as fcf_sync
 
 from scripts.fcf_sync import (
     extract_result_rows,
