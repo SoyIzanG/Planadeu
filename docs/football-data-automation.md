@@ -39,6 +39,27 @@ public listing to contain Planadeu as the sole group-selection test.
 Futbuteo's server response may be a JavaScript/cookie challenge. That source is
 secondary and its challenge must not override a verified official FCF response.
 
+## FCF access blocked from GitHub-hosted runners
+
+The workflow now supports a self-hosted GitHub Actions runner. Verified tests
+show that both direct HTTP requests and Chromium running on a GitHub-hosted
+runner receive an AWS/CloudFront-style `403 Request blocked` from the FCF API.
+This is not a missing query parameter, nor something that can be fixed by
+retrying or changing the browser User-Agent.
+
+For the reliable path, register a GitHub Actions runner on a club-controlled
+Linux machine or server that can open the public FCF competition pages from its
+normal network. Then set repository variable `FCF_RUNNER_LABELS` to the JSON
+array `["self-hosted","linux","x64"]` (adjust labels to match the registered
+runner). The workflow keeps the Chromium fallback for that runner. Do not use a
+third-party proxy to evade the FCF block; obtain an approved API/feed or run the
+job from an authorized network.
+
+Once the runner can reach FCF, the browser probe discovers the current season,
+competition and group IDs and requests the group fixture endpoint. Keep the
+write path disabled until the returned response shape and Juvenil C Grup 29
+fixture list are validated.
+
 ## GitHub Actions configuration
 
 Set repository variable `FCF_GROUP_ID` to the **internal group code returned by
