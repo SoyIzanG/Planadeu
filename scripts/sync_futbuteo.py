@@ -1204,8 +1204,8 @@ def main():
                     parsed = candidate
                     break
                 except Exception as exc:
-                    last_error = f"fuente no disponible ({type(exc).__name__})"
-                    print(f"Jornada {matchday}: {source_name} no disponible ({type(exc).__name__}).")
+                    last_error = f"fuente no disponible ({type(exc).__name__}: {str(exc)[:300]})"
+                    print(f"Jornada {matchday}: {source_name} no disponible ({type(exc).__name__}: {str(exc)[:500]}).")
 
             if parsed is None:
                 skipped.append((matchday, last_error or "ninguna fuente válida"))
