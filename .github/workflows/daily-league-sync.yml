@@ -13,8 +13,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: planadeu-daily-sync
-  cancel-in-progress: false
+  group: planadeu-daily-sync-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   sync:
