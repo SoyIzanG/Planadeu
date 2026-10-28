@@ -1,6 +1,9 @@
 name: Football source preflight
 
 on:
+  push:
+    branches:
+      - feat/fcf-automatic-sync
   schedule:
     # 05:15 UTC daily. UTC is used because GitHub Actions cron does not track
     # Europe/Madrid daylight-saving changes.
