@@ -66,8 +66,8 @@ class FcfApiAdapterTests(unittest.TestCase):
             normalize_modern_fixture_rows([{"id": 123, "foo": "bar"}])
 
     def test_complete_matchday_shape_passes(self):
-        teams = [f"Team {i}" for i in range(1, 15)]
-        fixtures = [row(teams[i], teams[i + 1], 5) for i in range(0, 14, 2)]
+        teams = [f"Team {i}" for i in range(1, 16)] + ["Planadeu C"]
+        fixtures = [row(teams[i], teams[i + 1], 5) for i in range(0, 16, 2)]
         summary = summarize_results(fixtures, 5)
         self.assertTrue(summary["ok"])
         self.assertEqual(summary["fixture_count"], 7)
@@ -76,7 +76,7 @@ class FcfApiAdapterTests(unittest.TestCase):
     def test_incomplete_matchday_fails(self):
         summary = summarize_results([row("A", "B", 5)], 5)
         self.assertFalse(summary["ok"])
-        self.assertIn("expected_7_fixtures_got_1", summary["validation_errors"])
+        self.assertIn("expected_8_fixtures_got_1", summary["validation_errors"])
 
     def test_does_not_mark_provisional_score_as_final(self):
         fixture = row("A", "B", 5, equipo_local_goles=2, equipo_visitante_goles=1)
