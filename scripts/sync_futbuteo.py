@@ -1033,15 +1033,16 @@ def sync_round(conn, matchday: int, parsed, team_ids: dict, season_id: int):
             pairing_confirmed = bool(
                 fixture.get("pairing_confirmed", not fixture.get("fixture_inferred", False))
             )
-            # The missing Planadeu pairing inferred from a public provider's
-            # bye slot is not source-confirmed. Never write it, even if a provisional
-            # database row exists; wait for a club/official feed to confirm the pairing.
+            # If the public round lists seven fixtures and exactly one roster
+            # team is absent, that team is the one resting in the source schedule.
+            # Pair it with Planadeu as a pending fixture. Keep kickoff unconfirmed;
+            # never fabricate a date/time or score.
             if fixture.get("fixture_inferred"):
                 print(
-                    f"Jornada {matchday}: se conserva sin cambios el emparejamiento "
-                    f"provisional inferido ({fixture['home']} vs {fixture['away']})."
+                    f"Jornada {matchday}: asignando a Planadeu el equipo que descansa "
+                    f"segun el complemento de los siete partidos publicados: "
+                    f"{fixture['home']} vs {fixture['away']} (pendiente de confirmar horario)."
                 )
-                continue
 
             # If a real source now confirms an inferred, unplayed pair, correct
             # its home/away orientation. Preserve orientation for any row that
