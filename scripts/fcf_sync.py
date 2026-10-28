@@ -11,6 +11,7 @@ import json
 import os
 import sys
 import time
+import unicodedata
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
@@ -68,10 +69,16 @@ def fetch_text(url: str, attempts: int = 3) -> tuple[int, str]:
     raise RuntimeError(f"Request failed after {attempts} attempts: {last_error}")
 
 
+def normalize_text(value: str) -> str:
+    """Case-fold text and remove diacritics so Catalan/Spanish accents match."""
+    decomposed = unicodedata.normalize("NFKD", value.casefold())
+    return "".join(char for char in decomposed if not unicodedata.combining(char))
+
+
 def inspect_source(name: str, url: str) -> dict[str, Any]:
     try:
         status, text = fetch_text(url)
-        normalized = text.casefold()
+        normalized = normalize_text(text)
         missing = [marker for marker in EXPECTED_MARKERS if marker not in normalized]
         return {
             "source": name,
