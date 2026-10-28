@@ -53,6 +53,7 @@ class StandingsService:
         ).filter(
             Match.home_goals.isnot(None),
             Match.away_goals.isnot(None),
+            Match.is_internal.is_(False),
             Match.kickoff >= datetime(2026, 10, 26),
         ).all()
 
@@ -133,7 +134,7 @@ class StandingsService:
         """Build form string (W/D/L) for last 5 matches per team."""
         matches = (
             Match.query.filter_by(season_id=season_id, is_played=True)
-            .filter(Match.home_goals.isnot(None), Match.away_goals.isnot(None), Match.kickoff >= datetime(2026, 10, 26))
+            .filter(Match.home_goals.isnot(None), Match.away_goals.isnot(None), Match.is_internal.is_(False), Match.kickoff >= datetime(2026, 10, 26))
             .order_by(Match.kickoff.desc())
             .all()
         )
