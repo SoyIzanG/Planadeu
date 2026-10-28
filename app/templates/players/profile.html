@@ -5,7 +5,7 @@
 <div class="row">
     <div class="col-md-4 text-center mb-4">
         {% if player.photo_filename %}
-        <img src="{{ player.photo_filename|asset_url('player') }}" alt="{{ player.full_name }}" class="img-fluid rounded">
+        <img src="{{ player.team.logo_filename|asset_url('team') }}" alt="{{ player.team.name }}" class="img-fluid rounded">
         {% else %}
         <div class="bg-secondary rounded d-inline-flex align-items-center justify-content-center" style="width:150px;height:150px;">
             <i class="bi bi-person-fill text-white" style="font-size:5rem;"></i>
