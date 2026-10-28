@@ -19,7 +19,7 @@ concurrency:
 jobs:
   sync:
     # Use a club-controlled runner when FCF/public sources block GitHub-hosted IPs.
-    runs-on: ${{ fromJSON(vars.FCF_RUNNER_LABELS || '["ubuntu-latest"]') }}
+    runs-on: ${{ fromJSON(vars.FCF_RUNNER_LABELS || '["ubuntu-24.04"]') }}
     timeout-minutes: 20
     steps:
       - name: Descargar repositorio
