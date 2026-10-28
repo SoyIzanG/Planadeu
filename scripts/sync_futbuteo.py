@@ -507,6 +507,32 @@ def parse_score(text: str, kickoff):
     return scores[-1] if scores else (None, None)
 
 
+def _find_resting_team(full_text: str, team_lookup: dict[str, str], planadeu_name: str):
+    """Identify the named team immediately associated with a public 'Descans' slot."""
+    normalized = norm(full_text)
+    for marker in re.finditer(r"\\b(?:descans(?:a)?|rest(?:s|ing)?)\\b", normalized, re.I):
+        before = normalized[max(0, marker.start() - 110):marker.start()]
+        after = normalized[marker.end():marker.end() + 140]
+        hits = []
+        for alias, team in team_lookup.items():
+            if not alias or team == planadeu_name:
+                continue
+            p_after = after.find(alias)
+            if p_after >= 0:
+                hits.append((p_after, team))
+                continue
+            p_before = before.rfind(alias)
+            if p_before >= 0:
+                hits.append((len(before) - p_before, team))
+        if hits:
+            hits.sort(key=lambda hit: hit[0])
+            closest_distance = hits[0][0]
+            closest = {team for distance, team in hits if distance == closest_distance}
+            if len(closest) == 1:
+                return closest.pop()
+    return None
+
+
 def parse_round(html: str, official_teams: list[str], target_matchday: int, source_name: str):
     # Script bundles may contain the entire season as hidden JSON. They must
     # not affect round/date context or be mistaken for visible fixture cards.
@@ -620,6 +646,58 @@ def parse_round(html: str, official_teams: list[str], target_matchday: int, sour
     full_text = " ".join(parser.full_text)
     bye_match = re.search(r"\bdescans(?:a)?\b|\brest(?:s|ing)?\b", full_text, re.I)
     used = [team for fixture in fixtures_list for team in (fixture["home"], fixture["away"])]
+    planadeu_names = [team for team in official_teams if "planadeu" in norm(team)]
+    planadeu_name = planadeu_names[0] if len(planadeu_names) == 1 else None
+
+    # The public schedule has 15 teams and one "Descans" slot. The club has
+    # confirmed the agreed roster has 16 teams including Planadeu C. Reconstruct
+    # the missing pairing only when (a) exactly seven public fixtures parse,
+    # (b) those fixtures cover 14 database teams, (c) the only non-Planadeu team
+    # not used is the same team named beside "Descans", and (d) the requested
+    # group/season and round are visible. The extra fixture stays explicitly
+    # pending; no kickoff time or score is invented.
+    expected_non_planadeu = set(official_teams) - ({planadeu_name} if planadeu_name else set())
+    missing_non_planadeu = expected_non_planadeu - set(used)
+    inferred_eligible = (
+        planadeu_name is not None
+        and len(fixtures_list) == 7
+        and len(set(used)) == 14
+        and set(used).issubset(expected_non_planadeu)
+        and len(missing_non_planadeu) == 1
+        and bye_match is not None
+    )
+    if inferred_eligible:
+        resting_team = _find_resting_team(full_text, team_lookup, planadeu_name)
+        if resting_team in missing_non_planadeu:
+            # The return-leg fixture reverses home/away; within the first leg,
+            # alternate the provisional side to avoid a schedule with all Planadeu
+            # fixtures at home or all away. The pending banner makes this inferred
+            # orientation explicit until a verified source replaces it.
+            first_leg_round = target_matchday if target_matchday <= 15 else target_matchday - 15
+            planadeu_home = first_leg_round % 2 == 1
+            if target_matchday > 15:
+                planadeu_home = not planadeu_home
+            anchor = min((item["kickoff"] for item in fixtures_list), default=datetime(2026, 8, 1, 12, 0))
+            pending_fixture = {
+                "home": planadeu_name if planadeu_home else resting_team,
+                "away": resting_team if planadeu_home else planadeu_name,
+                "kickoff": anchor.replace(hour=12, minute=0, second=0, microsecond=0),
+                "kickoff_confirmed": False,
+                "home_goals": None,
+                "away_goals": None,
+                "result_is_final": False,
+                "is_played": False,
+                "fixture_inferred": True,
+                "source": f"{source_name} (emparejamiento inferido; pendiente de confirmar)",
+            }
+            fixtures_list.append(pending_fixture)
+            return {
+                "fixtures": fixtures_list,
+                "bye": None,
+                "source": source_name,
+                "inferred_planadeu_fixture": True,
+            }, None
+
     valid = (
         len(fixtures_list) == EXPECTED_FIXTURES
         and len(set(used)) == EXPECTED_TEAMS
@@ -870,9 +948,13 @@ def main():
 
             verified += 1
             if not ENABLE_IMPORT:
+                detail = (
+                    "; incluye emparejamiento provisional de Planadeu inferido del descanso"
+                    if parsed.get("inferred_planadeu_fixture") else ""
+                )
                 print(
                     f"Jornada {matchday}: VALIDADA en seco por {parsed['source']}; "
-                    f"{len(parsed['fixtures'])} partidos, Planadeu incluido. Sin escrituras."
+                    f"{len(parsed['fixtures'])} partidos, Planadeu incluido{detail}. Sin escrituras."
                 )
                 continue
 
