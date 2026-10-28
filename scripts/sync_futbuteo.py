@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Conservative sync for the club-agreed Juvenil C, Grup 29 schedule.
+"""Sync the Juvenil C, Grup 29 schedule conservatively.
 
-Planadeu is part of the agreed 2026-2027 roster even if public listings omit it.
-A public round with seven fixtures may be validated only after its 14 teams are
-matched exactly and the unique missing non-Planadeu roster team is established.
-The eighth Planadeu pairing is marked provisional: its home/away side and kickoff
-are not confirmed. The main GitHub Actions workflow pins ENABLE_FOOTBALL_IMPORT
-to false, so scheduled runs validate data but do not write to the database.
+If a source publishes seven fixtures and they cover 14 distinct teams from the
+roster, the single absent non-Planadeu team is the bye team. Planadeu is paired
+with that team as a pending fixture; kickoff and result remain unconfirmed unless
+a source publishes them. Only rounds that pass the roster and fixture checks are
+written to the database.
 """
 from __future__ import annotations
 
