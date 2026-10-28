@@ -142,6 +142,11 @@ class DailySyncParserTests(unittest.TestCase):
         self.assertEqual(len(parsed["fixtures"]), 8)
         self.assertIn("UE Planadeu", [t for item in parsed["fixtures"] for t in (item["home"], item["away"])])
 
+    def test_futbuteo_source_round_index_starts_at_five(self):
+        self.assertEqual(sync_futbuteo.futbuteo_query_for_matchday(1), 5)
+        self.assertEqual(sync_futbuteo.futbuteo_query_for_matchday(5), 9)
+        self.assertEqual(sync_futbuteo.futbuteo_query_for_matchday(30), 34)
+
     def test_visible_round_heading_is_used_to_select_round(self):
         html = self.fixture_html().replace(
             "<p>Temporada 2026-2027</p>",
