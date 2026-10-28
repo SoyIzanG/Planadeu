@@ -228,8 +228,34 @@ def discover_modern_fcf_endpoints() -> dict[str, Any]:
         # Use it to discover competition IDs before attempting a fixture endpoint.
         search_url = homepage.replace("/es", "") + "/api/search?q=juvenil%20segona%20divisio%20grup%2029&locale=ca"
         try:
-            req = urllib.request.Request(search_url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
-            with urllib.request.urlopen(req, timeout=10) as response:
+            # Reuse the site's session cookies and same-origin browser headers;
+            # the public FCF frontend may reject a bare server-side API request.
+            from http.cookiejar import CookieJar
+            opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(CookieJar()))
+            homepage_request = urllib.request.Request(
+                homepage,
+                headers={
+                    "User-Agent": USER_AGENT,
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language": "ca-ES,ca;q=0.9,es;q=0.8,en;q=0.7",
+                },
+            )
+            with opener.open(homepage_request, timeout=10) as homepage_response:
+                homepage_response.read(100_000)
+            req = urllib.request.Request(
+                search_url,
+                headers={
+                    "User-Agent": USER_AGENT,
+                    "Accept": "application/json, text/plain, */*",
+                    "Accept-Language": "ca-ES,ca;q=0.9,es;q=0.8,en;q=0.7",
+                    "Referer": homepage,
+                    "Origin": "https://www.fcf.cat",
+                    "Sec-Fetch-Site": "same-origin",
+                    "Sec-Fetch-Mode": "cors",
+                    "Sec-Fetch-Dest": "empty",
+                },
+            )
+            with opener.open(req, timeout=10) as response:
                 raw_search = response.read(1_000_000).decode("utf-8", errors="replace")
                 search_payload = json.loads(raw_search)
             report["competition_search"] = {
