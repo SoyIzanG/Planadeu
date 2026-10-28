@@ -10,8 +10,10 @@ structural report; it does not write to PostgreSQL/Supabase.
 
 The API was documented by a project last updated in 2014. The endpoint and its
 current response format still need to pass a live request before this can be
-considered operational. Do not infer that public group number 29 is the API's
-internal group ID.
+considered operational. If `FCF_GROUP_ID` is not configured, the preflight probes
+`29` only as a candidate and rejects it unless returned rows contain both known
+teams (Planadeu and Can Trias). This is a discovery check, not proof that 29 is
+the internal code for all future requests.
 
 ## Sources
 
