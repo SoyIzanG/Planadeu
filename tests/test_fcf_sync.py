@@ -5,7 +5,7 @@ from scripts.fcf_sync import EXPECTED_MARKERS, inspect_source
 
 
 class SourcePreflightTests(unittest.TestCase):
-    @patch("scripts.fcf_sync.fetch_text", return_value=(200, "Juvenil Segona Divisio Grup 29 Jornada 5"))
+    @patch("scripts.fcf_sync.fetch_text", return_value=(200, "JUVENIL SEGONA DIVISIÓ GRUP 29 Jornada 5"))
     def test_valid_competition_page_passes(self, _fetch):
         result = inspect_source("test", "https://example.invalid")
         self.assertTrue(result["ok"])
