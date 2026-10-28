@@ -165,6 +165,39 @@ def inspect_futbuteo(url: str = FUTBOTEO_URL) -> dict[str, Any]:
         return {"url": url, "reachable": False, "error": str(exc), "note": "Secondary source only."}
 
 
+def discover_modern_fcf_endpoints() -> dict[str, Any]:
+    """Inspect public FCF page assets for current API endpoint hints, read-only."""
+    import re
+    from urllib.parse import urljoin
+
+    homepage = "https://www.fcf.cat/es"
+    report: dict[str, Any] = {"homepage": homepage, "reachable": False, "script_count": 0, "endpoint_candidates": []}
+    try:
+        request = urllib.request.Request(homepage, headers={"User-Agent": USER_AGENT, "Accept": "text/html"})
+        with urllib.request.urlopen(request, timeout=8) as response:
+            html = response.read(2_000_000).decode("utf-8", errors="replace")
+        report["reachable"] = True
+        script_urls = [urljoin(homepage, src) for src in re.findall(r'<script[^>]+src=["\\']([^"\\']+)["\\']', html, flags=re.I)]
+        report["script_count"] = len(script_urls)
+        candidates: set[str] = set()
+        pattern = re.compile(r'["\\']([^"\\']*(?:api|result|resultat|compet|partit|jornada|calendari|match)[^"\\']*)["\\']', re.I)
+        for script_url in script_urls[:15]:
+            try:
+                req = urllib.request.Request(script_url, headers={"User-Agent": USER_AGENT})
+                with urllib.request.urlopen(req, timeout=6) as response:
+                    source = response.read(1_000_000).decode("utf-8", errors="replace")
+                for match in pattern.findall(source):
+                    value = match.strip()
+                    if value.startswith(("http://", "https://", "/")) and len(value) < 300:
+                        candidates.add(urljoin(homepage, value))
+            except Exception:
+                continue
+        report["endpoint_candidates"] = sorted(candidates)[:40]
+    except Exception as exc:
+        report["error"] = str(exc)
+    return report
+
+
 def main() -> int:
     generated_at = datetime.now(timezone.utc).isoformat()
     report: dict[str, Any] = {
@@ -204,6 +237,7 @@ def main() -> int:
     except Exception as exc:
         report["official_source"]["http_json_ok"] = False
         report["error"] = str(exc)
+        report["modern_fcf_discovery"] = discover_modern_fcf_endpoints()
         report["ok"] = False
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0 if report["ok"] else 1
