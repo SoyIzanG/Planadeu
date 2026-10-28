@@ -720,6 +720,20 @@ def parse_round(html: str, official_teams: list[str], target_matchday: int, sour
         round_contexts = sorted({
             item[2] for item in parser.candidates if item[2] is not None
         })
+        candidate_samples = []
+        for candidate_text, candidate_date, candidate_round in parser.candidates:
+            candidate_norm = norm(candidate_text)
+            found_teams = []
+            for alias, team in team_lookup.items():
+                if alias and alias in candidate_norm and team not in found_teams:
+                    found_teams.append(team)
+            if len(found_teams) >= 2:
+                candidate_samples.append(
+                    str(candidate_round) + "|" + str(candidate_date) + "|" +
+                    ",".join(found_teams[:4]) + "|" + candidate_text[:100]
+                )
+            if len(candidate_samples) >= 5:
+                break
         return None, (
             f"jornada incompleta desde {source_name}: {len(fixtures_list)} partidos "
             f"(se exigen {EXPECTED_FIXTURES}), {len(set(used))} equipos distintos "
@@ -728,7 +742,7 @@ def parse_round(html: str, official_teams: list[str], target_matchday: int, sour
             f"descanso={'detectado' if bye_match else 'no detectado'}; "
             f"nombres reconocidos={len(recognized_teams)}/{EXPECTED_TEAMS}, "
             f"nombres ausentes={','.join(missing_names)}, candidatos={len(parser.candidates)}, "
-            f"jornadas_detectadas={round_contexts}, fechas visibles={date_hits}"
+            f"jornadas_detectadas={round_contexts}, fechas visibles={date_hits}, muestras={candidate_samples}"
         )
     return {"fixtures": fixtures_list, "bye": None, "source": source_name}, None
 
