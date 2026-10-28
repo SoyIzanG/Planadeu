@@ -153,6 +153,9 @@ class CandidateParser(HTMLParser):
             if round_heading:
                 self.current_matchday = int(round_heading.group(1))
                 self.has_round_labels = True
+                for node in self.stack:
+                    if node["matchday_context"] is None:
+                        node["matchday_context"] = self.current_matchday
             # The source labels fixture sections with yearless headings such as
             # "Sábado 31 oct". Remember that date for following fixture cards.
             short = SHORT_DATE_RE.search(self.recent_text)
@@ -164,6 +167,9 @@ class CandidateParser(HTMLParser):
                     year = 2026 if month >= 8 else 2027
                     try:
                         self.current_date = date(year, month, day)
+                        for node in self.stack:
+                            if node["date_context"] is None:
+                                node["date_context"] = self.current_date
                     except ValueError:
                         pass
             for node in self.stack:
