@@ -22,3 +22,6 @@ cloudinary==1.41.0
 
 # Production server
 gunicorn==21.2.0
+
+# PDF generation
+reportlab==4.2.5
