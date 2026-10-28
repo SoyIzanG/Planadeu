@@ -69,7 +69,7 @@
                         <td><span class="team-stadium"><i class="bi bi-geo-alt me-1"></i>{{ t.stadium or 'Sin estadio indicado' }}</span></td>
                         <td>
                             <div class="team-actions">
-                                <a href="{{ url_for('teams.profile', team_id=t.id) }}" class="action-btn action-view" aria-label="Ver {{ t.name }}" title="Ver equipo"><i class="bi bi-eye"></i><span>Ver</span></a>
+                                <a href="{{ url_for('teams.profile', team_identifier=t.slug) }}" class="action-btn action-view" aria-label="Ver {{ t.name }}" title="Ver equipo"><i class="bi bi-eye"></i><span>Ver</span></a>
                                 <a href="{{ url_for('admin.edit_team', team_id=t.id) }}" class="action-btn action-edit" aria-label="Editar {{ t.name }}" title="Editar equipo"><i class="bi bi-pencil-square"></i><span>Editar</span></a>
                                 <form action="{{ url_for('admin.delete_team', team_id=t.id) }}" method="post" class="d-inline" onsubmit="return confirm('¿Seguro que quieres eliminar este equipo? Esta acción no se puede deshacer.');">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
