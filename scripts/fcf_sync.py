@@ -171,19 +171,31 @@ def discover_modern_fcf_endpoints() -> dict[str, Any]:
     from urllib.parse import urljoin
 
     homepage = "https://www.fcf.cat/es"
+    competition_home = "https://www.fcf.cat/ca/competicio"
     report: dict[str, Any] = {"homepage": homepage, "reachable": False, "script_count": 0, "endpoint_candidates": []}
     try:
-        request = urllib.request.Request(homepage, headers={"User-Agent": USER_AGENT, "Accept": "text/html"})
-        with urllib.request.urlopen(request, timeout=8) as response:
-            html = response.read(2_000_000).decode("utf-8", errors="replace")
-        report["reachable"] = True
-        script_urls = [urljoin(homepage, src) for src in re.findall(r"""<script[^>]+src=["']([^"']+)["']""", html, flags=re.I)]
+        roots = [homepage, competition_home]
+        script_urls: list[str] = []
+        for root_url in roots:
+            request = urllib.request.Request(
+                root_url,
+                headers={"User-Agent": USER_AGENT, "Accept": "text/html,application/xhtml+xml"},
+            )
+            try:
+                with urllib.request.urlopen(request, timeout=8) as response:
+                    html = response.read(2_000_000).decode("utf-8", errors="replace")
+                report["reachable"] = True
+                script_urls.extend(urljoin(root_url, src) for src in re.findall(r"""<script[^>]+src=["']([^"']+)["']""", html, flags=re.I))
+            except Exception as exc:
+                report.setdefault("root_errors", []).append({"url": root_url, "error": str(exc)})
+        script_urls = list(dict.fromkeys(script_urls))
         report["script_count"] = len(script_urls)
-        report["script_assets"] = script_urls[:15]
+        report["script_assets"] = script_urls[:40]
         candidates: set[str] = set()
+        api_routes: set[str] = set()
         api_snippets: list[dict[str, str]] = []
-        pattern = re.compile(r"""["']([^"']*(?:api|result|resultat|compet|partit|jornada|calendari|match)[^"']*)["']""", re.I)
-        for script_url in script_urls[:15]:
+        pattern = re.compile(r"""["'\x60]([^"'\x60]*(?:/api/|api/|result|resultat|compet|partit|jornada|calendari|match)[^"'\x60]*)["'\x60]""", re.I)
+        for script_url in script_urls[:50]:
             try:
                 req = urllib.request.Request(script_url, headers={"User-Agent": USER_AGENT})
                 with urllib.request.urlopen(req, timeout=6) as response:
@@ -192,6 +204,19 @@ def discover_modern_fcf_endpoints() -> dict[str, Any]:
                     value = match.strip()
                     if value.startswith(("http://", "https://", "/")) and len(value) < 300:
                         candidates.add(urljoin(homepage, value))
+                cursor = 0
+                while True:
+                    fetch_at = source.find("fetch(", cursor)
+                    if fetch_at < 0:
+                        break
+                    snippet = source[fetch_at:fetch_at + 900]
+                    left = snippet.find("`")
+                    right = snippet.find("`", left + 1) if left >= 0 else -1
+                    if left >= 0 and right > left:
+                        route = snippet[left + 1:right].strip()
+                        if "/api/" in route.lower() or route.startswith("/"):
+                            api_routes.add(route[:350])
+                    cursor = fetch_at + 6
                 for token in re.finditer(r"\b(?:api|fetch\s*\(|axios|HttpClient|temporadaId|grupId)\b", source, flags=re.I):
                     snippet = source[max(0, token.start() - 120):min(len(source), token.end() + 220)]
                     if "/api/" in snippet.lower() or "axios" in snippet.lower():
@@ -200,7 +225,8 @@ def discover_modern_fcf_endpoints() -> dict[str, Any]:
                         break
             except Exception:
                 continue
-        report["endpoint_candidates"] = sorted(candidates)[:40]
+        report["endpoint_candidates"] = sorted(candidates)[:60]
+        report["api_routes"] = sorted(api_routes)[:80]
         report["api_snippets"] = api_snippets[:20]
         probes: list[dict[str, Any]] = []
         for page_url in sorted(candidates):
