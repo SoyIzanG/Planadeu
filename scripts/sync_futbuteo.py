@@ -510,7 +510,7 @@ def parse_score(text: str, kickoff):
 def _find_resting_team(full_text: str, team_lookup: dict[str, str], planadeu_name: str):
     """Identify the named team immediately associated with a public 'Descans' slot."""
     normalized = norm(full_text)
-    for marker in re.finditer(r"\\b(?:descans(?:a)?|rest(?:s|ing)?)\\b", normalized, re.I):
+    for marker in re.finditer(r"\b(?:descans(?:a)?|rest(?:s|ing)?)\b", normalized, re.I):
         before = normalized[max(0, marker.start() - 110):marker.start()]
         after = normalized[marker.end():marker.end() + 140]
         hits = []
