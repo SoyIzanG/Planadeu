@@ -111,12 +111,12 @@ class CandidateParser(HTMLParser):
         classes = attrs.get("class", "")
         # Futbuteo changes class names frequently. Include all common card/container
         # elements and let the two-team + complete-round checks reject false positives.
-        # Do not treat every wrapper div as a fixture: the page contains
-        # large wrappers around standings, team tables and news. Only collect
-        # semantically named match/fixture nodes and standard table/list rows.
+        # Candidate extraction includes wrapper divs because some public
+        # provider builds do not use semantic fixture classes. Large wrappers
+        # are rejected later unless they resolve to exactly two known teams.
         candidate = tag.lower() in {"tr", "li"} or (
             tag.lower() in {"div", "article", "section"}
-            and CANDIDATE_CLASS_RE.search(classes or "") is not None
+            and (CANDIDATE_CLASS_RE.search(classes or "") is not None or tag.lower() == "div")
         )
         node = {
             "tag": tag.lower(), "attrs": attrs, "text": [],
@@ -578,7 +578,13 @@ def parse_round(html: str, official_teams: list[str], target_matchday: int, sour
         # has_round_labels flag can filter out every current-round card.
         # Only apply per-card heading filtering to the whole-season provider.
         if parser.has_round_labels and candidate_matchday != target_matchday:
-            continue
+            # Futbuteo's round-specific URL sometimes puts fixture-card wrapper
+            # nodes in the DOM before the heading that labels their round. Its
+            # query parameter already selects one round; retain only those
+            # unlabelled cards on that source, while excluding cards explicitly
+            # associated with the previous article or next round.
+            if not (source_name == "Futbuteo" and candidate_matchday is None):
+                continue
         candidate_norm = norm(candidate)
         # Keep source text order (home first, away second) rather than the order
         # of database team IDs. Prefer the longest alias at the same character
