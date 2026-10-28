@@ -35,6 +35,9 @@ jobs:
 
       - name: Check official and complementary sources
         id: source-check
+        env:
+          FCF_GROUP_ID: ${{ vars.FCF_GROUP_ID }}
+          FCF_MATCHDAY: ${{ vars.FCF_MATCHDAY }}
         run: |
           mkdir -p reports
           set +e
