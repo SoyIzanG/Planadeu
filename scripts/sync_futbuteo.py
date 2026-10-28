@@ -499,10 +499,18 @@ def parse_score(text: str, kickoff):
 
 
 def parse_round(html: str, official_teams: list[str], target_matchday: int, source_name: str):
+    # Script bundles may contain the entire season as hidden JSON. They must
+    # not affect round/date context or be mistaken for visible fixture cards.
+    rendered_html = re.sub(
+        r"<(script|style|noscript|template)\\b[^>]*>.*?</\\1\\s*>",
+        " ",
+        html or "",
+        flags=re.I | re.S,
+    )
     parser = CandidateParser()
-    parser.feed(html)
-    visible_html = html_lib.unescape(re.sub(r"<[^>]+>", " ", html))
-    visible_text = norm(visible_html)
+    parser.feed(rendered_html)
+    visible_html = html_lib.unescape(re.sub(r"<[^>]+>", " ", rendered_html))
+    visible_text = _visible_text(rendered_html)
     if "juvenil segona divisio" not in visible_text or not re.search(r"\bgrup 29\b", visible_text):
         return None, "la página no confirma Juvenil Segona Divisió, Grup 29"
     if not any(token in visible_text for token in ("2026 27", "2026 2027", "temporada 26 27")):
@@ -615,7 +623,7 @@ def parse_round(html: str, official_teams: list[str], target_matchday: int, sour
             team for alias, team in team_lookup.items()
             if alias and alias in visible_text
         }
-        date_hits = len(SHORT_DATE_RE.findall(visible_html))
+        date_hits = len(SHORT_DATE_RE.findall(visible_text))
         return None, (
             f"jornada incompleta desde {source_name}: {len(fixtures_list)} partidos "
             f"(se exigen {EXPECTED_FIXTURES}), {len(set(used))} equipos distintos "
