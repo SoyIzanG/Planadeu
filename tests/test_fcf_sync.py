@@ -123,6 +123,18 @@ class DailySyncParserTests(unittest.TestCase):
         self.assertEqual(len(parsed["fixtures"]), 8)
         self.assertIn("UE Planadeu", [t for item in parsed["fixtures"] for t in (item["home"], item["away"])])
 
+    def test_visible_round_heading_is_used_to_select_round(self):
+        html = self.fixture_html().replace(
+            "<p>Temporada 2026-2027</p>",
+            "<h2>Jornada 1</h2><p>Temporada 2026-2027</p>",
+        )
+        parsed, error = sync_futbuteo.parse_round(html, self.teams, 1, "test")
+        self.assertIsNone(error)
+        self.assertEqual(len(parsed["fixtures"]), 8)
+        wrong_round, wrong_error = sync_futbuteo.parse_round(html, self.teams, 2, "test")
+        self.assertIsNone(wrong_round)
+        self.assertIsNotNone(wrong_error)
+
     def test_15_team_public_schedule_is_rejected(self):
         parsed, error = sync_futbuteo.parse_round(
             self.fixture_html(include_planadeu=False), self.teams, 1, "test"
