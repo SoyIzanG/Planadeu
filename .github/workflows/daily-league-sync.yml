@@ -1,6 +1,9 @@
 name: Actualización diaria de la liga
 
 on:
+  push:
+    branches:
+      - feat/fcf-automatic-sync
   schedule:
     # Todos los días a las 06:20 UTC (08:20 en Catalunya durante horario de verano).
     - cron: "20 6 * * *"
