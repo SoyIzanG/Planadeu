@@ -32,8 +32,8 @@ SEASON_ID_ENV = os.getenv("SEASON_ID", "").strip()
 ENABLE_IMPORT = os.getenv("ENABLE_FOOTBALL_IMPORT", "false").strip().lower() == "true"
 EXPECTED_TEAMS = 16
 EXPECTED_FIXTURES = 8
-# Futbuteo's j=5 page is internal matchday 1, j=6 is matchday 2, etc.
-J_VALUES = range(5, 35)
+# Futbuteo uses j=<actual round number>; the page itself labels Jornada 5 for ?j=5.
+J_VALUES = range(1, 31)
 USER_AGENT = "Planadeu-LeagueSync/1.0 (+scheduled fixture verification)"
 DATE_RE = re.compile(r"(?<!\d)(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?!\d)")
 ISO_DATE_RE = re.compile(r"\b(20\d{2}-\d{2}-\d{2})(?:[T ](\d{1,2}:\d{2})(?::\d{2})?)?\b")
@@ -801,7 +801,7 @@ def main():
             if CLUB_FIXTURES_URL:
                 attempts.append(("Club feed", fetch_club_feed, True))
             attempts.extend([
-                ("Futbuteo", lambda value=source_round: fetch_page(value), False),
+                ("Futbuteo", lambda value=matchday: fetch_page(value), False),
                 ("elFutbol", fetch_elfutbol_page, False),
             ])
             parsed = None
