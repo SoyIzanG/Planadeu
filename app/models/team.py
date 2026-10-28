@@ -2,6 +2,9 @@
 Team model - represents a football club.
 """
 
+import re
+import unicodedata
+
 from app.extensions import db
 
 
@@ -38,5 +41,11 @@ class Team(db.Model):
         lazy="dynamic",
     )
     
+    @property
+    def slug(self):
+        """URL-friendly team name, stable across links."""
+        value = unicodedata.normalize("NFKD", self.name).encode("ascii", "ignore").decode("ascii")
+        return re.sub(r"-+", "-", re.sub(r"[^a-z0-9]+", "-", value.lower())).strip("-")
+
     def __repr__(self):
         return f"<Team {self.name}>"
