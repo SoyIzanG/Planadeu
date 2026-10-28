@@ -1,6 +1,9 @@
 name: Actualización diaria de la liga
 
 on:
+  push:
+    branches:
+      - feat/fcf-automatic-sync
   schedule:
     # Todos los días a las 06:20 UTC (08:20 en Catalunya durante horario de verano).
     - cron: "20 6 * * *"
@@ -10,13 +13,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: planadeu-daily-sync
-  cancel-in-progress: false
+  group: planadeu-daily-sync-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   sync:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Use a club-controlled runner when FCF/public sources block GitHub-hosted IPs.
+    runs-on: ${{ fromJSON(vars.FCF_RUNNER_LABELS || '["ubuntu-24.04"]') }}
+    timeout-minutes: 20
     steps:
       - name: Descargar repositorio
         uses: actions/checkout@v4
@@ -24,10 +28,17 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Instalar dependencia PostgreSQL
-        run: python -m pip install --disable-pip-version-check "psycopg2-binary==2.9.11"
-      - name: Sincronizar jornadas verificadas
+      - name: Instalar dependencias de importación y navegador
+        run: |
+          python -m pip install --disable-pip-version-check "psycopg2-binary==2.9.11" "playwright==1.55.0"
+          python -m playwright install chromium
+      - name: Validar fuentes y, solo si está autorizado, sincronizar jornadas
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          SEASON_ID: "1"
+          ENABLE_FOOTBALL_IMPORT: ${{ vars.ENABLE_FOOTBALL_IMPORT }}
+          CLUB_FIXTURES_URL: ${{ vars.CLUB_FIXTURES_URL }}
+          CLUB_FIXTURES_TOKEN: ${{ secrets.CLUB_FIXTURES_TOKEN }}
+          # A focused round can be selected with repository variable SYNC_MATCHDAY.
+          # With it unset, the run validates every available round (dry-run by default).
+          SYNC_MATCHDAY: ${{ vars.SYNC_MATCHDAY }}
         run: python scripts/sync_futbuteo.py

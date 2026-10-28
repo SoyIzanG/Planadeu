@@ -4,7 +4,7 @@
 {% block content %}
 {% set home = match.home_team %}
 {% set away = match.away_team %}
-{% set planadeu_pending = home.name == "UE Planadeu" or away.name == "UE Planadeu" %}
+{% set planadeu_pending = match.is_internal or not match.kickoff_confirmed %}
 {% set played = match.is_played and match.home_goals is not none and match.away_goals is not none %}
 
 <div class="match-sheet">
@@ -22,7 +22,7 @@
             <div class="text-center mb-4">
                 <div class="competition-kicker"><span class="competition-dot"></span>LA LIGA <span class="competition-separator">·</span> JUVENIL · GRUP 29</div>
                 <div class="small text-uppercase fw-bold text-secondary tracking-wide mt-2">
-                    {% if match.matchday == 0 %}Historial anterior{% else %}Jornada {{ 1 if match.matchday == 5 else match.matchday }}{% endif %}
+                    {% if match.matchday == 0 %}Historial anterior{% else %}Jornada {{ match.matchday }}{% endif %}
                 </div>
                 <div class="text-secondary mt-2"><i class="bi bi-calendar3 me-2"></i>{% if planadeu_pending %}Fecha y hora pendientes de confirmación{% else %}{% set dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'] %}{% set meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'] %}{{ dias[match.kickoff.weekday()] }}, {{ '%02d'|format(match.kickoff.day) }} de {{ meses[match.kickoff.month - 1] }} de {{ match.kickoff.year }} · {{ match.kickoff.strftime('%H:%M') }}{% endif %}</div>
             </div>
@@ -30,7 +30,7 @@
             {% if planadeu_pending %}
             <div class="alert alert-warning d-flex align-items-center gap-2 py-2" role="status">
                 <i class="bi bi-info-circle-fill"></i>
-                <div><strong>Partido pendiente de confirmar.</strong> El emparejamiento de UE Planadeu está pendiente de confirmación oficial.</div>
+                <div><strong>Partido pendiente de confirmar.</strong> El horario o emparejamiento está pendiente de confirmación oficial.</div>
             </div>
             {% endif %}
 

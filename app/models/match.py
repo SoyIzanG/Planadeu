@@ -21,6 +21,10 @@ class Match(db.Model):
     
     # Status
     is_played = db.Column(db.Boolean, default=False, nullable=False)
+    # Internal Planadeu fixtures are not part of the official league competition.
+    is_internal = db.Column(db.Boolean, default=False, nullable=False, server_default=db.false())
+    # False means the kickoff is provisional/unknown; do not display midnight as a real time.
+    kickoff_confirmed = db.Column(db.Boolean, default=True, nullable=False, server_default=db.true())
     played_at = db.Column(db.DateTime)  # When result was recorded
     
     # Foreign keys
