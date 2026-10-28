@@ -175,6 +175,7 @@ def main() -> int:
             "url": FCF_RESULTS_ENDPOINT,
             "api_contract": "POST id_grupo; optional jornada",
             "group_id_configured": bool(FCF_GROUP_ID),
+            "group_id_source": "repository_variable" if FCF_GROUP_ID else "candidate_probe_29_only",
             "requested_matchday": int(FCF_MATCHDAY) if FCF_MATCHDAY.isdigit() else None,
         },
         "secondary_source": inspect_futbuteo(),
@@ -185,8 +186,6 @@ def main() -> int:
         ],
     }
     try:
-        if not FCF_GROUP_ID:
-            raise ValueError("FCF_GROUP_ID is missing; configure the official FCF internal group code in repository variables")
         matchday = int(FCF_MATCHDAY) if FCF_MATCHDAY.isdigit() else None
         # Probe public group number 29 only when no verified internal code is set.
         # Query all rounds so the team identity check also works when a team rests.
