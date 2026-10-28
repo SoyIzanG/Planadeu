@@ -14,76 +14,35 @@ from app.models import Match, MatchEvent, Season
 MADRID = ZoneInfo("Europe/Madrid")
 
 
-def _featured_matchday(season_id: int, now: datetime | None = None) -> int | None:
-    """Choose one featured round without deleting/hiding fixtures from storage.
-
-    Until Tuesday 15:00 Madrid time, keep the most recently started round featured.
-    From Tuesday 15:00 onward, feature the next upcoming round.
-    """
-    now = now or datetime.now(MADRID)
-    local_now = now.astimezone(MADRID) if now.tzinfo else now
-    naive_now = local_now.replace(tzinfo=None)
-
-    query = Match.query.filter_by(season_id=season_id)
-    latest_started = (
-        query.filter(Match.kickoff <= naive_now)
-        .order_by(Match.kickoff.desc(), Match.matchday.desc())
-        .first()
-    )
-    next_upcoming = (
-        query.filter(Match.kickoff >= naive_now)
-        .order_by(Match.kickoff.asc(), Match.matchday.asc())
-        .first()
-    )
-
-    # Tuesday (weekday 1) through 14:59:59: keep the previous/current round.
-    before_cutoff = local_now.weekday() < 1 or (
-        local_now.weekday() == 1
-        and (local_now.hour, local_now.minute, local_now.second) < (15, 0, 0)
-    )
-    if before_cutoff and latest_started:
-        return latest_started.matchday
-    if next_upcoming:
-        return next_upcoming.matchday
-    # If no future fixtures exist (end of season), keep the latest round visible.
-    return latest_started.matchday if latest_started else None
+def _active_season():
+    season = Season.query.filter_by(is_active=True).first()
+    if not season:
+        season = Season.query.order_by(Season.start_date.desc()).first()
+    return season
 
 
 @matches_bp.route("/")
 def list_matches():
-    """Show only the featured matchday; other rounds remain stored."""
-    season = Season.query.filter_by(is_active=True).first()
-    if not season:
-        season = Season.query.order_by(Season.start_date.desc()).first()
-
+    """Show every stored matchday for the active season."""
+    season = _active_season()
     matches = []
-    featured_matchday = None
-    if season:
-        featured_matchday = _featured_matchday(season.id)
-        if featured_matchday is not None:
-            matches = (
-                Match.query.filter_by(
-                    season_id=season.id,
-                    matchday=featured_matchday,
-                )
-                .order_by(Match.kickoff, Match.id)
-                .all()
-            )
-
     by_matchday = {}
-    if featured_matchday is not None:
-        # Keep the existing display label for the provisional round mapping.
-        display_matchday = 1 if featured_matchday == 5 else featured_matchday
-        by_matchday[display_matchday] = matches
+    if season:
+        matches = (
+            Match.query.filter_by(season_id=season.id)
+            .order_by(Match.matchday.asc(), Match.kickoff.asc(), Match.id.asc())
+            .all()
+        )
+        for match in matches:
+            by_matchday.setdefault(match.matchday, []).append(match)
 
     return render_template(
         "matches/list.html",
         season=season,
         matches=matches,
         by_matchday=by_matchday,
-        featured_matchday=featured_matchday,
+        featured_matchday=None,
     )
-
 
 @matches_bp.route("/api/results")
 def results_api():
