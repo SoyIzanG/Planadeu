@@ -176,7 +176,7 @@ _CLUB_FEED_PAYLOAD = None
 def _visible_text(html: str) -> str:
     """Get rendered-ish body text without script/style payloads or metadata."""
     value = html_lib.unescape(html or "")
-    value = re.sub(r"<(script|style|noscript|template)\\b[^>]*>.*?</\\1\\s*>", " ", value, flags=re.I | re.S)
+    value = re.sub(r"<(script|style|noscript|template)\b[^>]*>.*?</\1\s*>", " ", value, flags=re.I | re.S)
     value = re.sub(r"<!--.*?-->", " ", value, flags=re.S)
     return norm(re.sub(r"<[^>]+>", " ", value))
 
