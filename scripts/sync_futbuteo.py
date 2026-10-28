@@ -566,13 +566,6 @@ def _fetch_futbuteo_dom_round(url: str, official_teams: list[str], matchday: int
     no_date = re.search(r"\bsin\s+fecha\b", round_text, re.I)
     schedule_text = round_text[no_date.start():] if no_date else round_text
     bye_match = re.search(r"\bdescans(?:a)?\b", schedule_text, re.I)
-    resting_team = None
-    if bye_match:
-        bye_window = schedule_text[max(0, bye_match.start() - 35):bye_match.start() + 180]
-        found = _source_team_hits(bye_window, official_teams)
-        if len(found) == 1:
-            resting_team = found[0]
-
     day_pattern = (
         r"\b(?:dilluns|dimarts|dimecres|dijous|divendres|dissabte|diumenge|"
         r"lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|"
@@ -584,6 +577,17 @@ def _fetch_futbuteo_dom_round(url: str, official_teams: list[str], matchday: int
         "(" + day_pattern + r")|(\b(?:[01]?\d|2[0-3]):[0-5]\d\b)",
         re.I,
     )
+    resting_team = None
+    if bye_match:
+        # A page may render the bye and the first day's games in one line.
+        # Isolate the Descans fragment before the next date/time event so names
+        # from the first real fixture cannot make the resting team ambiguous.
+        next_event = event_re.search(schedule_text, bye_match.end())
+        bye_end = next_event.start() if next_event else min(len(schedule_text), bye_match.end() + 180)
+        bye_window = schedule_text[max(0, bye_match.start() - 20):bye_end]
+        found = _source_team_hits(bye_window, official_teams)
+        if len(found) == 1:
+            resting_team = found[0]
     events = list(event_re.finditer(schedule_text))
     current_date = None
     fixtures: list[dict[str, str]] = []
