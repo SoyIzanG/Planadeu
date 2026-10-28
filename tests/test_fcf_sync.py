@@ -131,6 +131,61 @@ class DailySyncParserTests(unittest.TestCase):
         self.assertIn("se exigen 8", error)
         self.assertIn("Planadeu=ausente", error)
 
+    def club_feed(self, **overrides):
+        teams = [f"Team {i}" for i in range(1, 16)] + ["UE Planadeu"]
+        payload = {
+            "competition": "Juvenil Segona Divisió Grup 29",
+            "season": "2026-2027",
+            "teams": teams,
+            "fixtures": [
+                {
+                    "matchday": 1,
+                    "home": teams[i],
+                    "away": teams[i + 1],
+                    "date": "2026-10-31",
+                    "time": "12:00",
+                }
+                for i in range(0, 16, 2)
+            ],
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_approved_club_feed_is_accepted(self):
+        teams = [f"Team {i}" for i in range(1, 16)] + ["UE Planadeu"]
+        parsed, error = sync_futbuteo.parse_club_feed(self.club_feed(), teams, 1)
+        self.assertIsNone(error)
+        self.assertEqual(len(parsed["fixtures"]), 8)
+        self.assertEqual(parsed["source"], "Club feed")
+        self.assertTrue(all(item["kickoff_confirmed"] for item in parsed["fixtures"]))
+
+    def test_club_feed_rejects_wrong_competition(self):
+        teams = [f"Team {i}" for i in range(1, 16)] + ["UE Planadeu"]
+        parsed, error = sync_futbuteo.parse_club_feed(
+            self.club_feed(competition="Juvenil Segona Divisió Grup 28"),
+            teams,
+            1,
+        )
+        self.assertIsNone(parsed)
+        self.assertIn("Grup 29", error)
+
+    def test_club_feed_rejects_incomplete_round(self):
+        teams = [f"Team {i}" for i in range(1, 16)] + ["UE Planadeu"]
+        feed = self.club_feed()
+        feed["fixtures"] = feed["fixtures"][:-1]
+        parsed, error = sync_futbuteo.parse_club_feed(feed, teams, 1)
+        self.assertIsNone(parsed)
+        self.assertIn("se exigen 8", error)
+
+    def test_club_feed_does_not_import_unfinalized_scores(self):
+        teams = [f"Team {i}" for i in range(1, 16)] + ["UE Planadeu"]
+        feed = self.club_feed()
+        feed["fixtures"][0].update({"home_goals": 3, "away_goals": 1, "result_is_final": False})
+        parsed, error = sync_futbuteo.parse_club_feed(feed, teams, 1)
+        self.assertIsNone(error)
+        self.assertIsNone(parsed["fixtures"][0]["home_goals"])
+        self.assertIsNone(parsed["fixtures"][0]["away_goals"])
+
     def test_kickoff_clock_is_not_misread_as_score(self):
         parsed, error = sync_futbuteo.parse_round(
             self.fixture_html(final=False), self.teams, 1, "test"
