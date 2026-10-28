@@ -95,6 +95,51 @@ def extract_result_rows(payload: Any) -> list[dict[str, Any]]:
     return rows
 
 
+
+def _first_value(row: dict[str, Any], keys: tuple[str, ...]) -> Any:
+    for key in keys:
+        value = row.get(key)
+        if value is not None and value != "":
+            return value
+    return None
+
+
+def _team_name(value: Any) -> str:
+    if isinstance(value, dict):
+        value = _first_value(value, ("nom", "nombre", "name", "label", "descripcio", "descripcion"))
+    return str(value or "").strip()
+
+
+def normalize_modern_fixture_rows(payload: Any) -> list[dict[str, Any]]:
+    """Map the current FCF frontend's common Catalan/Spanish fields to our validator."""
+    rows = extract_result_rows(payload)
+    normalized: list[dict[str, Any]] = []
+    for row in rows:
+        home = _team_name(_first_value(row, (
+            "equipLocal", "equip_local", "equipoLocal", "equipo_local",
+            "local", "equipLocalNom", "nomEquipLocal", "equipo_local_nombre",
+        )))
+        away = _team_name(_first_value(row, (
+            "equipVisitant", "equip_visitant", "equipoVisitante", "equipo_visitante",
+            "visitant", "visitante", "equipVisitantNom", "nomEquipVisitant", "equipo_visitante_nombre",
+        )))
+        if not home or not away:
+            raise ValueError("Modern FCF fixture schema is not recognized; refusing to validate/import")
+        normalized.append({
+            "jornada_numero": _first_value(row, ("jornada", "jornadaNumero", "jornada_numero", "matchday")),
+            "equipo_local_nombre": home,
+            "equipo_visitante_nombre": away,
+            "fecha_partido": _first_value(row, ("data", "fecha", "date", "fecha_partido")),
+            "hora_partido": _first_value(row, ("hora", "time", "hora_partido")),
+            "codigo_acta": _first_value(row, ("actaId", "codigoActa", "codigo_acta")),
+            "acta_cerrada": _first_value(row, ("actaTancada", "actaCerrada", "acta_cerrada")),
+            "resultado_provisional": _first_value(row, ("resultatProvisional", "resultadoProvisional", "resultado_provisional")),
+            "equipo_local_goles": _first_value(row, ("golsLocal", "golesLocal", "resultatLocal", "equipo_local_goles")),
+            "equipo_visitante_goles": _first_value(row, ("golsVisitant", "golesVisitante", "resultatVisitant", "equipo_visitante_goles")),
+        })
+    return normalized
+
+
 def result_matchday(row: dict[str, Any]) -> int | None:
     value = row.get("jornada_numero", row.get("jornada", row.get("matchday")))
     try:
