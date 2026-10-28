@@ -67,7 +67,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{{ url_for('teams.profile', team_id=s.team.id) }}" class="text-decoration-none text-dark fw-medium d-inline-flex align-items-center gap-2">
+                            <a href="{{ url_for('teams.profile', team_identifier=s.team.slug) }}" class="text-decoration-none text-dark fw-medium d-inline-flex align-items-center gap-2">
                                 {% if s.team.logo_filename %}
                                 <img src="{{ s.team.logo_filename|asset_url('team') }}" alt="Escudo de {{ s.team.name }}" loading="eager" style="width:30px;height:30px;object-fit:contain;">
                                 {% else %}
@@ -125,7 +125,7 @@
 function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 }
-function renderForm(form) {
+function slugifyTeamName(value) {\n    return String(value || '').normalize('NFKD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');\n}\nfunction renderForm(form) {
     return String(form || '').slice(0, 5).split('').map(result => {
         const classes = result === 'W' ? 'bg-success' : (result === 'D' ? 'bg-secondary' : 'bg-danger');
         const label = result === 'W' ? 'G' : (result === 'D' ? 'E' : 'P');
