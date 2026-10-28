@@ -111,9 +111,12 @@ class CandidateParser(HTMLParser):
         classes = attrs.get("class", "")
         # Futbuteo changes class names frequently. Include all common card/container
         # elements and let the two-team + complete-round checks reject false positives.
+        # Do not treat every wrapper div as a fixture: the page contains
+        # large wrappers around standings, team tables and news. Only collect
+        # semantically named match/fixture nodes and standard table/list rows.
         candidate = tag.lower() in {"tr", "li"} or (
             tag.lower() in {"div", "article", "section"}
-            and (CANDIDATE_CLASS_RE.search(classes or "") is not None or tag.lower() == "div")
+            and CANDIDATE_CLASS_RE.search(classes or "") is not None
         )
         node = {
             "tag": tag.lower(), "attrs": attrs, "text": [],
