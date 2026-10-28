@@ -19,7 +19,7 @@ import urllib.request
 from datetime import datetime, timezone
 from typing import Any
 
-FCF_API_BASE = os.getenv("FCF_API_BASE", "https://m.fcf.cat/data").rstrip("/")
+FCF_API_BASE = os.getenv("FCF_API_BASE", "http://m.fcf.cat/data").rstrip("/")
 FCF_RESULTS_ENDPOINT = FCF_API_BASE + "/json_resultados.php"
 FCF_GROUP_ID = os.getenv("FCF_GROUP_ID", "").strip()
 FCF_MATCHDAY = os.getenv("FCF_MATCHDAY", "").strip()
