@@ -3,9 +3,11 @@ Matches routes - fixtures list, match detail.
 """
 
 from datetime import datetime
+import csv
+from io import StringIO
 from zoneinfo import ZoneInfo
 
-from flask import jsonify, render_template, request, url_for, redirect
+from flask import Response, jsonify, render_template, request, url_for, redirect
 from flask_login import current_user
 from app.blueprints.matches import matches_bp
 from app.models import Match, MatchEvent, Season
@@ -42,6 +44,46 @@ def list_matches():
         matches=matches,
         by_matchday=by_matchday,
         featured_matchday=None,
+    )
+
+
+@matches_bp.route("/export")
+def export_matches():
+    """Download all season matchdays as a CSV spreadsheet."""
+    season = _active_season()
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Jornada", "Fecha", "Hora", "Local", "Visitante", "Resultado", "Estado de la hora"])
+
+    if season:
+        matches = (
+            Match.query.filter_by(season_id=season.id)
+            .order_by(Match.matchday.asc(), Match.kickoff.asc(), Match.id.asc())
+            .all()
+        )
+        for match in matches:
+            kickoff = match.kickoff
+            time_pending = (
+                match.home_team.name == "UE Planadeu"
+                or match.away_team.name == "UE Planadeu"
+                or not match.kickoff_confirmed
+                or (kickoff and kickoff.strftime("%H:%M") == "12:00")
+            )
+            writer.writerow([
+                match.matchday,
+                kickoff.strftime("%d/%m/%Y") if kickoff else "Fecha por confirmar",
+                "Tiempo pendiente de confirmar" if time_pending else kickoff.strftime("%H:%M"),
+                match.home_team.name,
+                match.away_team.name,
+                match.score_display1 if match.is_played else "",
+                "Pendiente de confirmar" if time_pending else "Confirmada",
+            ])
+
+    filename = f"jornadas_{season.name if season else 'liga'}.csv".replace(" ", "_")
+    return Response(
+        "\ufeff" + output.getvalue(),
+        mimetype="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 @matches_bp.route("/api/results")
