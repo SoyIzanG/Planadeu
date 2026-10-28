@@ -49,12 +49,16 @@ def list_matches():
 
 @matches_bp.route("/export")
 def export_matches():
-    """Download all season matchdays as a CSV spreadsheet."""
-    season = _active_season()
-    output = StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["Jornada", "Fecha", "Hora", "Local", "Visitante", "Resultado", "Estado de la hora"])
+    """Download the season fixtures as a PDF."""
+    from io import BytesIO
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.units import mm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 
+    season = _active_season()
+    matches = []
     if season:
         matches = (
             Match.query.filter_by(season_id=season.id)
@@ -63,28 +67,58 @@ def export_matches():
             .order_by(Match.matchday.asc(), Match.kickoff.asc(), Match.id.asc())
             .all()
         )
-        for match in matches:
-            kickoff = match.kickoff
-            time_pending = (
-                match.home_team.name == "UE Planadeu"
-                or match.away_team.name == "UE Planadeu"
-                or not match.kickoff_confirmed
-                or (kickoff and kickoff.strftime("%H:%M") == "12:00")
-            )
-            writer.writerow([
-                match.matchday,
-                kickoff.strftime("%d/%m/%Y") if kickoff else "Fecha por confirmar",
-                "Tiempo pendiente de confirmar" if time_pending else kickoff.strftime("%H:%M"),
-                match.home_team.name,
-                match.away_team.name,
-                match.score_display1 if match.is_played else "",
-                "Pendiente de confirmar" if time_pending else "Confirmada",
-            ])
 
-    filename = f"jornadas_{season.name if season else 'liga'}.csv".replace(" ", "_")
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=landscape(A4),
+        rightMargin=12 * mm, leftMargin=12 * mm,
+        topMargin=12 * mm, bottomMargin=12 * mm,
+    )
+    styles = getSampleStyleSheet()
+    story = [Paragraph("Calendario de jornadas", styles["Title"])]
+    if season:
+        story.append(Paragraph(season.name, styles["Heading2"]))
+    story.append(Spacer(1, 5 * mm))
+
+    rows = [["Jornada", "Fecha", "Hora", "Local", "Visitante", "Resultado"]]
+    for match in matches:
+        kickoff = match.kickoff
+        time_pending = (
+            match.home_team.name == "UE Planadeu"
+            or match.away_team.name == "UE Planadeu"
+            or not match.kickoff_confirmed
+            or (kickoff and kickoff.strftime("%H:%M") == "12:00")
+        )
+        rows.append([
+            str(match.matchday),
+            kickoff.strftime("%d/%m/%Y") if kickoff else "Por confirmar",
+            "Pendiente de confirmar" if time_pending else kickoff.strftime("%H:%M"),
+            match.home_team.name,
+            match.away_team.name,
+            match.score_display1 if match.is_played else "—",
+        ])
+
+    table = Table(rows, repeatRows=1, colWidths=[22*mm, 28*mm, 38*mm, 54*mm, 54*mm, 30*mm])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#17365D")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("LEADING", (0, 0), (-1, -1), 10),
+        ("GRID", (0, 0), (-1, -1), 0.35, colors.HexColor("#D9E1F2")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F3F6FA")]),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 5),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    story.append(table)
+    doc.build(story)
+    filename = f"jornadas_{season.name if season else 'liga'}.pdf".replace(" ", "_")
     return Response(
-        "\ufeff" + output.getvalue(),
-        mimetype="text/csv; charset=utf-8",
+        buffer.getvalue(),
+        mimetype="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
