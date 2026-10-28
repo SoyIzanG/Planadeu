@@ -1,12 +1,13 @@
 # Automatic football data integration
 
-## Current stage: read-only FCF API adapter
+## Current status
 
-The GitHub Actions workflow `Football source preflight` runs daily and on demand.
-It now calls the legacy FCF results API contract recovered from
-`pauruiz/fcf`: `POST https://m.fcf.cat/data/json_resultados.php` with
-`id_grupo` and optional `jornada`. The adapter parses JSON and emits a
-structural report; it does not write to PostgreSQL/Supabase.
+Two separate workflows are used:
+
+- `Football source preflight` probes the official FCF endpoints and reports source reachability. It is read-only.
+- `Actualización diaria de la liga` validates the agreed Juvenil C / Grup 29 schedule. It stays in dry-run mode unless repository variable `ENABLE_FOOTBALL_IMPORT=true` is explicitly set. Even then, writes are refused until the migration adding `matches.is_internal` and `matches.kickoff_confirmed` exists.
+
+The modern FCF API is currently blocked from GitHub-hosted runners with HTTP 403. The legacy endpoint `https://m.fcf.cat/data/json_resultados.php` is based on an API contract documented in `pauruiz/fcf` in 2014 and has not been verified to work today. The integration therefore does not treat any source as operational until it returns a complete, validated round.
 
 The API was documented by a project last updated in 2014. The endpoint and its
 current response format still need to pass a live request before this can be
@@ -82,7 +83,7 @@ FCF_GROUP_ID=<verified-internal-code> python scripts/fcf_sync.py
 python -m unittest discover -s tests -v
 ```
 
-Optional settings: `FCF_API_BASE`, `FCF_MATCHDAY`, and `FUTBOTEO_URL`.
+Optional settings: `SEASON_ID` (only when the season ID is known), `CLUB_FIXTURES_URL` (recommended approved JSON feed), `CLUB_FIXTURES_TOKEN` (secret Bearer token), `ELFUTBOL_URL` (secondary provider override), and `ENABLE_FOOTBALL_IMPORT` (default `false`; do not enable until a complete target-group round and the migration are verified).
 
 ## Required safeguards before database writes
 
