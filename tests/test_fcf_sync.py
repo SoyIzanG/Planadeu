@@ -176,6 +176,21 @@ class DailySyncParserTests(unittest.TestCase):
         self.assertIn("/es/competitions/juvenil-segona-divisio/grup-29", sync_futbuteo.ELFUTBOL_URL)
         self.assertIn("season=2627", sync_futbuteo.ELFUTBOL_URL)
 
+    def test_futbuteo_badge_joined_text_resolves_two_real_teams(self):
+        text = (
+            "ED ESCOLA DE FUTBOL VILADECAVALLS, C. A "
+            "NT NATACIO TERRASSA, C B"
+        )
+        teams = ["CEF Viladecavalls", "Club Natació Terrassa"]
+        self.assertEqual(
+            sync_futbuteo._source_team_hits(text, teams),
+            ["CEF Viladecavalls", "Club Natació Terrassa"],
+        )
+
+    def test_futbuteo_date_headings_resolve_season_crossing(self):
+        self.assertEqual(sync_futbuteo._source_date_from_heading("Sábado 31 oct"), "2026-10-31")
+        self.assertEqual(sync_futbuteo._source_date_from_heading("Domingo 1 nov"), "2026-11-01")
+
     def test_futbuteo_source_query_uses_displayed_matchday_number(self):
         self.assertEqual(sync_futbuteo.futbuteo_query_for_matchday(1), 1)
         self.assertEqual(sync_futbuteo.futbuteo_query_for_matchday(5), 5)
