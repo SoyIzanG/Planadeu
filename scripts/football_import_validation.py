@@ -12,8 +12,8 @@ import re
 import unicodedata
 
 
-EXPECTED_TEAM_COUNT = 15
-EXPECTED_FIXTURES_PER_MATCHDAY = 7
+EXPECTED_TEAM_COUNT = 16
+EXPECTED_FIXTURES_PER_MATCHDAY = 8
 
 
 def normalize_team_name(value: str) -> str:
@@ -67,6 +67,8 @@ def validate_matchday(data: Matchday, aliases: dict[str, str]) -> list[str]:
             canonical_teams.append(canonical)
     if len(set(canonical_teams)) != len(canonical_teams):
         errors.append("duplicate_team_identity")
+    if len(set(canonical_teams)) != EXPECTED_TEAM_COUNT:
+        errors.append("incomplete_team_roster")
     if len(data.fixtures) != EXPECTED_FIXTURES_PER_MATCHDAY:
         errors.append("incomplete_matchday")
     used: list[str] = []
@@ -96,14 +98,12 @@ def validate_matchday(data: Matchday, aliases: dict[str, str]) -> list[str]:
             errors.append("midnight_kickoff_requires_confirmation")
     if len(set(used)) != len(used):
         errors.append("team_appears_more_than_once")
+    if set(used) != set(canonical_teams):
+        errors.append("team_fixture_coverage_mismatch")
     if data.resting_team:
         resting = aliases.get(normalize_team_name(data.resting_team))
         if not resting:
             errors.append(f"unknown_resting_team:{data.resting_team}")
-        elif resting in used:
-            errors.append("resting_team_also_has_fixture")
-        elif canonical_teams and resting not in canonical_teams:
-            errors.append("resting_team_not_in_competition")
-    elif len(set(used)) == EXPECTED_TEAM_COUNT:
-        errors.append("missing_resting_team")
+        else:
+            errors.append("unexpected_resting_team_in_16_team_competition")
     return sorted(set(errors))
