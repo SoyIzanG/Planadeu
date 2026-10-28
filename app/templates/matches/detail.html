@@ -36,7 +36,7 @@
 
             <div class="row align-items-center text-center g-3">
                 <div class="col-5">
-                    <a href="{{ url_for('teams.profile', team_id=home.id) }}" class="team-link">
+                    <a href="{{ url_for('teams.profile', team_identifier=home.slug) }}" class="team-link">
                         {% if home.logo_filename %}
                         <img class="match-team-logo" src="{{ home.logo_filename|asset_url('team') }}" alt="Escudo de {{ home.name }}" loading="lazy">
                         {% else %}
@@ -50,7 +50,7 @@
                     {% if played %}<div class="small text-secondary mt-1">Resultado final</div>{% endif %}
                 </div>
                 <div class="col-5">
-                    <a href="{{ url_for('teams.profile', team_id=away.id) }}" class="team-link">
+                    <a href="{{ url_for('teams.profile', team_identifier=away.slug) }}" class="team-link">
                         {% if away.logo_filename %}
                         <img class="match-team-logo" src="{{ away.logo_filename|asset_url('team') }}" alt="Escudo de {{ away.name }}" loading="lazy">
                         {% else %}
