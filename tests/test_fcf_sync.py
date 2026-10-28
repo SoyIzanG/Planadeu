@@ -169,6 +169,10 @@ class DailySyncParserTests(unittest.TestCase):
         self.assertEqual(len(parsed["fixtures"]), 8)
         self.assertIn("UE Planadeu", [t for item in parsed["fixtures"] for t in (item["home"], item["away"])])
 
+    def test_elFutbol_uses_spanish_schedule_url(self):
+        self.assertIn("/es/competitions/juvenil-segona-divisio/grup-29", sync_futbuteo.ELFUTBOL_URL)
+        self.assertIn("season=2627", sync_futbuteo.ELFUTBOL_URL)
+
     def test_futbuteo_source_query_uses_displayed_matchday_number(self):
         self.assertEqual(sync_futbuteo.futbuteo_query_for_matchday(1), 1)
         self.assertEqual(sync_futbuteo.futbuteo_query_for_matchday(5), 5)
