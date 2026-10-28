@@ -8,8 +8,8 @@ on:
       - ".github/workflows/daily-league-sync.yml"
       - "scripts/sync_futbuteo.py"
   schedule:
-    # Todos los días a las 06:20 UTC (07:20 en invierno y 08:20 en verano en Catalunya).
-    - cron: "20 6 * * *"
+    # Todos los días a las 16:10 UTC (17:10 en Catalunya durante el horario de invierno).
+    - cron: "10 16 * * *"
   workflow_dispatch:
 
 permissions:
