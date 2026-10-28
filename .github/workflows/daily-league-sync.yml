@@ -38,4 +38,7 @@ jobs:
           ENABLE_FOOTBALL_IMPORT: ${{ vars.ENABLE_FOOTBALL_IMPORT }}
           CLUB_FIXTURES_URL: ${{ vars.CLUB_FIXTURES_URL }}
           CLUB_FIXTURES_TOKEN: ${{ secrets.CLUB_FIXTURES_TOKEN }}
+          # Pushes to this feature branch run one quick dry-run smoke test.
+          # Scheduled/manual executions process all rounds unless SYNC_MATCHDAY is set.
+          SYNC_MATCHDAY: ${{ github.event_name == 'push' && '5' || vars.SYNC_MATCHDAY }}
         run: python scripts/sync_futbuteo.py
