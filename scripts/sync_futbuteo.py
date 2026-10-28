@@ -742,7 +742,7 @@ def parse_round(html: str, official_teams: list[str], target_matchday: int, sour
             for alias, team in team_lookup.items():
                 if alias and alias in candidate_norm and team not in found_teams:
                     found_teams.append(team)
-            if len(found_teams) >= 2:
+            if len(found_teams) >= 2 and candidate_round == target_matchday and len(candidate_text) < 500:
                 candidate_samples.append(
                     str(candidate_round) + "|" + str(candidate_date) + "|" +
                     ",".join(found_teams[:4]) + "|" + candidate_text[:100]
