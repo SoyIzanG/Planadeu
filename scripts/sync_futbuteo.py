@@ -173,18 +173,36 @@ _ELFUTBOL_HTML = None
 _CLUB_FEED_PAYLOAD = None
 
 
+def _visible_text(html: str) -> str:
+    """Get rendered-ish body text without script/style payloads or metadata."""
+    value = html_lib.unescape(html or "")
+    value = re.sub(r"<(script|style|noscript|template)\\b[^>]*>.*?</\\1\\s*>", " ", value, flags=re.I | re.S)
+    value = re.sub(r"<!--.*?-->", " ", value, flags=re.S)
+    return norm(re.sub(r"<[^>]+>", " ", value))
+
+
 def _looks_like_challenge(html: str) -> bool:
     lower = (html or "").lower()
-    visible = norm(re.sub(r"<[^>]+>", " ", html_lib.unescape(html or "")))
+    visible = _visible_text(html)
     explicit = (
         "necesitas tener activado javascript" in visible
         or "please enable javascript to continue" in visible
         or "checking your browser" in visible
-        or "just a moment..." in visible
+        or "just a moment" in visible
+        or "request blocked" in visible
+        or "access denied" in visible
+    )
+    # A server-rendered JS shell may embed the whole schedule in a script tag.
+    # Such hidden payload must not trick this check into assuming the page is
+    # rendered. Require actual body text plus multiple known roster names.
+    group_visible = (
+        "juvenil segona divisio" in visible
+        and "grup 29" in visible
+        and len(visible) > 250
     )
     weak_challenge = (
-        ("sessionstorage" in lower or "javascript" in visible)
-        and not ("juvenil segona divisio" in visible and "grup 29" in visible)
+        ("sessionstorage" in lower or "javascript" in lower or "__next_data__" in lower)
+        and not group_visible
     )
     return explicit or weak_challenge
 
