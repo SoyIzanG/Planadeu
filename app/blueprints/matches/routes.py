@@ -3,15 +3,10 @@ Matches routes - fixtures list, match detail.
 """
 
 from datetime import datetime
-from zoneinfo import ZoneInfo
 
 from flask import abort, jsonify, render_template, url_for
-from flask_login import current_user
 from app.blueprints.matches import matches_bp
 from app.models import Match, MatchEvent, Season
-
-
-MADRID = ZoneInfo("Europe/Madrid")
 
 
 def _active_season():
@@ -31,7 +26,7 @@ def list_matches():
         matches = (
             Match.query.filter_by(season_id=season.id)
             .filter(Match.matchday >= 5)
-            .filter(Match.kickoff.isnot(None), Match.kickoff >= datetime(2026, 10, 31))
+            .filter(Match.kickoff >= datetime(2026, 10, 31))
             .order_by(Match.matchday.asc(), Match.kickoff.asc(), Match.id.asc())
             .all()
         )
@@ -78,7 +73,7 @@ def results_api():
 def detail(match_id):
     """Match detail with events timeline."""
     match = Match.query.get_or_404(match_id)
-    if match.matchday < 5 or not match.kickoff or match.kickoff < datetime(2026, 10, 31):
+    if not match.matchday or match.matchday < 5 or not match.kickoff or match.kickoff < datetime(2026, 10, 31):
         abort(404)
     events = match.events.order_by(MatchEvent.minute).all()
     return render_template(
