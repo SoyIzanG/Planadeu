@@ -456,26 +456,44 @@ def main() -> int:
             "The legacy API contract comes from https://github.com/pauruiz/fcf and must be live-verified before enabling writes.",
         ],
     }
-    if not FCF_GROUP_ID:
-        # The public competition number (e.g. Grup 29) is not the legacy API's
-        # internal id. Never send "29" as if it were verified configuration.
-        report["error"] = "FCF_GROUP_ID is not configured; public group number cannot safely be used as the legacy API id"
-        report["modern_fcf_discovery"] = discover_modern_fcf_endpoints()
-        report["ok"] = False
-    else:
+    matchday = int(FCF_MATCHDAY) if FCF_MATCHDAY.isdigit() else None
+    if FCF_GROUP_ID:
         try:
-            matchday = int(FCF_MATCHDAY) if FCF_MATCHDAY.isdigit() else None
             payload = post_fcf_results(FCF_GROUP_ID)
             rows = extract_result_rows(payload)
             summary = summarize_results(rows, matchday)
             report["official_source"].update({"http_json_ok": True, "api_rows_returned": len(rows), **summary})
             report["ok"] = summary["ok"]
             if not summary["ok"]:
-                report["error"] = "FCF API response failed structural validation"
+                report["error"] = "FCF legacy API response failed structural validation"
         except Exception as exc:
             report["official_source"]["http_json_ok"] = False
             report["error"] = str(exc)
             report["modern_fcf_discovery"] = discover_modern_fcf_endpoints()
+            report["ok"] = False
+    else:
+        # Do not confuse public Grup 29 with the old API's internal id. Prefer
+        # the current official frontend route discovery, including its fixtures
+        # endpoint, and only pass if the returned payload validates.
+        report["modern_fcf_discovery"] = discover_modern_fcf_endpoints()
+        browser_probe = report["modern_fcf_discovery"].get("browser_api_probe", {})
+        matches = browser_probe.get("matches") if isinstance(browser_probe, dict) else None
+        if isinstance(matches, dict) and matches.get("ok"):
+            try:
+                rows = normalize_modern_fixture_rows(matches.get("payload"))
+                summary = summarize_results(rows, matchday)
+                report["official_source"].update({"modern_api_ok": True, "api_rows_returned": len(rows), **summary})
+                report["ok"] = summary["ok"]
+                if not summary["ok"]:
+                    report["error"] = "Modern FCF fixture response failed structural validation"
+            except Exception as exc:
+                report["error"] = str(exc)
+                report["ok"] = False
+        else:
+            report["error"] = (
+                "FCF API is blocked from this runner or no verified internal group ID is configured. "
+                "Use an approved network runner and verify Juvenil C Grup 29 before enabling writes."
+            )
             report["ok"] = False
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0 if report["ok"] else 1
