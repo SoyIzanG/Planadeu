@@ -1,32 +1,40 @@
 """
-Teams routes - team profile, squad, stats.
+Teams routes - team profile, squad, stats and upcoming fixtures.
 """
 
-from flask import render_template, abort
+from datetime import datetime
+
+from flask import render_template, abort, redirect, url_for
 from app.blueprints.teams import teams_bp
 from app.models import Team, Standing, Match, Season
 
 
-@teams_bp.route("/<int:team_id>")
-def profile(team_id):
-    """Team profile page with squad and stats."""
-    team = Team.query.get_or_404(team_id)
+@teams_bp.route("/<string:team_identifier>")
+def profile(team_identifier):
+    """Team profile page, reachable by readable team slug."""
+    if team_identifier.isdigit():
+        team = Team.query.get_or_404(int(team_identifier))
+        return redirect(url_for("teams.profile", team_identifier=team.slug), code=301)
+
+    team = next(
+        (candidate for candidate in Team.query.all() if candidate.slug == team_identifier),
+        None,
+    )
+    if team is None:
+        abort(404)
+
     season = Season.query.filter_by(is_active=True).first()
     if not season:
         season = Season.query.order_by(Season.start_date.desc()).first()
 
     standing = None
     if season and team in season.teams:
-        standing = Standing.query.filter_by(
-            season_id=season.id,
-            team_id=team.id,
-        ).first()
+        standing = Standing.query.filter_by(season_id=season.id, team_id=team.id).first()
 
-    # Last 5 matches (form)
     matches = (
         Match.query.filter(
             (Match.home_team_id == team.id) | (Match.away_team_id == team.id),
-            Match.is_played == True,
+            Match.is_played.is_(True),
         )
         .order_by(Match.kickoff.desc())
         .limit(5)
@@ -34,28 +42,41 @@ def profile(team_id):
     )
 
     form = []
-    for m in matches:
-        if m.home_team_id == team.id:
-            if m.home_goals > m.away_goals:
+    for match in matches:
+        if match.home_team_id == team.id:
+            if match.home_goals > match.away_goals:
                 form.append("W")
-            elif m.home_goals < m.away_goals:
+            elif match.home_goals < match.away_goals:
                 form.append("L")
             else:
                 form.append("D")
         else:
-            if m.away_goals > m.home_goals:
+            if match.away_goals > match.home_goals:
                 form.append("W")
-            elif m.away_goals < m.home_goals:
+            elif match.away_goals < match.home_goals:
                 form.append("L")
             else:
                 form.append("D")
-    form_str = "".join(form)
+
+    upcoming_matches = []
+    if season:
+        upcoming_matches = (
+            Match.query.filter(
+                Match.season_id == season.id,
+                (Match.home_team_id == team.id) | (Match.away_team_id == team.id),
+                Match.is_played.is_(False),
+                Match.kickoff >= datetime.now(),
+            )
+            .order_by(Match.kickoff.asc(), Match.matchday.asc())
+            .all()
+        )
 
     return render_template(
         "teams/profile.html",
         team=team,
         season=season,
         standing=standing,
-        form=form_str,
+        form="".join(form),
         recent_matches=matches,
+        upcoming_matches=upcoming_matches,
     )
