@@ -37,6 +37,11 @@ jobs:
           python -m pip install --disable-pip-version-check "playwright==1.55.0" "psycopg2-binary==2.9.11"
           python -m playwright install chromium
 
+      - name: Initialize diagnostic report
+        run: |
+          mkdir -p reports
+          printf '{"status":"not-run"}\n' > reports/football-source-preflight.json
+
       - name: Run preflight unit tests
         run: python -m unittest discover -s tests -v
 
