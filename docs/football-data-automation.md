@@ -46,3 +46,25 @@ Optional source URL overrides: `FUTBOTEO_URL` and `FCF_URL`.
 6. Make writes transactional and idempotent; keep a per-run audit report.
 7. Test that internal fixtures never affect official standings.
 8. Keep all database credentials in GitHub Actions secrets; never print them.
+
+
+## Validation and database safeguards added
+
+- `scripts/football_import_validation.py` normalizes Catalan/Spanish accents and
+  validates the expected 15-team, seven-fixture matchday shape, unique team
+  identities, a single resting team, and final-score confirmation. It is a
+  validation layer, not a source-page parser or a database writer.
+- The `matches` model and migration add `is_internal` and
+  `kickoff_confirmed`. The migration marks only the existing unplayed
+  2026-2027 UD Can Trias–UE Planadeu midnight placeholder as internal and
+  unconfirmed, if that exact row exists.
+- Official standings and form calculation exclude records marked internal.
+
+## Still required before enabling automated imports
+
+The source pages could not be fetched reliably from this session, so the current
+HTML structure and the legacy FCF JSON endpoint response have not been verified.
+No production database migration was run. Do not merge/deploy until the migration
+chain is confirmed, the tests pass in GitHub Actions, the real source adapter is
+implemented against captured current HTML/JSON, and a dry-run report matches a
+known official matchday. Database writes must remain disabled until then.
