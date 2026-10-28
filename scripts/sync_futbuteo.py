@@ -8,6 +8,7 @@ written. Writes are disabled unless ENABLE_FOOTBALL_IMPORT=true is set.
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
@@ -24,6 +25,8 @@ from psycopg2.extras import RealDictCursor
 
 BASE_URL = "https://futbuteo.com/catalunya/resultados/juvenil-segona-divisio/grup-29/"
 ELFUTBOL_URL = os.getenv("ELFUTBOL_URL", "https://elfutbol.co/en/competitions/juvenil-segona-divisio/grup-29?results=all&season=2627&tab=results")
+CLUB_FIXTURES_URL = os.getenv("CLUB_FIXTURES_URL", "").strip()
+CLUB_FIXTURES_TOKEN = os.getenv("CLUB_FIXTURES_TOKEN", "").strip()
 SEASON_NAME = "2026-2027"
 SEASON_ID_ENV = os.getenv("SEASON_ID", "").strip()
 ENABLE_IMPORT = os.getenv("ENABLE_FOOTBALL_IMPORT", "false").strip().lower() == "true"
@@ -245,6 +248,168 @@ def _fetch_html(url: str) -> str:
         raise RuntimeError(
             f"No se pudo leer la fuente ni por HTTP ni en navegador ({type(direct_error).__name__ if direct_error else 'HTTP'} / {type(browser_error).__name__})."
         ) from browser_error
+
+
+def fetch_club_feed() -> dict:
+    """Fetch an authorised club-owned JSON export; never bypass a site challenge."""
+    if not CLUB_FIXTURES_URL:
+        raise RuntimeError("No está configurada CLUB_FIXTURES_URL")
+    if not CLUB_FIXTURES_URL.lower().startswith("https://"):
+        raise RuntimeError("CLUB_FIXTURES_URL debe usar HTTPS")
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "application/json",
+    }
+    if CLUB_FIXTURES_TOKEN:
+        headers["Authorization"] = f"Bearer {CLUB_FIXTURES_TOKEN}"
+    request = Request(CLUB_FIXTURES_URL, headers=headers)
+    with urlopen(request, timeout=20) as response:
+        if response.status != 200:
+            raise RuntimeError(f"El feed del club respondió HTTP {response.status}")
+        raw = response.read(4_000_001)
+    if len(raw) > 4_000_000:
+        raise RuntimeError("El feed del club supera el límite de 4 MB")
+    payload = json.loads(raw.decode("utf-8-sig"))
+    if not isinstance(payload, dict):
+        raise ValueError("El feed del club debe tener un objeto JSON en la raíz")
+    return payload
+
+
+def _feed_kickoff(fixture: dict) -> tuple[datetime | None, bool]:
+    """Parse a date/time without inventing a kickoff hour."""
+    kickoff_value = fixture.get("kickoff")
+    date_value = fixture.get("date") or fixture.get("fecha")
+    time_value = fixture.get("time") or fixture.get("hora")
+
+    if isinstance(kickoff_value, str) and kickoff_value.strip():
+        raw = kickoff_value.strip().replace("Z", "+00:00")
+        try:
+            parsed = datetime.fromisoformat(raw)
+        except ValueError:
+            return None, False
+        has_explicit_time = "T" in raw or " " in raw
+        confirmed = bool(fixture.get("kickoff_confirmed", has_explicit_time))
+        if parsed.tzinfo is not None:
+            # Keep the wall-clock time as supplied; feed providers should publish
+            # local Catalonia time (Europe/Madrid), since the app stores local naive time.
+            parsed = parsed.replace(tzinfo=None)
+        if parsed.time().isoformat() == "00:00:00" and fixture.get("kickoff_confirmed") is not True:
+            confirmed = False
+        if not confirmed:
+            parsed = parsed.replace(hour=12, minute=0, second=0, microsecond=0)
+        return parsed, confirmed
+
+    if not isinstance(date_value, str) or not date_value.strip():
+        return None, False
+    try:
+        day = date.fromisoformat(date_value.strip()[:10])
+    except ValueError:
+        return None, False
+    confirmed = False
+    hour, minute = 12, 0
+    if isinstance(time_value, str) and TIME_RE.fullmatch(time_value.strip()):
+        hour, minute = map(int, time_value.strip().split(":"))
+        confirmed = not (hour == 0 and minute == 0)
+        if fixture.get("kickoff_confirmed") is True:
+            confirmed = True
+    kickoff = datetime(day.year, day.month, day.day, hour, minute)
+    if not confirmed:
+        kickoff = kickoff.replace(hour=12, minute=0)
+    return kickoff, confirmed
+
+
+def parse_club_feed(payload: dict, official_teams: list[str], target_matchday: int):
+    """Validate a club-owned JSON schedule with the same strict group safeguards."""
+    season_value = str(payload.get("season") or "").strip().replace("/", "-")
+    if season_value not in {"2026-2027", "2026-27", "26-27"}:
+        return None, "el feed del club no confirma la temporada 2026-2027"
+    competition = norm(str(payload.get("competition") or ""))
+    expected_competition = norm("Juvenil Segona Divisió Grup 29")
+    if competition != expected_competition:
+        return None, "el feed del club no confirma Juvenil Segona Divisió Grup 29"
+
+    roster = payload.get("teams")
+    if not isinstance(roster, list) or len(roster) != EXPECTED_TEAMS:
+        return None, f"el feed del club debe declarar exactamente {EXPECTED_TEAMS} equipos"
+    official_by_norm = {norm(name): name for name in official_teams}
+    canonical_roster = [official_by_norm.get(norm(str(name))) for name in roster]
+    if any(name is None for name in canonical_roster):
+        return None, "el feed del club contiene un nombre de equipo sin correspondencia exacta"
+    if len(set(canonical_roster)) != EXPECTED_TEAMS or set(canonical_roster) != set(official_teams):
+        return None, "la plantilla del feed del club no coincide con los 16 equipos de la temporada"
+
+    fixture_rows = payload.get("fixtures")
+    if not isinstance(fixture_rows, list):
+        matchdays = payload.get("matchdays")
+        if isinstance(matchdays, list):
+            fixture_rows = []
+            for matchday_row in matchdays:
+                if not isinstance(matchday_row, dict):
+                    return None, "el feed contiene una jornada mal formada"
+                group_round = matchday_row.get("matchday", matchday_row.get("jornada"))
+                nested = matchday_row.get("fixtures", matchday_row.get("partidos"))
+                if not isinstance(nested, list):
+                    return None, "una jornada del feed no contiene una lista de partidos"
+                for fixture in nested:
+                    if isinstance(fixture, dict):
+                        fixture_rows.append({**fixture, "matchday": fixture.get("matchday", group_round)})
+                    else:
+                        return None, "el feed contiene un partido mal formado"
+        else:
+            return None, "el feed no contiene fixtures ni matchdays"
+
+    selected = []
+    for fixture in fixture_rows:
+        if not isinstance(fixture, dict):
+            return None, "el feed contiene un partido mal formado"
+        raw_matchday = fixture.get("matchday", fixture.get("jornada"))
+        try:
+            fixture_matchday = int(raw_matchday)
+        except (TypeError, ValueError):
+            return None, "cada partido del feed debe declarar su jornada"
+        if fixture_matchday != target_matchday:
+            continue
+        home = official_by_norm.get(norm(str(fixture.get("home") or fixture.get("local") or "")))
+        away = official_by_norm.get(norm(str(fixture.get("away") or fixture.get("visitant") or "")))
+        if not home or not away or home == away:
+            return None, "el feed contiene equipos desconocidos o un partido de un equipo contra sí mismo"
+        kickoff, kickoff_confirmed = _feed_kickoff(fixture)
+        if kickoff is None:
+            return None, "hay un partido sin fecha válida; no se importa la jornada"
+        final = fixture.get("result_is_final") is True and fixture.get("provisional") is not True
+        hg = fixture.get("home_goals", fixture.get("goles_local"))
+        ag = fixture.get("away_goals", fixture.get("goles_visitante"))
+        if final:
+            try:
+                hg, ag = int(hg), int(ag)
+            except (TypeError, ValueError):
+                return None, "un resultado marcado como final no tiene dos goles válidos"
+            if hg < 0 or ag < 0:
+                return None, "el feed contiene un marcador negativo"
+        else:
+            hg, ag = None, None
+        selected.append({
+            "home": home,
+            "away": away,
+            "kickoff": kickoff,
+            "kickoff_confirmed": kickoff_confirmed,
+            "home_goals": hg,
+            "away_goals": ag,
+            "result_is_final": final,
+            "is_played": final,
+            "source": "Club feed",
+        })
+
+    used = [name for fixture in selected for name in (fixture["home"], fixture["away"])]
+    if len(selected) != EXPECTED_FIXTURES:
+        return None, f"jornada del feed del club incompleta: {len(selected)} partidos; se exigen {EXPECTED_FIXTURES}"
+    if len(set(used)) != EXPECTED_TEAMS or set(used) != set(official_teams):
+        return None, "los ocho partidos del feed no cubren a los 16 equipos exactamente una vez"
+    if not any("planadeu" in norm(team) for team in used):
+        return None, "la jornada del feed no contiene Planadeu"
+    if len({frozenset((f["home"], f["away"])) for f in selected}) != EXPECTED_FIXTURES:
+        return None, "el feed repite un emparejamiento dentro de la jornada"
+    return {"fixtures": selected, "bye": None, "source": "Club feed"}, None
 
 
 def fetch_page(j_value: int) -> str:
