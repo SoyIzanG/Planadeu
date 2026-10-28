@@ -133,14 +133,16 @@ class CandidateParser(HTMLParser):
 
     def handle_endtag(self, tag):
         tag = tag.lower()
+        # Only close the nearest matching candidate node. Removing the entire
+        # suffix here accidentally discarded parent <div> candidates whenever
+        # nested <div>s closed, which meant real fixture cards were never
+        # assembled into two-team candidates.
         for i in range(len(self.stack) - 1, -1, -1):
             if self.stack[i]["tag"] == tag:
-                closed = self.stack[i:]
-                del self.stack[i:]
-                for node in closed:
-                    text = " ".join(node["text"])
-                    if text.strip():
-                        self.candidates.append((text, node["date_context"], node["matchday_context"]))
+                node = self.stack.pop(i)
+                text = " ".join(node["text"])
+                if text.strip():
+                    self.candidates.append((text, node["date_context"], node["matchday_context"]))
                 break
 
     def handle_data(self, data):
