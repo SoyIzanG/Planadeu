@@ -804,6 +804,30 @@ def sync_round(conn, matchday: int, parsed, team_ids: dict, season_id: int):
             reversed_pair = bool(
                 row and row["home_team_id"] == away_id and row["away_team_id"] == home_id
             )
+            pairing_confirmed = bool(
+                fixture.get("pairing_confirmed", not fixture.get("fixture_inferred", False))
+            )
+            # A bye-slot reconstruction is only a provisional fixture. Never let
+            # it downgrade a previously confirmed kickoff or final result.
+            if fixture.get("fixture_inferred") and row and (
+                row["is_played"] or row["kickoff_confirmed"]
+            ):
+                continue
+
+            # If a real source now confirms an inferred, unplayed pair, correct
+            # its home/away orientation. Preserve orientation for any row that
+            # already has a score/event history.
+            correct_orientation = bool(
+                reversed_pair
+                and pairing_confirmed
+                and row
+                and not row["is_played"]
+                and row["home_goals"] is None
+                and row["away_goals"] is None
+            )
+            store_home_id = home_id if (not row or not reversed_pair or correct_orientation) else row["home_team_id"]
+            store_away_id = away_id if (not row or not reversed_pair or correct_orientation) else row["away_team_id"]
+
             source_final = bool(
                 fixture.get("result_is_final")
                 and fixture["home_goals"] is not None
@@ -811,12 +835,14 @@ def sync_round(conn, matchday: int, parsed, team_ids: dict, season_id: int):
             )
             if source_final:
                 hg, ag = fixture["home_goals"], fixture["away_goals"]
-                if reversed_pair:
+                if reversed_pair and not correct_orientation:
                     hg, ag = ag, hg
                 is_played = True
             elif row:
                 # A live/partial source cannot erase or overwrite a confirmed score.
                 hg, ag = row["home_goals"], row["away_goals"]
+                if reversed_pair and correct_orientation:
+                    hg, ag = ag, hg
                 is_played = bool(row["is_played"] and hg is not None and ag is not None)
             else:
                 hg, ag, is_played = None, None, False
@@ -836,11 +862,13 @@ def sync_round(conn, matchday: int, parsed, team_ids: dict, season_id: int):
 
             if row:
                 cur.execute(
-                    """UPDATE matches SET kickoff=%s, home_goals=%s, away_goals=%s,
+                    """UPDATE matches SET home_team_id=%s, away_team_id=%s,
+                       kickoff=%s, home_goals=%s, away_goals=%s,
                        is_played=%s, is_internal=FALSE, kickoff_confirmed=%s,
                        played_at=CASE WHEN %s THEN COALESCE(played_at, NOW()) ELSE played_at END
                        WHERE id=%s""",
-                    (kickoff, hg, ag, is_played, kickoff_confirmed, is_played, row["id"]),
+                    (store_home_id, store_away_id, kickoff, hg, ag, is_played,
+                     kickoff_confirmed, is_played, row["id"]),
                 )
             else:
                 cur.execute(
@@ -849,7 +877,7 @@ def sync_round(conn, matchday: int, parsed, team_ids: dict, season_id: int):
                         home_team_id, away_team_id, is_internal, kickoff_confirmed)
                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,FALSE,%s)""",
                     (matchday, kickoff, hg, ag, is_played, season_id,
-                     home_id, away_id, kickoff_confirmed),
+                     store_home_id, store_away_id, kickoff_confirmed),
                 )
             written += 1
     conn.commit()
