@@ -23,7 +23,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 BASE_URL = "https://futbuteo.com/catalunya/resultados/juvenil-segona-divisio/grup-29/"
-ELFUTBOL_URL = os.getenv("ELFUTBOL_URL", "https://elfutbol.co/en/competitions/juvenil-segona-divisio/grup-29")
+ELFUTBOL_URL = os.getenv("ELFUTBOL_URL", "https://elfutbol.co/en/competitions/juvenil-segona-divisio/grup-29?results=all&season=2627&tab=results")
 SEASON_NAME = "2026-2027"
 SEASON_ID_ENV = os.getenv("SEASON_ID", "").strip()
 ENABLE_IMPORT = os.getenv("ENABLE_FOOTBALL_IMPORT", "false").strip().lower() == "true"
@@ -404,7 +404,7 @@ def parse_round(html: str, official_teams: list[str], target_matchday: int, sour
 
     fixtures_list = list(fixtures.values())
     full_text = " ".join(parser.full_text)
-    bye_match = re.search(r"descans(?:a)?|rest(?:s|ing)?", full_text, re.I)
+    bye_match = re.search(r"\\bdescans(?:a)?\\b|\\brest(?:s|ing)?\\b", full_text, re.I)
     used = [team for fixture in fixtures_list for team in (fixture["home"], fixture["away"])]
     valid = (
         len(fixtures_list) == EXPECTED_FIXTURES
