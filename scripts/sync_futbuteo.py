@@ -633,7 +633,7 @@ def _fetch_futbuteo_dom_round(url: str, official_teams: list[str], matchday: int
         pageTitle: document.title,
         bodyStart: normalize(getText(document.body)).slice(0,450)
       };
-    }""", {"teams": team_records, "matchday": target_matchday})
+    }""", {"teams": team_records, "matchday": matchday})
 
     if not isinstance(browser_result, dict):
         raise RuntimeError("Futbuteo no devolvió datos DOM válidos")
@@ -651,7 +651,7 @@ def _fetch_futbuteo_dom_round(url: str, official_teams: list[str], matchday: int
             f"cabecera={browser_result.get('heading')}, "
             f"descanso={resting_team!r}, inicio={browser_result.get('bodyStart')!r}"
         )
-    return _synthetic_futbuteo_html(target_matchday, fixtures, resting_team)
+    return _synthetic_futbuteo_html(matchday, fixtures, resting_team)
 
 
 def fetch_page(j_value: int, official_teams: list[str] | None = None, target_matchday: int | None = None) -> str:
