@@ -20,7 +20,7 @@ from typing import Any
 
 FUTBOTEO_URL = os.getenv(
     "FUTBOTEO_URL",
-    "https://futboteo.com/catalunya/resultados/juvenil-segona-divisio/grup-29/",
+    "https://futbuteo.com/catalunya/resultados/juvenil-segona-divisio/grup-29/",
 )
 FCF_URL = os.getenv(
     "FCF_URL",
