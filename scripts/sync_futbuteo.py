@@ -1033,11 +1033,14 @@ def sync_round(conn, matchday: int, parsed, team_ids: dict, season_id: int):
             pairing_confirmed = bool(
                 fixture.get("pairing_confirmed", not fixture.get("fixture_inferred", False))
             )
-            # A bye-slot reconstruction is only a provisional fixture. Never let
-            # it downgrade a previously confirmed kickoff or final result.
-            if fixture.get("fixture_inferred") and row and (
-                row["is_played"] or row["kickoff_confirmed"]
-            ):
+            # The missing Planadeu pairing inferred from a public provider's
+            # bye slot is not source-confirmed. Never write it, even if a provisional
+            # database row exists; wait for a club/official feed to confirm the pairing.
+            if fixture.get("fixture_inferred"):
+                print(
+                    f"Jornada {matchday}: se conserva sin cambios el emparejamiento "
+                    f"provisional inferido ({fixture['home']} vs {fixture['away']})."
+                )
                 continue
 
             # If a real source now confirms an inferred, unplayed pair, correct
