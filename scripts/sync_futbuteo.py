@@ -436,10 +436,29 @@ def connect():
     return psycopg2.connect(database_url, connect_timeout=15, sslmode="require")
 
 
-def sync_round(conn, matchday: int, parsed, team_ids: dict):
+def require_import_schema(conn) -> None:
+    """Refuse writes until the migration that protects internal fixtures is applied."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT column_name FROM information_schema.columns
+               WHERE table_schema='public' AND table_name='matches'"""
+        )
+        columns = {row[0] for row in cur.fetchall()}
+    required = {"is_internal", "kickoff_confirmed"}
+    missing = sorted(required - columns)
+    if missing:
+        raise RuntimeError(
+            "No se habilita la escritura: falta aplicar la migración de partidos internos "
+            f"(columnas ausentes: {', '.join(missing)})."
+        )
+
+
+def sync_round(conn, matchday: int, parsed, team_ids: dict, season_id: int):
     fixtures = parsed["fixtures"]
     expected_pairs = set()
     prepared = []
+    if len(fixtures) != EXPECTED_FIXTURES:
+        return 0, "jornada incompleta: se necesitan ocho partidos"
     for fixture in fixtures:
         home_id = team_ids.get(norm(fixture["home"]))
         away_id = team_ids.get(norm(fixture["away"]))
@@ -450,15 +469,18 @@ def sync_round(conn, matchday: int, parsed, team_ids: dict):
 
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
-            """SELECT id, home_team_id, away_team_id, kickoff, home_goals, away_goals, is_played
+            """SELECT id, home_team_id, away_team_id, kickoff, home_goals, away_goals,
+                      is_played, is_internal, kickoff_confirmed
                FROM matches WHERE season_id=%s AND matchday=%s""",
-            (SEASON_ID, matchday),
+            (season_id, matchday),
         )
         existing = cur.fetchall()
         official_ids = set(team_ids.values())
         existing_official = [
             row for row in existing
-            if row["home_team_id"] in official_ids and row["away_team_id"] in official_ids
+            if row["home_team_id"] in official_ids
+            and row["away_team_id"] in official_ids
+            and not row["is_internal"]
         ]
         existing_pairs = {
             frozenset((row["home_team_id"], row["away_team_id"])) for row in existing_official
@@ -469,38 +491,65 @@ def sync_round(conn, matchday: int, parsed, team_ids: dict):
         written = 0
         for home_id, away_id, fixture in prepared:
             cur.execute(
-                """SELECT id, home_team_id, away_team_id, kickoff, home_goals, away_goals, is_played
+                """SELECT id, home_team_id, away_team_id, kickoff, home_goals, away_goals,
+                          is_played, is_internal, kickoff_confirmed
                    FROM matches
                    WHERE season_id=%s AND matchday=%s
                      AND ((home_team_id=%s AND away_team_id=%s)
                        OR (home_team_id=%s AND away_team_id=%s))
                    ORDER BY id LIMIT 1""",
-                (SEASON_ID, matchday, home_id, away_id, away_id, home_id),
+                (season_id, matchday, home_id, away_id, away_id, home_id),
             )
             row = cur.fetchone()
-            hg, ag = fixture["home_goals"], fixture["away_goals"]
-            reversed_pair = row and row["home_team_id"] == away_id and row["away_team_id"] == home_id
-            if reversed_pair:
-                hg, ag = ag, hg
+            reversed_pair = bool(
+                row and row["home_team_id"] == away_id and row["away_team_id"] == home_id
+            )
+            source_final = bool(
+                fixture.get("result_is_final")
+                and fixture["home_goals"] is not None
+                and fixture["away_goals"] is not None
+            )
+            if source_final:
+                hg, ag = fixture["home_goals"], fixture["away_goals"]
+                if reversed_pair:
+                    hg, ag = ag, hg
+                is_played = True
+            elif row:
+                # A live/partial source cannot erase or overwrite a confirmed score.
+                hg, ag = row["home_goals"], row["away_goals"]
+                is_played = bool(row["is_played"] and hg is not None and ag is not None)
+            else:
+                hg, ag, is_played = None, None, False
+
+            source_kickoff = fixture["kickoff"]
+            if fixture.get("kickoff_confirmed"):
+                kickoff = source_kickoff
+                kickoff_confirmed = True
+            elif row and row["kickoff_confirmed"] and row["kickoff"].date() == source_kickoff.date():
+                # Keep an already confirmed time if the source repeats the same date
+                # but omits the clock; otherwise treat the new date as pending.
+                kickoff = row["kickoff"]
+                kickoff_confirmed = True
+            else:
+                kickoff = source_kickoff
+                kickoff_confirmed = False
+
             if row:
-                # Never downgrade a known final score to an unknown score.
-                if hg is None or ag is None:
-                    hg = row["home_goals"]
-                    ag = row["away_goals"]
-                is_played = hg is not None and ag is not None
                 cur.execute(
                     """UPDATE matches SET kickoff=%s, home_goals=%s, away_goals=%s,
-                       is_played=%s, played_at=CASE WHEN %s THEN COALESCE(played_at, NOW()) ELSE played_at END
+                       is_played=%s, is_internal=FALSE, kickoff_confirmed=%s,
+                       played_at=CASE WHEN %s THEN COALESCE(played_at, NOW()) ELSE played_at END
                        WHERE id=%s""",
-                    (fixture["kickoff"], hg, ag, is_played, is_played, row["id"]),
+                    (kickoff, hg, ag, is_played, kickoff_confirmed, is_played, row["id"]),
                 )
             else:
                 cur.execute(
                     """INSERT INTO matches
-                       (matchday, kickoff, home_goals, away_goals, is_played, season_id, home_team_id, away_team_id)
-                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
-                    (matchday, fixture["kickoff"], hg, ag, hg is not None and ag is not None,
-                     SEASON_ID, home_id, away_id),
+                       (matchday, kickoff, home_goals, away_goals, is_played, season_id,
+                        home_team_id, away_team_id, is_internal, kickoff_confirmed)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,FALSE,%s)""",
+                    (matchday, kickoff, hg, ag, is_played, season_id,
+                     home_id, away_id, kickoff_confirmed),
                 )
             written += 1
     conn.commit()
