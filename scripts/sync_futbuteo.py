@@ -34,7 +34,7 @@ EXPECTED_TEAMS = 16
 EXPECTED_FIXTURES = 8
 # Futbuteo uses j=<actual round number>; the page itself labels Jornada 5 for ?j=5.
 SYNC_MATCHDAY_ENV = os.getenv("SYNC_MATCHDAY", "").strip()
-J_VALUES = [int(SYNC_MATCHDAY_ENV)] if SYNC_MATCHDAY_ENV.isdigit() and 1 <= int(SYNC_MATCHDAY_ENV) <= 30 else range(1, 31)
+MATCHDAYS = [int(SYNC_MATCHDAY_ENV)] if SYNC_MATCHDAY_ENV.isdigit() and 1 <= int(SYNC_MATCHDAY_ENV) <= 30 else range(1, 31)
 USER_AGENT = "Planadeu-LeagueSync/1.0 (+scheduled fixture verification)"
 DATE_RE = re.compile(r"(?<!\d)(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?!\d)")
 ISO_DATE_RE = re.compile(r"\b(20\d{2}-\d{2}-\d{2})(?:[T ](\d{1,2}:\d{2})(?::\d{2})?)?\b")
@@ -448,6 +448,14 @@ def parse_club_feed(payload: dict, official_teams: list[str], target_matchday: i
 def fetch_page(j_value: int) -> str:
     return _fetch_html(f"{BASE_URL}?j={j_value}")
 
+def futbuteo_query_for_matchday(matchday: int) -> int:
+    """Futbuteo uses j=5 for Jornada 1, so its source index is round + 4."""
+    if not 1 <= matchday <= 30:
+        raise ValueError("La jornada debe estar entre 1 y 30")
+    return matchday + 4
+
+
+
 
 def fetch_elfutbol_page() -> str:
     """Fallback provider: public whole-season group page, filtered by round."""
@@ -823,17 +831,14 @@ def main():
         else:
             print("Modo seguro: únicamente se inspeccionan fuentes; Supabase no se modifica.")
 
-        # Futbuteo's old query parameter uses j=5 for internal round 1.
-        # Each round is independently validated. The alternative provider is a
-        # whole-season page, usable only if its visible round headings identify
-        # the requested round. If it cannot, the strict validator rejects it.
-        for source_round in J_VALUES:
-            matchday = source_round - 4
+        # The public provider index starts at 5 for matchday 1.
+        # Keep app round (1..30) separate from the source query index.
+        for matchday in MATCHDAYS:
             attempts = []
             if CLUB_FIXTURES_URL:
                 attempts.append(("Club feed", fetch_club_feed, True))
             attempts.extend([
-                ("Futbuteo", lambda value=matchday: fetch_page(value), False),
+                ("Futbuteo", lambda value=futbuteo_query_for_matchday(matchday): fetch_page(value), False),
                 ("elFutbol", fetch_elfutbol_page, False),
             ])
             parsed = None
