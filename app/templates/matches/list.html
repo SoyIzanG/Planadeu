@@ -17,7 +17,7 @@
             
             <li class="list-group-item match-row">
                 <div class="match-time">
-                    {% if m.home_team.name != 'UE Planadeu' and m.away_team.name != 'UE Planadeu' %}{{ m.kickoff.strftime('%d/%m · %H:%M') if m.kickoff else '' }}{% else %}Sin fecha confirmada{% endif %}
+                    {% if m.home_team.name == 'UE Planadeu' or m.away_team.name == 'UE Planadeu' %}Fecha y hora por confirmar{% elif m.kickoff %}{{ m.kickoff.strftime('%d/%m') }}{% if m.kickoff_confirmed and m.kickoff.strftime('%H:%M') != '12:00' %} · {{ m.kickoff.strftime('%H:%M') }}{% else %}<br><span class="text-muted">Hora por confirmar</span>{% endif %}{% else %}Fecha por confirmar{% endif %}
                 </div>
 
                 <div class="match-teams">
