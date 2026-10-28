@@ -134,6 +134,33 @@ class DailySyncParserTests(unittest.TestCase):
         )
         self.assertFalse(sync_futbuteo._looks_like_challenge(html))
 
+    def test_missing_planadeu_slot_is_reconstructed_only_from_named_bye(self):
+        teams = [f"Team {i}" for i in range(1, 16)] + ["UE Planadeu"]
+        source_html = self.fixture_html(include_planadeu=False).replace(
+            "<h2>Jornada 1</h2>",
+            "<h2>Jornada 1</h2><p>Descans: Team 15</p>",
+        )
+        parsed, error = sync_futbuteo.parse_round(source_html, teams, 1, "test")
+        self.assertIsNone(error)
+        self.assertEqual(len(parsed["fixtures"]), 8)
+        self.assertTrue(parsed["inferred_planadeu_fixture"])
+        inferred = [f for f in parsed["fixtures"] if not f["kickoff_confirmed"]]
+        self.assertEqual(len(inferred), 1)
+        self.assertIn("UE Planadeu", {inferred[0]["home"], inferred[0]["away"]})
+        self.assertIn("Team 15", {inferred[0]["home"], inferred[0]["away"]})
+        self.assertIsNone(inferred[0]["home_goals"])
+        self.assertIsNone(inferred[0]["away_goals"])
+
+    def test_bye_reconstruction_is_rejected_when_the_named_resting_team_differs(self):
+        teams = [f"Team {i}" for i in range(1, 16)] + ["UE Planadeu"]
+        source_html = self.fixture_html(include_planadeu=False).replace(
+            "<h2>Jornada 1</h2>",
+            "<h2>Jornada 1</h2><p>Descans: Team 13</p>",
+        )
+        parsed, error = sync_futbuteo.parse_round(source_html, teams, 1, "test")
+        self.assertIsNone(parsed)
+        self.assertIsNotNone(error)
+
     def test_target_round_requires_all_16_teams_and_eight_fixtures(self):
         parsed, error = sync_futbuteo.parse_round(
             self.fixture_html(), self.teams, 1, "test"
