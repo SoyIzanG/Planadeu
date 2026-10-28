@@ -115,6 +115,25 @@ class DailySyncParserTests(unittest.TestCase):
             + "</body></html>"
         )
 
+    def test_hidden_script_schedule_does_not_count_as_rendered_page(self):
+        html = (
+            "<html><body><p>Loading…</p>"
+            "<script>sessionStorage.setItem('x','1'); "
+            "Juvenil Segona Divisio Grup 29 Team 1 Team 2</script>"
+            "</body></html>"
+        )
+        self.assertTrue(sync_futbuteo._looks_like_challenge(html))
+
+    def test_rendered_group_page_is_not_classified_as_js_shell(self):
+        html = (
+            "<html><body><h1>Juvenil Segona Divisió Grup 29</h1>"
+            + " ".join(f"Team {i}" for i in range(1, 17))
+            + " Temporada 2026-2027 Jornada 1 calendari resultats "
+            + ("partit equip futbol " * 15)
+            + "<script>sessionStorage.setItem('x','1')</script></body></html>"
+        )
+        self.assertFalse(sync_futbuteo._looks_like_challenge(html))
+
     def test_target_round_requires_all_16_teams_and_eight_fixtures(self):
         parsed, error = sync_futbuteo.parse_round(
             self.fixture_html(), self.teams, 1, "test"
