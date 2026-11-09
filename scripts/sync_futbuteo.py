@@ -95,6 +95,28 @@ def compact(value: str) -> str:
     return norm(value).replace(" ", "")
 
 
+def select_competition_teams(rows):
+    """Select only uniquely named Group 29 clubs from a shared season roster.
+
+    An ambiguous or incomplete mapping aborts the import without DB writes.
+    """
+    expected_names = {compact(name) for name in TEAM_ALIASES}
+    selected = [row for row in rows if compact(row["name"]) in expected_names]
+    selected_names = {compact(row["name"]) for row in selected}
+    if (
+        len(selected) != EXPECTED_TEAMS
+        or len(selected_names) != EXPECTED_TEAMS
+        or selected_names != expected_names
+    ):
+        missing = sorted(expected_names - selected_names)
+        raise RuntimeError(
+            f"Plantilla del Grupo 29 no verificada: {len(selected)}/{EXPECTED_TEAMS} "
+            f"clubes reconocidos entre {len(rows)} equipos asociados. "
+            f"Claves de clubes pendientes: {missing}. Sin escrituras."
+        )
+    return selected
+
+
 class CandidateParser(HTMLParser):
     """Collect likely fixture rows/cards without assuming one specific HTML layout."""
     def __init__(self):
@@ -1178,20 +1200,7 @@ def main():
         # This Supabase season can also contain squads from other categories.
         # Select only the exact 16 club names validated for this group; never
         # delete, rename or infer the identity of any additional season team.
-        expected_names = {compact(name) for name in TEAM_ALIASES}
-        selected_rows = [row for row in rows if compact(row["name"]) in expected_names]
-        selected_names = {compact(row["name"]) for row in selected_rows}
-        if (
-            len(selected_rows) != EXPECTED_TEAMS
-            or len(selected_names) != EXPECTED_TEAMS
-            or selected_names != expected_names
-        ):
-            missing = sorted(expected_names - selected_names)
-            raise RuntimeError(
-                f"Plantilla del Grupo 29 no verificada: {len(selected_rows)}/{EXPECTED_TEAMS} "
-                f"clubes reconocidos entre {len(rows)} equipos asociados. "
-                f"Claves de clubes pendientes: {missing}. Sin escrituras."
-            )
+        selected_rows = select_competition_teams(rows)
         if len(rows) != EXPECTED_TEAMS:
             print(
                 f"Se ignoran {len(rows) - EXPECTED_TEAMS} equipos extra asociados a la temporada; "
