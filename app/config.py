@@ -93,6 +93,15 @@ class ProductionConfig(Config):
     if _db_url and _db_url.startswith("postgres://"):
         _db_url = _db_url.replace("postgres://", "postgresql://", 1)
     SQLALCHEMY_DATABASE_URI = _db_url or ""
+    # Keep the production PostgreSQL connection pool small on Render Free.
+    # The site has a single synchronous Gunicorn worker.
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_size": 2,
+        "max_overflow": 0,
+        "pool_timeout": 15,
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+    }
 
 
 class TestingConfig(Config):

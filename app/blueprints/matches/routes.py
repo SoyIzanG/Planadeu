@@ -2,9 +2,12 @@
 Matches routes - fixtures list, match detail.
 """
 
-from datetime import datetime
+from datetime import date, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
-from flask import abort, jsonify, render_template, url_for
+from sqlalchemy.orm import joinedload
+
+from flask import abort, jsonify, render_template, request, url_for
 from app.blueprints.matches import matches_bp
 from app.models import Match, MatchEvent, Season
 
@@ -16,6 +19,57 @@ def _active_season():
     return season
 
 
+def local_today():
+    """Return today's date in the league's local timezone."""
+    return datetime.now(ZoneInfo("Europe/Madrid")).date()
+
+
+def daily_fixtures(target_date):
+    """Read only fixtures on the selected calendar day, with both clubs.
+
+    Kickoff values in this app are stored as naive local datetimes.
+    Do not convert those persisted times to UTC.
+    """
+    season = _active_season()
+    if not season:
+        return season, []
+    start = datetime.combine(target_date, time.min)
+    end = start + timedelta(days=1)
+    matches = (
+        Match.query.options(joinedload(Match.home_team), joinedload(Match.away_team))
+        .filter(
+            Match.season_id == season.id,
+            Match.matchday >= 1,
+            Match.kickoff >= start,
+            Match.kickoff < end,
+        )
+        .order_by(Match.kickoff.asc(), Match.id.asc())
+        .limit(50)
+        .all()
+    )
+    return season, matches
+
+
+@matches_bp.route("/daily")
+def daily():
+    """Show fixtures for a single day; default to today in Spain."""
+    selected = request.args.get("date", "").strip()
+    try:
+        target_date = date.fromisoformat(selected) if selected else local_today()
+    except ValueError:
+        abort(400)
+    season, matches = daily_fixtures(target_date)
+    return render_template(
+        "matches/daily.html",
+        season=season,
+        matches=matches,
+        target_date=target_date,
+        previous_date=target_date - timedelta(days=1),
+        next_date=target_date + timedelta(days=1),
+        today=local_today(),
+    )
+
+
 @matches_bp.route("/")
 def list_matches():
     """Show every stored matchday for the active season."""
@@ -25,9 +79,10 @@ def list_matches():
     if season:
         matches = (
             Match.query.filter_by(season_id=season.id)
-            .filter(Match.matchday >= 5)
-            .filter(Match.kickoff >= datetime(2026, 10, 31))
+            .filter(Match.matchday >= 1)
+            .options(joinedload(Match.home_team), joinedload(Match.away_team))
             .order_by(Match.matchday.asc(), Match.kickoff.asc(), Match.id.asc())
+            .limit(500)
             .all()
         )
         for match in matches:
@@ -52,11 +107,11 @@ def results_api():
         return jsonify([])
 
     matches = Match.query.filter_by(season_id=season.id).filter(
-        Match.matchday >= 5,
+        Match.matchday >= 1,
         Match.is_played.is_(True),
         Match.home_goals.isnot(None),
         Match.away_goals.isnot(None),
-    ).order_by(Match.kickoff.desc()).all()
+    ).options(joinedload(Match.home_team), joinedload(Match.away_team)).order_by(Match.kickoff.desc()).limit(100).all()
 
     return jsonify([{
         "id": match.id,
@@ -73,7 +128,7 @@ def results_api():
 def detail(match_id):
     """Match detail with events timeline."""
     match = Match.query.get_or_404(match_id)
-    if not match.matchday or match.matchday < 5 or not match.kickoff or match.kickoff < datetime(2026, 10, 31):
+    if not match.matchday or match.matchday < 1 or not match.kickoff:
         abort(404)
     events = match.events.order_by(MatchEvent.minute).all()
     return render_template(

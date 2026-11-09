@@ -295,5 +295,36 @@ class DailySyncParserTests(unittest.TestCase):
         self.assertEqual(parsed["fixtures"][0]["away_goals"], 1)
 
 
+class DailyRosterSelectionTests(unittest.TestCase):
+    def setUp(self):
+        self.rows = [
+            {"id": i + 1, "name": name}
+            for i, name in enumerate(sync_futbuteo.TEAM_ALIASES)
+        ]
+
+    def test_excludes_two_unrelated_teams_without_deleting_them(self):
+        extras = [
+            {"id": 100, "name": "Equipo de otra competición A"},
+            {"id": 101, "name": "Equipo de otra competición B"},
+        ]
+        rows = self.rows + extras
+        selected = sync_futbuteo.select_competition_teams(rows)
+        self.assertEqual(len(selected), 16)
+        self.assertEqual({row["id"] for row in selected}, set(range(1, 17)))
+        self.assertEqual(len(rows), 18)
+
+    def test_does_not_guess_a_missing_competition_team(self):
+        with self.assertRaisesRegex(RuntimeError, "Sin escrituras"):
+            sync_futbuteo.select_competition_teams(self.rows[:-1] + [
+                {"id": 100, "name": "Equipo de otra competición"}
+            ])
+
+    def test_rejects_duplicate_club_name(self):
+        with self.assertRaisesRegex(RuntimeError, "Sin escrituras"):
+            sync_futbuteo.select_competition_teams(self.rows + [
+                {"id": 100, "name": self.rows[0]["name"]}
+            ])
+
+
 if __name__ == "__main__":
     unittest.main()

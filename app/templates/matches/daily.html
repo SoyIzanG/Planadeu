@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Partidos del día | La Liga{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <p class="text-uppercase text-secondary small fw-bold mb-1">Calendario diario</p>
+    <h1 class="mb-1">Partidos del {{ target_date.strftime('%d/%m/%Y') }}</h1>
+    {% if season %}<p class="text-muted mb-0">Temporada {{ season.name }}</p>{% endif %}
+  </div>
+  <a href="{{ url_for('matches.list_matches') }}" class="btn btn-outline-primary">Todas las jornadas</a>
+</div>
+
+<div class="d-flex gap-2 flex-wrap mb-4">
+  <a class="btn btn-outline-secondary" href="{{ url_for('matches.daily', date=previous_date.isoformat()) }}">Día anterior</a>
+  <a class="btn btn-outline-primary" href="{{ url_for('matches.daily', date=today.isoformat()) }}">Hoy</a>
+  <a class="btn btn-outline-secondary" href="{{ url_for('matches.daily', date=next_date.isoformat()) }}">Día siguiente</a>
+</div>
+
+{% if matches %}
+<div class="card border-0 shadow-sm">
+  <div class="list-group list-group-flush">
+    {% for match in matches %}
+    <a class="list-group-item list-group-item-action py-3" href="{{ url_for('matches.detail', match_id=match.id) }}">
+      <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
+        <div>
+          <div class="fw-semibold">{{ match.home_team.name }} — {{ match.away_team.name }}</div>
+          <div class="small text-muted">Jornada {{ match.matchday }} · {{ match.kickoff.strftime('%H:%M') }}</div>
+        </div>
+        <span class="fw-bold">
+          {% if match.is_played and match.home_goals is not none and match.away_goals is not none %}
+            {{ match.home_goals }} - {{ match.away_goals }}
+          {% else %}
+            Pendiente
+          {% endif %}
+        </span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info">No hay partidos registrados para este día. Puedes consultar otra fecha o ver todas las jornadas.</div>
+{% endif %}
+{% endblock %}

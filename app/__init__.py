@@ -39,8 +39,19 @@ def create_app(config_name: str = "development") -> Flask:
     # Registrar visitas.
     @app.before_request
     def registrar_visita():
+        from flask import request
+        # Don't query or write visitor analytics for health probes or assets.
+        if request.method != "GET" or request.endpoint in {"health", "static"}:
+            return
+        if request.path.startswith(("/api/", "/uploads/")):
+            return
         from app.services.visitor_service import track_visitor
         track_visitor()
+
+    @app.get("/health")
+    def health():
+        # Keep Render's frequent health checks free of DB round-trips.
+        return {"status": "ok"}
 
     # Configurar el inicio de sesión.
     from app.models import User
@@ -128,7 +139,10 @@ def registrar_blueprints(app: Flask) -> None:
     @app.route("/")
     def index():
         from flask import render_template
-        return render_template("home.html")
+        from app.blueprints.matches.routes import local_today, daily_fixtures
+        today = local_today()
+        _, today_matches = daily_fixtures(today)
+        return render_template("home.html", today=today, today_matches=today_matches)
 
 
 def registrar_manejadores_errores(app: Flask) -> None:
