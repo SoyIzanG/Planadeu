@@ -139,7 +139,10 @@ def registrar_blueprints(app: Flask) -> None:
     @app.route("/")
     def index():
         from flask import render_template
-        return render_template("home.html")
+        from app.blueprints.matches.routes import local_today, daily_fixtures
+        today = local_today()
+        _, today_matches = daily_fixtures(today)
+        return render_template("home.html", today=today, today_matches=today_matches)
 
 
 def registrar_manejadores_errores(app: Flask) -> None:
