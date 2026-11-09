@@ -7,12 +7,12 @@
     {% if season %}<small class="text-muted">{{ season.name }}</small>{% endif %}
 </h1>
 {% if by_matchday %}
-{% for matchday in by_matchday.keys()|sort if matchday >= 5 %}
+{% for matchday in by_matchday.keys()|sort %}
 <div class="card shadow mb-4">
-    <div class="card-header">Jornada {{ matchday - 4 }}</div>
+    <div class="card-header">Jornada {{ matchday }}</div>
     <div class="card-body p-0">
         <ul class="list-group list-group-flush">
-            {% for m in by_matchday[matchday] if m.kickoff and m.kickoff.strftime('%Y-%m-%d') >= '2026-10-31' %}
+            {% for m in by_matchday[matchday] %}
             
             <li class="list-group-item match-row">
                 <div class="match-time">
