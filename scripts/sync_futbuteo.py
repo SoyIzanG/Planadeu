@@ -1013,6 +1013,34 @@ def sync_round(conn, matchday: int, parsed, team_ids: dict, season_id: int):
         if not existing_pairs.issubset(expected_pairs):
             return 0, "conflicto con partidos oficiales ya guardados; no se modifica la jornada"
 
+        # A previously published score may have been entered and verified
+        # manually. Never change it silently if an external source disagrees.
+        for home_id, away_id, fixture in prepared:
+            if not fixture.get("result_is_final"):
+                continue
+            previous = next(
+                (
+                    item for item in existing_official
+                    if {item["home_team_id"], item["away_team_id"]} == {home_id, away_id}
+                ),
+                None,
+            )
+            if (
+                previous
+                and previous["is_played"]
+                and previous["home_goals"] is not None
+                and previous["away_goals"] is not None
+            ):
+                source_goals = (fixture["home_goals"], fixture["away_goals"])
+                if previous["home_team_id"] == away_id:
+                    source_goals = tuple(reversed(source_goals))
+                stored_goals = (previous["home_goals"], previous["away_goals"])
+                if source_goals != stored_goals:
+                    return 0, (
+                        f"marcador final en conflicto para partido existente {previous['id']}; "
+                        "no se modifica la jornada"
+                    )
+
         written = 0
         for home_id, away_id, fixture in prepared:
             cur.execute(
@@ -1020,6 +1048,7 @@ def sync_round(conn, matchday: int, parsed, team_ids: dict, season_id: int):
                           is_played, is_internal, kickoff_confirmed
                    FROM matches
                    WHERE season_id=%s AND matchday=%s
+                     AND is_internal=FALSE
                      AND ((home_team_id=%s AND away_team_id=%s)
                        OR (home_team_id=%s AND away_team_id=%s))
                    ORDER BY id LIMIT 1""",
