@@ -157,7 +157,7 @@
                href="{{ url_for('matches.detail', match_id=match.id) }}">
                 <div>
                     <div class="fw-semibold">{{ match.home_team.name }} — {{ match.away_team.name }}</div>
-                    <small class="text-muted">Jornada {{ match.matchday - 4 }} · {{ match.kickoff.strftime('%H:%M') }}</small>
+                    <small class="text-muted">Jornada {{ match.matchday }} · {{ match.kickoff.strftime('%H:%M') }}</small>
                 </div>
                 <strong>{% if match.is_played and match.home_goals is not none and match.away_goals is not none %}{{ match.home_goals }} - {{ match.away_goals }}{% else %}Pendiente{% endif %}</strong>
             </a>
