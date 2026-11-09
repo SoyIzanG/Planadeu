@@ -81,7 +81,9 @@ def list_matches():
             Match.query.filter_by(season_id=season.id)
             .filter(Match.matchday >= 5)
             .filter(Match.kickoff >= datetime(2026, 10, 31))
+            .options(joinedload(Match.home_team), joinedload(Match.away_team))
             .order_by(Match.matchday.asc(), Match.kickoff.asc(), Match.id.asc())
+            .limit(500)
             .all()
         )
         for match in matches:
@@ -110,7 +112,7 @@ def results_api():
         Match.is_played.is_(True),
         Match.home_goals.isnot(None),
         Match.away_goals.isnot(None),
-    ).order_by(Match.kickoff.desc()).all()
+    ).options(joinedload(Match.home_team), joinedload(Match.away_team)).order_by(Match.kickoff.desc()).limit(100).all()
 
     return jsonify([{
         "id": match.id,
