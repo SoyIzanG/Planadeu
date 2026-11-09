@@ -39,8 +39,19 @@ def create_app(config_name: str = "development") -> Flask:
     # Registrar visitas.
     @app.before_request
     def registrar_visita():
+        from flask import request
+        # Don't query or write visitor analytics for health probes or assets.
+        if request.method != "GET" or request.endpoint in {"health", "static"}:
+            return
+        if request.path.startswith(("/api/", "/uploads/")):
+            return
         from app.services.visitor_service import track_visitor
         track_visitor()
+
+    @app.get("/health")
+    def health():
+        # Keep Render's frequent health checks free of DB round-trips.
+        return {"status": "ok"}
 
     # Configurar el inicio de sesión.
     from app.models import User
