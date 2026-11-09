@@ -1146,11 +1146,29 @@ def main():
             )
             rows = cur.fetchall()
 
-        if len(rows) != EXPECTED_TEAMS:
+        # This Supabase season can also contain squads from other categories.
+        # Select only the exact 16 club names validated for this group; never
+        # delete, rename or infer the identity of any additional season team.
+        expected_names = {compact(name) for name in TEAM_ALIASES}
+        selected_rows = [row for row in rows if compact(row["name"]) in expected_names]
+        selected_names = {compact(row["name"]) for row in selected_rows}
+        if (
+            len(selected_rows) != EXPECTED_TEAMS
+            or len(selected_names) != EXPECTED_TEAMS
+            or selected_names != expected_names
+        ):
+            missing = sorted(expected_names - selected_names)
             raise RuntimeError(
-                f"Se esperaban {EXPECTED_TEAMS} equipos asociados a {SEASON_NAME}; hay {len(rows)}. "
-                "No se importa ninguna jornada."
+                f"Plantilla del Grupo 29 no verificada: {len(selected_rows)}/{EXPECTED_TEAMS} "
+                f"clubes reconocidos entre {len(rows)} equipos asociados. "
+                f"Claves de clubes pendientes: {missing}. Sin escrituras."
             )
+        if len(rows) != EXPECTED_TEAMS:
+            print(
+                f"Se ignoran {len(rows) - EXPECTED_TEAMS} equipos extra asociados a la temporada; "
+                "no se modifican ni se borran."
+            )
+        rows = selected_rows
         official_teams = [row["name"] for row in rows]
         team_ids = {norm(row["name"]): row["id"] for row in rows}
         planadeu = [name for name in official_teams if "planadeu" in norm(name)]
