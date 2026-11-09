@@ -12,6 +12,11 @@ bind = f"0.0.0.0:{os.environ.get('PORT', '10000')}"
 workers = 1
 worker_class = "sync"
 
+# Recycle the worker periodically to bound long-lived memory growth.
+# Jitter prevents a rigid restart interval; it does not add workers.
+max_requests = 500
+max_requests_jitter = 50
+
 # Timeouts
 timeout = 120
 keepalive = 5
