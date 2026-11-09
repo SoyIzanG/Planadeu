@@ -141,6 +141,34 @@
     </div>
 </section>
 
+<section class="mb-5" aria-labelledby="daily-fixtures-heading">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+            <p class="text-uppercase small fw-bold text-secondary mb-1">Calendario actualizado</p>
+            <h2 class="section-heading mb-0" id="daily-fixtures-heading">Partidos de hoy · {{ today.strftime('%d/%m/%Y') }}</h2>
+        </div>
+        <a href="{{ url_for('matches.daily') }}" class="btn btn-outline-primary btn-sm">Ver partidos por día</a>
+    </div>
+    {% if today_matches %}
+    <div class="card border-0 shadow-sm">
+        <div class="list-group list-group-flush">
+            {% for match in today_matches %}
+            <a class="list-group-item list-group-item-action d-flex align-items-center justify-content-between gap-3 flex-wrap py-3"
+               href="{{ url_for('matches.detail', match_id=match.id) }}">
+                <div>
+                    <div class="fw-semibold">{{ match.home_team.name }} — {{ match.away_team.name }}</div>
+                    <small class="text-muted">Jornada {{ match.matchday - 4 }} · {{ match.kickoff.strftime('%H:%M') }}</small>
+                </div>
+                <strong>{% if match.is_played and match.home_goals is not none and match.away_goals is not none %}{{ match.home_goals }} - {{ match.away_goals }}{% else %}Pendiente{% endif %}</strong>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">Hoy no hay partidos registrados. <a href="{{ url_for('matches.list_matches') }}">Consulta todas las jornadas</a>.</p>
+    {% endif %}
+</section>
+
 <section class="card border-0 mb-5 overflow-hidden">
     <div class="card-body p-4 p-md-5">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
