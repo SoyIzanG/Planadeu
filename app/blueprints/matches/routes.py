@@ -39,8 +39,8 @@ def daily_fixtures(target_date):
         Match.query.options(joinedload(Match.home_team), joinedload(Match.away_team))
         .filter(
             Match.season_id == season.id,
-            Match.matchday >= 5,
-            Match.kickoff >= max(start, datetime(2026, 10, 31)),
+            Match.matchday >= 1,
+            Match.kickoff >= start,
             Match.kickoff < end,
         )
         .order_by(Match.kickoff.asc(), Match.id.asc())
@@ -79,8 +79,7 @@ def list_matches():
     if season:
         matches = (
             Match.query.filter_by(season_id=season.id)
-            .filter(Match.matchday >= 5)
-            .filter(Match.kickoff >= datetime(2026, 10, 31))
+            .filter(Match.matchday >= 1)
             .options(joinedload(Match.home_team), joinedload(Match.away_team))
             .order_by(Match.matchday.asc(), Match.kickoff.asc(), Match.id.asc())
             .limit(500)
@@ -108,7 +107,7 @@ def results_api():
         return jsonify([])
 
     matches = Match.query.filter_by(season_id=season.id).filter(
-        Match.matchday >= 5,
+        Match.matchday >= 1,
         Match.is_played.is_(True),
         Match.home_goals.isnot(None),
         Match.away_goals.isnot(None),
@@ -129,7 +128,7 @@ def results_api():
 def detail(match_id):
     """Match detail with events timeline."""
     match = Match.query.get_or_404(match_id)
-    if not match.matchday or match.matchday < 5 or not match.kickoff or match.kickoff < datetime(2026, 10, 31):
+    if not match.matchday or match.matchday < 1 or not match.kickoff:
         abort(404)
     events = match.events.order_by(MatchEvent.minute).all()
     return render_template(
